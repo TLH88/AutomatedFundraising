@@ -1,0 +1,63 @@
+name: Send Email Campaign Batch
+
+on:
+  # Manual trigger only — staff initiates sends from GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      campaign_id:
+        description: 'Campaign UUID from Supabase (required)'
+        required: true
+      batch_limit:
+        description: 'Max emails to send in this batch (default: 50)'
+        required: false
+        default: '50'
+
+jobs:
+  send-batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate campaign ID input
+        run: |
+          if [ -z "${{ github.event.inputs.campaign_id }}" ]; then
+            echo "ERROR: campaign_id is required."
+            exit 1
+          fi
+          echo "Sending campaign: ${{ github.event.inputs.campaign_id }}"
+          echo "Batch limit: ${{ github.event.inputs.batch_limit }}"
+
+      - name: Send campaign batch
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDER_NAME: ${{ secrets.SENDER_NAME }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          FUNDRAISER_NAME: ${{ secrets.FUNDRAISER_NAME }}
+          UNSUBSCRIBE_BASE_URL: ${{ secrets.UNSUBSCRIBE_BASE_URL }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_limit }}
+        run: |
+          python -m emailer.batch_send \
+            --campaign-id "${{ github.event.inputs.campaign_id }}" \
+            --limit "${{ github.event.inputs.batch_limit }}"
+
+      - name: Print send summary
+        if: always()
+        run: |
+          echo "=== Email Batch Complete ==="
+          echo "Campaign ID: ${{ github.event.inputs.campaign_id }}"
+          echo "Timestamp: $(date -u)"
+          echo "Triggered by: ${{ github.actor }}"

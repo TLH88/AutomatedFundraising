@@ -1,0 +1,8 @@
+AutomatedFundraising Dev Notes:
+
+
+Services Uses:
+- Github - repo name: AutomatedFundraising -- Repo URL: https://github.com/TLH88/AutomatedFundraising
+- Supabase - project name: AutomatedFundraising -- Password: (F)ForTheAnimals88 -- Project URL: https://kjbbdqqqloljzxikblwa.supabase.co
+- SendGrid (AKA - Twillow) - Login: infinityitconsulting@mail.com PW: OPen@1ce
+---- Recovery Key: 7A2DJ6P1WVS8S4VX25UC4LPB

@@ -1,0 +1,64 @@
+name: Discover & Scrape Organizations
+
+on:
+  # Run every Sunday at 6:00 AM UTC
+  schedule:
+    - cron: '0 6 * * 0'
+  # Allow manual trigger from GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      min_score:
+        description: 'Minimum donation potential score for contact extraction (1-10)'
+        required: false
+        default: '5'
+
+jobs:
+  discover-and-scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers (if enabled)
+        if: env.PLAYWRIGHT_ENABLED == 'true'
+        run: playwright install chromium --with-deps
+        env:
+          PLAYWRIGHT_ENABLED: ${{ secrets.PLAYWRIGHT_ENABLED }}
+
+      - name: Run discovery (find organizations)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+        run: python -m scraper.discover
+
+      - name: Run contact extraction
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          PLAYWRIGHT_ENABLED: ${{ secrets.PLAYWRIGHT_ENABLED }}
+          MIN_SCORE: ${{ github.event.inputs.min_score || '5' }}
+        run: |
+          python -c "
+          from scraper.extract_contacts import run_extraction
+          import os
+          run_extraction(min_score=int(os.environ.get('MIN_SCORE', 5)))
+          "
+
+      - name: Print run summary
+        if: always()
+        run: |
+          echo "=== Scrape Run Complete ==="
+          echo "Timestamp: $(date -u)"
+          echo "Triggered by: ${{ github.event_name }}"

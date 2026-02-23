@@ -1,0 +1,23 @@
+Subject: One Quick Follow-Up — Furry Friends Shelter & {{org_name}}
+
+---
+
+Hi {{contact_name}},
+
+I wanted to follow up on my note from last week about Furry Friends Shelter's {{fundraiser_name}} campaign.
+
+I know how full inboxes get, so I'll keep this short: we're a small shelter with a big mission, and we're looking for a handful of partners who share our belief that every animal deserves a second chance.
+
+If there's any interest from {{org_name}} — even at a small level — it would make a meaningful difference. And if the timing simply isn't right, that's completely okay too. I'd rather build a genuine relationship than push for anything that doesn't feel right.
+
+Either way, thank you for the work {{org_name}} does. It matters.
+
+With appreciation,
+
+{{sender_name}}
+Furry Friends Shelter
+{{sender_email}}
+furryfriendswa.org
+
+---
+To unsubscribe: {{unsubscribe_link}}

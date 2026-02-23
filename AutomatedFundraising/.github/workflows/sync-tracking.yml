@@ -1,0 +1,48 @@
+name: Sync Email Tracking
+
+on:
+  # Run daily at 8:00 AM UTC
+  schedule:
+    - cron: '0 8 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      hours_back:
+        description: 'How many hours back to sync events (default: 25)'
+        required: false
+        default: '25'
+
+jobs:
+  sync-tracking:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Sync SendGrid event data to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+        run: |
+          python -c "
+          from emailer.sync_tracking import sync_events
+          sync_events()
+          "
+
+      - name: Print sync summary
+        if: always()
+        run: |
+          echo "=== Tracking Sync Complete ==="
+          echo "Timestamp: $(date -u)"

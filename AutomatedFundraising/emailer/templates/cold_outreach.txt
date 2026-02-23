@@ -1,0 +1,32 @@
+Subject: Partnering to Give Every Animal a Second Chance | {{org_name}}
+
+---
+
+Hi {{contact_name}},
+
+My name is {{sender_name}}, and I'm reaching out on behalf of Furry Friends Shelter — a nonprofit dedicated to rescuing, rehabilitating, and rehoming animals in need across Washington State.
+
+I came across {{org_name}} and was genuinely moved by {{org_reason}}. That kind of commitment reflects the values we hold deeply at our shelter.
+
+We're currently running our {{fundraiser_name}} campaign, and we're reaching out to a select group of organizations whose values align with ours — to explore whether a partnership might be a fit. That could look like a direct donation, in-kind support, or co-promoting our campaign to your audience.
+
+Here's the direct impact of a contribution:
+
+  $50 — provides one week of medical care for a rescued animal
+  $250 — covers a full month of shelter and feeding for a senior dog
+  $500 — funds a spay/neuter procedure that prevents future suffering
+
+Every dollar goes directly to the animals.
+
+I'd love to connect — even a 15-minute call would mean the world to us (and to a few wagging tails). If now isn't the right time, I completely understand, and I'm happy to stay in touch for when it might be.
+
+With deep gratitude,
+
+{{sender_name}}
+Furry Friends Shelter
+{{sender_email}}
+furryfriendswa.org
+
+---
+You're receiving this because we believe in what {{org_name}} stands for.
+To unsubscribe: {{unsubscribe_link}}
