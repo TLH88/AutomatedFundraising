@@ -167,6 +167,35 @@
 
 ---
 
+## Phase 6 — Web Dashboard UI
+
+| Page | Status | Detail |
+|---|---|---|
+| Dashboard (Home) | ✅ | Fundraising trends chart, donations table, impact metrics, news feed |
+| Campaigns Page | ⏳ | Campaign list, create/edit, status management |
+| Donors Page | 🔄 | In Progress — Donor directory with profiles and history |
+| Analytics Page | ⏳ | Custom reports, data visualization, export functionality |
+| Impact Reports Page | ⏳ | Generate stakeholder reports with metrics and stories |
+| Active Campaigns Detail | ⏳ | Individual campaign deep-dive with performance data |
+| Animals Helped Page | ⏳ | Animal profiles, rescue stories, photo gallery |
+| Events Calendar | ⏳ | Event management, RSVP tracking, calendar view |
+| Communications Center | ⏳ | Email campaign management, message templates |
+| Success Stories | ⏳ | Story management, publishing, social sharing |
+| Settings Page | ⏳ | App configuration, integrations, preferences |
+| Team Management | ⏳ | User roles, permissions, team directory |
+| Help & Resources | ⏳ | Documentation, FAQs, support contact |
+
+**Design System:**
+- ✅ Design tokens (variables.css)
+- ✅ Base styles (base.css)
+- ✅ Component library (components.css)
+- ✅ Layout system (layout.css)
+- ✅ Flask server with mock APIs
+- ✅ Chart.js integration
+- ✅ Responsive grid (desktop, tablet, mobile)
+
+---
+
 ## Open Items Requiring Action
 
 ### Tony (External)
@@ -177,14 +206,23 @@
 
 ### Claude (Next Session)
 
-**High Priority — New Requirements:**
-- [ ] **Design & build Web UI** for tool management (Change #009)
-  - Dashboard with org/contact counts and activity overview
-  - One-click workflow triggers (discover, scrape, send campaigns)
-  - Campaign management interface
-  - Organizations and contacts browser with search/filter
-  - Real-time progress indicators
-  - Technology decision needed: Next.js, Streamlit, or React
+**High Priority — Web UI Page Buildouts (Change #010):**
+- [x] **Dashboard Page** — Overview with charts and metrics (COMPLETE)
+- [ ] **Donors Page** — Donor directory, profiles, donation history (IN PROGRESS)
+- [ ] **Campaigns Page** — Campaign management and creation
+- [ ] **Analytics Page** — Deep-dive analytics and reports
+- [ ] **Impact Reports Page** — Stakeholder report generation
+- [ ] **Active Campaigns Detail** — Individual campaign performance
+- [ ] **Animals Helped Page** — Animal profiles and rescue stories
+- [ ] **Events Calendar** — Event management and RSVP tracking
+- [ ] **Communications Center** — Email campaign management
+- [ ] **Success Stories** — Story publishing and management
+- [ ] **Settings Page** — App configuration and preferences
+- [ ] **Team Management** — User roles and permissions
+- [ ] **Help & Resources** — Documentation and support
+
+**High Priority — Backend Integration:**
+- [ ] **Connect UI to Supabase** — Replace mock data with real queries
 - [ ] **Implement real-time progress updates** (Change #008)
   - Scripts emit progress events during execution
   - 5-second auto-refresh progress display
@@ -223,3 +261,45 @@
 ---
 
 *Last full audit: February 22, 2026 | 19 code files | 3 Supabase migrations | 11 RLS policies | 7 indexes*
+
+---
+
+## CURRENT SESSION OVERRIDE (February 23, 2026)
+
+This section is the authoritative status snapshot for the current codebase.
+
+### Major Status Changes This Session
+- Web dashboard UI page buildout: COMPLETE (13-page frontend exists locally).
+- Backend integration: PARTIAL (Supabase-aware Flask API implemented with mock fallback).
+- Supabase CRM schema design: COMPLETE (`AutomatedFundraising/db/schema.sql`).
+- GitHub workflow location/pathing: FIXED (moved to repo-root `.github/workflows`, working directory set to `AutomatedFundraising`).
+- Discover workflow artifact summary: IMPLEMENTED.
+- `{{donation_impact}}` token: IMPLEMENTED.
+- 24-hour same-org send gap: IMPLEMENTED in `emailer/batch_send.py` using recent org send checks.
+
+### SendGrid / Email Delivery Status (Updated)
+- SendGrid account is currently inactive.
+- Live outbound email sending and tracking sync validation are blocked pending provider reactivation or provider replacement.
+- Connection checks now treat missing `SENDGRID_API_KEY` as non-fatal while provider is under review.
+
+### Frontend + Backend Milestones (Normal SDLC Tracking)
+- Milestone F1: UI page buildout (HTML/CSS/JS) - COMPLETE
+- Milestone B1: Flask API server with mock endpoints - COMPLETE
+- Milestone B2: Supabase-aware CRM API layer (`db/crm.py`) - COMPLETE
+- Milestone B3: Unified Supabase schema design (`db/schema.sql`) - COMPLETE (design only; not yet applied in Supabase)
+- Milestone B4: Page-by-page frontend wiring to live API responses - IN PROGRESS
+- Milestone B5: Real-time automation progress UX (5s updates) - PARTIAL (schema/API scaffolding via `automation_runs` + `automation_run_events`; UI wiring pending)
+- Milestone O1: Workflow execution from repo root - COMPLETE (pathing fixed)
+- Milestone O2: Email provider migration/selection - PENDING
+
+### Validation / Smoke Tests Added This Session
+- `AutomatedFundraising/scripts/smoke_test_server.py` (Flask API smoke tests)
+- `AutomatedFundraising/scripts/pre_deploy_check.py` (compile, imports, smoke tests, optional connection checks)
+- Local smoke tests passed in mock mode on February 23, 2026
+
+### Pre-Deployment Check Gate (Use Before Push/Deploy)
+1. Run `python AutomatedFundraising/scripts/pre_deploy_check.py`
+2. If using Supabase, run `python AutomatedFundraising/scripts/test_connections.py`
+3. If email provider is active, validate send/tracking scripts against non-production data first
+4. Confirm workflow files exist in repo-root `.github/workflows`
+5. Confirm tracker/docs updates for the session are committed with code changes

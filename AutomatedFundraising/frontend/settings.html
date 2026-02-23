@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Funds 4 Furry Friends</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></div>
+    </div>
+    <div class="topbar-center">
+      <div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search settings..." class="search-input"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn"><span class="notification-badge">3</span>🔔</button>
+      <button class="icon-btn"><span class="notification-badge">5</span>💬</button>
+      <div class="user-menu"><img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar"><span class="user-name">Admin</span></div>
+    </div>
+  </nav>
+
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a href="campaigns.html" class="nav-item"><span class="nav-icon">🎯</span><span class="nav-label">Active Campaigns</span></a>
+      <a href="donors.html" class="nav-item"><span class="nav-icon">❤️</span><span class="nav-label">Donors & Sponsors</span></a>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Analytics & Reports</span></a>
+      <a href="animals.html" class="nav-item"><span class="nav-icon">🐕</span><span class="nav-label">Animals Helped</span></a>
+      <a href="events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Events Calendar</span></a>
+      <a href="communications.html" class="nav-item"><span class="nav-icon">📧</span><span class="nav-label">Communications</span></a>
+      <a href="stories.html" class="nav-item"><span class="nav-icon">✨</span><span class="nav-label">Success Stories</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item active"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+      <a href="team.html" class="nav-item"><span class="nav-icon">👥</span><span class="nav-label">Team Management</span></a>
+      <a href="help.html" class="nav-item"><span class="nav-icon">❓</span><span class="nav-label">Help & Resources</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <div><h1 class="page-title">Settings</h1><p class="page-subtitle">Configure your organization and application preferences</p></div>
+        <div class="page-actions">
+          <button class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Organization Profile</h2></div>
+          <div class="card-body">
+            <form class="form">
+              <div class="input-group"><label class="label">Organization Name *</label><input type="text" class="input" value="Funds 4 Furry Friends" required></div>
+              <div class="input-group"><label class="label">Email Address *</label><input type="email" class="input" value="contact@funds4furryfriends.org" required></div>
+              <div class="input-group"><label class="label">Phone Number</label><input type="tel" class="input" value="(555) 123-4567"></div>
+              <div class="input-group"><label class="label">Website</label><input type="url" class="input" value="https://funds4furryfriends.org"></div>
+              <div class="input-group"><label class="label">Address</label><textarea class="input" rows="3">123 Rescue Lane, Animal City, ST 12345</textarea></div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Notification Preferences</h2></div>
+          <div class="card-body">
+            <div class="checkbox-group">
+              <label class="checkbox-label"><input type="checkbox" checked><span>New donations</span></label>
+              <label class="checkbox-label"><input type="checkbox" checked><span>Campaign milestones</span></label>
+              <label class="checkbox-label"><input type="checkbox" checked><span>Event RSVPs</span></label>
+              <label class="checkbox-label"><input type="checkbox"><span>Weekly summary reports</span></label>
+              <label class="checkbox-label"><input type="checkbox"><span>System updates</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Payment Processing</h2></div>
+          <div class="card-body">
+            <form class="form">
+              <div class="input-group"><label class="label">Payment Gateway</label><select class="input"><option>Stripe</option><option>PayPal</option><option>Square</option></select></div>
+              <div class="input-group"><label class="label">API Key</label><input type="password" class="input" value="sk_live_••••••••••••"></div>
+              <div class="input-group"><label class="label">Currency</label><select class="input"><option>USD</option><option>CAD</option><option>EUR</option></select></div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Email Settings</h2></div>
+          <div class="card-body">
+            <form class="form">
+              <div class="input-group"><label class="label">SMTP Host</label><input type="text" class="input" value="smtp.gmail.com"></div>
+              <div class="input-group"><label class="label">SMTP Port</label><input type="number" class="input" value="587"></div>
+              <div class="input-group"><label class="label">From Email</label><input type="email" class="input" value="noreply@funds4furryfriends.org"></div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Tax Receipt Settings</h2></div>
+          <div class="card-body">
+            <form class="form">
+              <div class="input-group"><label class="label">Tax ID / EIN</label><input type="text" class="input" value="12-3456789"></div>
+              <div class="input-group"><label class="label">Minimum Amount for Receipt</label><input type="number" class="input" value="10"></div>
+              <div class="checkbox-group">
+                <label class="checkbox-label"><input type="checkbox" checked><span>Auto-send receipts</span></label>
+                <label class="checkbox-label"><input type="checkbox" checked><span>Include year-end summary</span></label>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Data & Privacy</h2></div>
+          <div class="card-body">
+            <div class="checkbox-group">
+              <label class="checkbox-label"><input type="checkbox" checked><span>Allow analytics tracking</span></label>
+              <label class="checkbox-label"><input type="checkbox" checked><span>Enable data exports</span></label>
+              <label class="checkbox-label"><input type="checkbox"><span>Two-factor authentication required</span></label>
+            </div>
+            <div class="form" style="margin-top: var(--spacing-lg);">
+              <button class="btn btn-secondary" style="width: 100%;">Export All Data</button>
+              <button class="btn btn-secondary" style="width: 100%; background: rgba(239, 68, 68, 0.1); color: #EF4444;">Delete All Data</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Save Changes button
+    document.querySelector('.page-actions .btn-primary')?.addEventListener('click', () => {
+      // Show saving feedback
+      const btn = document.querySelector('.page-actions .btn-primary');
+      const originalText = btn.textContent;
+      btn.textContent = 'Saving...';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        // Show toast
+        const toast = document.createElement('div');
+        toast.textContent = 'Settings saved successfully!';
+        toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--accent-green);color:white;padding:16px 24px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:9999;font-weight:500;transition:opacity 0.3s ease;';
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+      }, 1000);
+    });
+
+    // Delete All Data button - confirm before action
+    document.querySelector('.btn-secondary[style*="EF4444"]')?.addEventListener('click', (e) => {
+      if (!confirm('Are you sure you want to delete all data? This action cannot be undone.')) {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+/**
+ * Funds 4 Furry Friends - Donor Profile Page Styles
+ */
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+.breadcrumb a {
+  color: var(--text-impact);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
+
+/* Profile Header */
+.profile-header {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.profile-header-left {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.profile-avatar-large {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  border: 4px solid var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.profile-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.profile-name {
+  font-size: var(--text-h1);
+  font-weight: var(--weight-bold);
+  margin: 0;
+}
+
+.profile-meta {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+
+.profile-header-right {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Profile Stats Grid */
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--column-gap);
+  margin-bottom: var(--spacing-xl);
+}
+
+.profile-stat-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.profile-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.profile-stat-label {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 0 0 var(--spacing-xs) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.profile-stat-value {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-bold);
+  margin: 0;
+}
+
+/* Profile Grid */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--column-gap);
+}
+
+.card-full-width {
+  grid-column: 1 / -1;
+}
+
+/* Contact Info List */
+.contact-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.contact-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--table-divider);
+}
+
+.contact-info-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.contact-info-label {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--weight-semibold);
+}
+
+.contact-info-value {
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+
+.contact-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+/* Preferred Causes */
+.preferred-causes-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.preferred-cause-item {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--glass-bg);
+  border-radius: var(--radius-small);
+  border: 1px solid var(--glass-border);
+}
+
+/* Engagement Timeline */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  position: relative;
+  padding-left: var(--spacing-lg);
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--table-divider);
+}
+
+.timeline-item {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+  position: relative;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: absolute;
+  left: -19px;
+  top: 4px;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.timeline-content {
+  flex: 1;
+}
+
+.timeline-title {
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.timeline-meta {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Notes */
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.note-item {
+  padding: var(--spacing-md);
+  background: var(--glass-bg);
+  border-radius: var(--radius-small);
+  border: 1px solid var(--glass-border);
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.note-content {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: var(--line-height-relaxed);
+}
+
+/* Contact Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-modal);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-hover);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s var(--ease-default);
+}
+
+.modal-header {
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--table-divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+.modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-default);
+}
+
+.modal-close:hover {
+  background: var(--glass-border);
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: var(--spacing-xl);
+}
+
+/* Contact Options */
+.contact-options {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.contact-option-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  transition: var(--transition-default);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.contact-option-card:hover {
+  background: var(--glass-border);
+  border-color: var(--accent-green);
+  transform: translateX(4px);
+}
+
+.contact-option-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.contact-option-title {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 0 0 var(--spacing-xs) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--weight-semibold);
+}
+
+.contact-option-value {
+  font-size: var(--text-body-large);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  .profile-header-right {
+    width: 100%;
+  }
+
+  .profile-header-right .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-header-left {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-meta {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+}

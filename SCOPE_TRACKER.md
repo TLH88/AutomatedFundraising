@@ -167,6 +167,34 @@ Changes are recorded in chronological order. Each entry notes the date, what cha
 
 ---
 
+### Change #010 — Web UI Complete Page Buildout Plan
+**Date:** Feb 23, 2026
+**Type:** Implementation plan / Scope breakdown
+**Initiated by:** Tony
+**Original:** Web UI proposed as single major feature (Change #009)
+**Decision:** Break down UI into 11 distinct page buildouts based on navigation structure
+**Impact:** Creates structured development path for complete dashboard implementation
+**Pages to build:**
+1. ✅ **Dashboard** — Overview with fundraising trends, donations, impact metrics (COMPLETE)
+2. **Campaigns Page** — View, create, edit, and manage fundraising campaigns
+3. **Donors Page** — Donor directory with profiles, donation history, and engagement tracking
+4. **Analytics Page** — Deep-dive analytics with custom reports and data visualization
+5. **Impact Reports Page** — Generate and view impact reports for stakeholders
+6. **Active Campaigns Detail** — Detailed view of individual campaign performance
+7. **Animals Helped Page** — Showcase animals rescued/helped with stories and photos
+8. **Events Calendar** — Manage fundraising events, adoption days, and volunteer activities
+9. **Communications Center** — Email campaign management and messaging hub
+10. **Success Stories** — Publish and manage animal success stories for marketing
+11. **Settings Page** — Application configuration, user preferences, integrations
+12. **Team Management** — User management, roles, permissions
+13. **Help & Resources** — Documentation, FAQs, support contact
+
+**Technology Stack Selected:** HTML/CSS/JS with Flask backend (already implemented)
+**Status:** ✅ Implemented — Dashboard complete, remaining pages queued
+**Estimated Effort:** 1-2 hours per page (13-26 hours total)
+
+---
+
 ## Pending Scope Items (Planned but Not Yet Built)
 
 These items were in the original plan or emerged during development but have not been implemented yet. They are candidates for upcoming work sessions.
@@ -232,3 +260,27 @@ When a new requirement or change is requested, document it here before implement
 ---
 
 *This tracker is a living document. Update at the end of every session.*
+
+---
+
+## CURRENT SESSION OVERRIDE (February 23, 2026)
+
+This section supersedes stale page-status and pending-item notes earlier in this file.
+
+### Scope Decisions Finalized This Session
+- Scope expanded to a unified internal fundraising CRM + outreach automation platform (Supabase-backed).
+- A full Supabase schema design now exists in `AutomatedFundraising/db/schema.sql`.
+- CRM entities added to scope: donors, donations, campaigns, animals, events, communications, reports, stories, team, settings/help content, activity logs, automation progress runs/events.
+- Flask backend API now targets this expanded model via `AutomatedFundraising/server.py` + `AutomatedFundraising/db/crm.py` with mock fallback when Supabase is not configured.
+
+### Scope Clarifications
+- Frontend page buildout is complete as a UI shell (13 pages exist locally).
+- Backend integration is partially complete (API endpoints exist), but deeper page-level data rendering/action wiring remains in progress.
+- Email delivery remains in scope, but provider implementation is operationally blocked while SendGrid is inactive and alternatives are being evaluated.
+
+### Previously Pending Items Resolved This Session
+- `db/schema.sql` added
+- `{{donation_impact}}` token implemented
+- 24-hour same-org email send gap enforced (default 24h)
+- Discover workflow summary artifact added
+- GitHub Actions workflow pathing corrected to repo-root `.github/workflows`

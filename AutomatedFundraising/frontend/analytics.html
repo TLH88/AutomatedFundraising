@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - Funds 4 Furry Friends</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/analytics.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <span class="brand-icon">🐾</span>
+        <span class="brand-name">Funds 4 Furry Friends</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search campaigns, donors, or events..." class="search-input">
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="icon-btn" title="Notifications">
+        <span class="notification-badge">3</span>
+        🔔
+      </button>
+      <button class="icon-btn" title="Messages">
+        <span class="notification-badge">5</span>
+        💬
+      </button>
+      <div class="user-menu">
+        <img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar">
+        <span class="user-name">Admin</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a href="campaigns.html" class="nav-item">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Active Campaigns</span>
+      </a>
+
+      <a href="donors.html" class="nav-item">
+        <span class="nav-icon">❤️</span>
+        <span class="nav-label">Donors & Sponsors</span>
+      </a>
+
+      <a href="analytics.html" class="nav-item active">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Analytics & Reports</span>
+      </a>
+
+      <a href="animals.html" class="nav-item">
+        <span class="nav-icon">🐕</span>
+        <span class="nav-label">Animals Helped</span>
+      </a>
+
+      <a href="events.html" class="nav-item">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Events Calendar</span>
+      </a>
+
+      <a href="communications.html" class="nav-item">
+        <span class="nav-icon">📧</span>
+        <span class="nav-label">Communications</span>
+      </a>
+
+      <a href="stories.html" class="nav-item">
+        <span class="nav-icon">✨</span>
+        <span class="nav-label">Success Stories</span>
+      </a>
+
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </a>
+      <a href="team.html" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Team Management</span>
+      </a>
+      <a href="help.html" class="nav-item">
+        <span class="nav-icon">❓</span>
+        <span class="nav-label">Help & Resources</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Analytics & Reports</h1>
+          <p class="page-subtitle">Deep dive into your fundraising performance and donor insights</p>
+        </div>
+        <div class="page-actions">
+          <select class="select" id="dateRangeSelect">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last year</option>
+            <option value="custom">Custom range</option>
+          </select>
+          <button class="btn btn-primary">
+            <span>📥</span>
+            <span>Export Report</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Key Metrics Grid -->
+      <div class="analytics-metrics-grid">
+        <div class="metric-card">
+          <div class="metric-card-header">
+            <span class="metric-icon" style="background: linear-gradient(135deg, #10B981, #059669);">💰</span>
+            <span class="metric-trend positive">+24.5%</span>
+          </div>
+          <div class="metric-card-body">
+            <h3 class="metric-value">$187,450</h3>
+            <p class="metric-label">Total Donations</p>
+            <p class="metric-change">+$36,890 from last period</p>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-header">
+            <span class="metric-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">❤️</span>
+            <span class="metric-trend positive">+12.3%</span>
+          </div>
+          <div class="metric-card-body">
+            <h3 class="metric-value">1,847</h3>
+            <p class="metric-label">Total Donors</p>
+            <p class="metric-change">+203 new donors</p>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-header">
+            <span class="metric-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">📊</span>
+            <span class="metric-trend positive">+8.7%</span>
+          </div>
+          <div class="metric-card-body">
+            <h3 class="metric-value">$101.52</h3>
+            <p class="metric-label">Avg. Donation</p>
+            <p class="metric-change">+$8.15 from last period</p>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-header">
+            <span class="metric-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">🔄</span>
+            <span class="metric-trend positive">+18.9%</span>
+          </div>
+          <div class="metric-card-body">
+            <h3 class="metric-value">42%</h3>
+            <p class="metric-label">Donor Retention</p>
+            <p class="metric-change">+6.2% from last period</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="analytics-charts-row">
+        <!-- Donation Trends Chart -->
+        <div class="card chart-card-large">
+          <div class="card-header">
+            <h2 class="card-title">Donation Trends</h2>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-secondary">Daily</button>
+              <button class="btn btn-sm btn-primary">Weekly</button>
+              <button class="btn btn-sm btn-secondary">Monthly</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="donationTrendsChart" width="800" height="300"></canvas>
+          </div>
+        </div>
+
+        <!-- Campaign Performance -->
+        <div class="card chart-card-small">
+          <div class="card-header">
+            <h2 class="card-title">Campaign Performance</h2>
+          </div>
+          <div class="card-body">
+            <canvas id="campaignPerformanceChart" width="400" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="analytics-charts-row">
+        <!-- Donor Demographics -->
+        <div class="card chart-card-small">
+          <div class="card-header">
+            <h2 class="card-title">Donor Demographics</h2>
+          </div>
+          <div class="card-body">
+            <canvas id="donorDemographicsChart" width="400" height="300"></canvas>
+          </div>
+        </div>
+
+        <!-- Donation Sources -->
+        <div class="card chart-card-small">
+          <div class="card-header">
+            <h2 class="card-title">Donation Sources</h2>
+          </div>
+          <div class="card-body">
+            <canvas id="donationSourcesChart" width="400" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Campaigns Table -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Top Performing Campaigns</h2>
+          <button class="btn btn-sm btn-secondary">View All</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Campaign</th>
+                  <th>Category</th>
+                  <th>Goal</th>
+                  <th>Raised</th>
+                  <th>Progress</th>
+                  <th>Donors</th>
+                  <th>Conversion</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="table-cell-with-badge">
+                      <strong>Emergency Surgery Fund for Max</strong>
+                      <span class="badge badge-success">Active</span>
+                    </div>
+                  </td>
+                  <td>Medical Care</td>
+                  <td>$10,000</td>
+                  <td class="text-success">$8,450</td>
+                  <td>
+                    <div class="progress-bar-small">
+                      <div class="progress-fill" style="width: 84.5%"></div>
+                    </div>
+                    <span class="progress-text">84.5%</span>
+                  </td>
+                  <td>142</td>
+                  <td>12.8%</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="table-cell-with-badge">
+                      <strong>New Shelter Expansion Project</strong>
+                      <span class="badge badge-success">Active</span>
+                    </div>
+                  </td>
+                  <td>Shelter</td>
+                  <td>$75,000</td>
+                  <td class="text-success">$45,200</td>
+                  <td>
+                    <div class="progress-bar-small">
+                      <div class="progress-fill" style="width: 60.3%"></div>
+                    </div>
+                    <span class="progress-text">60.3%</span>
+                  </td>
+                  <td>324</td>
+                  <td>18.4%</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="table-cell-with-badge">
+                      <strong>Wildfire Rescue Emergency Fund</strong>
+                      <span class="badge badge-success">Active</span>
+                    </div>
+                  </td>
+                  <td>Emergency</td>
+                  <td>$15,000</td>
+                  <td class="text-success">$12,800</td>
+                  <td>
+                    <div class="progress-bar-small">
+                      <div class="progress-fill" style="width: 85.3%"></div>
+                    </div>
+                    <span class="progress-text">85.3%</span>
+                  </td>
+                  <td>218</td>
+                  <td>15.2%</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="table-cell-with-badge">
+                      <strong>Senior Dog Medical Fund</strong>
+                      <span class="badge badge-success">Active</span>
+                    </div>
+                  </td>
+                  <td>Medical Care</td>
+                  <td>$25,000</td>
+                  <td class="text-success">$18,950</td>
+                  <td>
+                    <div class="progress-bar-small">
+                      <div class="progress-fill" style="width: 75.8%"></div>
+                    </div>
+                    <span class="progress-text">75.8%</span>
+                  </td>
+                  <td>267</td>
+                  <td>16.7%</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="table-cell-with-badge">
+                      <strong>Cat Colony Rescue</strong>
+                      <span class="badge badge-success">Active</span>
+                    </div>
+                  </td>
+                  <td>Rescue</td>
+                  <td>$12,000</td>
+                  <td class="text-success">$6,200</td>
+                  <td>
+                    <div class="progress-bar-small">
+                      <div class="progress-fill" style="width: 51.7%"></div>
+                    </div>
+                    <span class="progress-text">51.7%</span>
+                  </td>
+                  <td>98</td>
+                  <td>9.3%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donor Insights -->
+      <div class="analytics-insights-grid">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Top Donors</h2>
+          </div>
+          <div class="card-body">
+            <div class="donor-insights-list">
+              <div class="donor-insight-item">
+                <div class="donor-insight-avatar">
+                  <img src="https://i.pravatar.cc/150?img=1" alt="Donor">
+                </div>
+                <div class="donor-insight-info">
+                  <strong>Sarah Johnson</strong>
+                  <span class="text-muted">Hero Donor</span>
+                </div>
+                <div class="donor-insight-amount">$15,250</div>
+              </div>
+
+              <div class="donor-insight-item">
+                <div class="donor-insight-avatar">
+                  <img src="https://i.pravatar.cc/150?img=2" alt="Donor">
+                </div>
+                <div class="donor-insight-info">
+                  <strong>Michael Chen</strong>
+                  <span class="text-muted">Hero Donor</span>
+                </div>
+                <div class="donor-insight-amount">$12,800</div>
+              </div>
+
+              <div class="donor-insight-item">
+                <div class="donor-insight-avatar">
+                  <img src="https://i.pravatar.cc/150?img=3" alt="Donor">
+                </div>
+                <div class="donor-insight-info">
+                  <strong>Emily Rodriguez</strong>
+                  <span class="text-muted">Champion Donor</span>
+                </div>
+                <div class="donor-insight-amount">$8,450</div>
+              </div>
+
+              <div class="donor-insight-item">
+                <div class="donor-insight-avatar">
+                  <img src="https://i.pravatar.cc/150?img=4" alt="Donor">
+                </div>
+                <div class="donor-insight-info">
+                  <strong>James Wilson</strong>
+                  <span class="text-muted">Champion Donor</span>
+                </div>
+                <div class="donor-insight-amount">$7,200</div>
+              </div>
+
+              <div class="donor-insight-item">
+                <div class="donor-insight-avatar">
+                  <img src="https://i.pravatar.cc/150?img=5" alt="Donor">
+                </div>
+                <div class="donor-insight-info">
+                  <strong>Lisa Anderson</strong>
+                  <span class="text-muted">Champion Donor</span>
+                </div>
+                <div class="donor-insight-amount">$6,950</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Recent Activity</h2>
+          </div>
+          <div class="card-body">
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon" style="background: linear-gradient(135deg, #10B981, #059669);">💰</div>
+                <div class="activity-content">
+                  <p class="activity-title">Large donation received</p>
+                  <p class="activity-meta">Sarah Johnson donated $2,500 to Emergency Surgery Fund</p>
+                  <p class="activity-time">2 hours ago</p>
+                </div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">🎯</div>
+                <div class="activity-content">
+                  <p class="activity-title">Campaign milestone reached</p>
+                  <p class="activity-meta">Wildfire Rescue Fund reached 85% of goal</p>
+                  <p class="activity-time">5 hours ago</p>
+                </div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">❤️</div>
+                <div class="activity-content">
+                  <p class="activity-title">New recurring donor</p>
+                  <p class="activity-meta">Emily Rodriguez set up monthly $100 donation</p>
+                  <p class="activity-time">1 day ago</p>
+                </div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">📊</div>
+                <div class="activity-content">
+                  <p class="activity-title">Campaign performance update</p>
+                  <p class="activity-meta">Senior Dog Medical Fund trending 24% above target</p>
+                  <p class="activity-time">2 days ago</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/analytics-charts.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ All database operations go through this module.
 """
 
 import os
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from supabase import create_client, Client
 
@@ -121,6 +122,28 @@ def get_contactable_leads(campaign_id: str, limit: int = 50) -> list:
 
     result = query.limit(limit).execute()
     return result.data or []
+
+
+def get_recently_contacted_org_ids(hours_back: int = 24) -> set[str]:
+    """
+    Return organization IDs that have had any email send created in the last N hours.
+    Used to enforce a cooldown between contacts at the same organization.
+    """
+    client = get_client()
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours_back)).isoformat()
+    result = (
+        client.table("email_sends")
+        .select("contact_id, created_at, contacts(org_id)")
+        .gte("created_at", cutoff)
+        .execute()
+    )
+    org_ids: set[str] = set()
+    for row in (result.data or []):
+        contact_row = row.get("contacts") or {}
+        org_id = contact_row.get("org_id")
+        if org_id:
+            org_ids.add(org_id)
+    return org_ids
 
 
 def flag_do_not_contact(contact_id: str) -> None:

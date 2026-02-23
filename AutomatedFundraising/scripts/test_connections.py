@@ -51,7 +51,6 @@ def check_env_vars() -> Tuple[bool, Dict[str, bool]]:
     required = {
         "SUPABASE_URL": "Supabase project URL",
         "SUPABASE_PUBLISHABLE_KEY": "Supabase publishable key (sb_publishable_...)",
-        "SENDGRID_API_KEY": "SendGrid API key (required for sending emails)",
         "SENDER_NAME": "Sender identity name",
         "SENDER_EMAIL": "Sender email address",
         "FUNDRAISER_NAME": "Fundraiser campaign name",
@@ -60,6 +59,7 @@ def check_env_vars() -> Tuple[bool, Dict[str, bool]]:
 
     optional = {
         "SERPAPI_KEY": "Google search API (optional for discovery)",
+        "SENDGRID_API_KEY": "SendGrid API key (optional while provider is inactive/under review)",
         "PLAYWRIGHT_ENABLED": "Playwright for JS-rendered sites (optional)",
         "BATCH_SIZE": "Email batch size (defaults to 50)",
         "SEND_DELAY_SECONDS": "Delay between sends (defaults to 1.5s)",
@@ -186,8 +186,8 @@ def check_sendgrid() -> bool:
     api_key = os.environ.get("SENDGRID_API_KEY", "")
 
     if not api_key:
-        print_result("SendGrid API key", False, "SENDGRID_API_KEY not set")
-        return False
+        print_result("SendGrid API key", True, "Not set (email provider currently inactive / under review)")
+        return True
 
     try:
         import sendgrid

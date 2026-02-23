@@ -267,17 +267,38 @@ All stored as **GitHub Actions Secrets** — never hardcoded.
 
 ## Build Sequence (Recommended Order)
 
-| Step | Deliverable | Priority |
-|---|---|---|
-| 1 | Supabase schema + migrations | ✅ First (everything depends on this) |
-| 2 | `db/client.py` — database wrapper | ✅ Core utility |
-| 3 | `scraper/discover.py` — discovery engine | High |
-| 4 | `scraper/extract_contacts.py` — contact extractor | High |
-| 5 | `emailer/render_template.py` + templates | Medium |
-| 6 | `emailer/batch_send.py` — SendGrid integration | Medium |
-| 7 | GitHub Actions workflows | Medium |
-| 8 | `sync-tracking.yml` — webhook/polling | Lower |
-| 9 | End-to-end test run | Final |
+| Step | Deliverable | Priority | Status |
+|---|---|---|---|
+| 1 | Supabase schema + migrations | ✅ First (everything depends on this) | ✅ Complete |
+| 2 | `db/client.py` — database wrapper | ✅ Core utility | ✅ Complete |
+| 3 | `scraper/discover.py` — discovery engine | High | ✅ Complete |
+| 4 | `scraper/extract_contacts.py` — contact extractor | High | ✅ Complete |
+| 5 | `emailer/render_template.py` + templates | Medium | ✅ Complete |
+| 6 | `emailer/batch_send.py` — SendGrid integration | Medium | ✅ Complete |
+| 7 | GitHub Actions workflows | Medium | ✅ Complete |
+| 8 | `sync-tracking.yml` — webhook/polling | Lower | ✅ Complete |
+| 9 | Web Dashboard UI — 13 pages | High | 🔄 In Progress |
+| 10 | Backend integration — Connect UI to Supabase | High | ⏳ Pending |
+| 11 | Real-time progress updates | Medium | ⏳ Pending |
+| 12 | End-to-end test run | Final | ⏳ Pending |
+
+### Phase 9: Web Dashboard UI Pages
+
+| # | Page | Priority | Status |
+|---|---|---|---|
+| 9.1 | Dashboard (Home) | Critical | ✅ Complete |
+| 9.2 | Donors & Sponsors | High | 🔄 In Progress |
+| 9.3 | Campaigns Management | High | ⏳ Pending |
+| 9.4 | Analytics & Reports | Medium | ⏳ Pending |
+| 9.5 | Impact Reports | Medium | ⏳ Pending |
+| 9.6 | Active Campaigns Detail | Medium | ⏳ Pending |
+| 9.7 | Animals Helped | Medium | ⏳ Pending |
+| 9.8 | Events Calendar | Low | ⏳ Pending |
+| 9.9 | Communications Center | Medium | ⏳ Pending |
+| 9.10 | Success Stories | Low | ⏳ Pending |
+| 9.11 | Settings | Low | ⏳ Pending |
+| 9.12 | Team Management | Low | ⏳ Pending |
+| 9.13 | Help & Resources | Low | ⏳ Pending |
 
 ---
 
@@ -304,3 +325,34 @@ All stored as **GitHub Actions Secrets** — never hardcoded.
 ---
 
 *Plan version 1.0 — Ready for review and green light to build.*
+
+---
+
+## PLAN UPDATE (February 23, 2026) - CRM Expansion + Validation Gates
+
+This plan has been expanded beyond the original outreach-only pipeline.
+
+### New Active Workstreams
+1. Unified CRM data model in Supabase (outreach + fundraising dashboard entities)
+2. Flask API backend integration for the existing 13-page dashboard UI
+3. Automation progress tracking data model (`automation_runs`, `automation_run_events`) for future 5-second UI updates
+4. Standardized validation gates (smoke tests + pre-deploy checks) before push/deploy
+
+### Current Build Sequence (Superseding prior Step 9+ statuses)
+- COMPLETE: Frontend page buildout (13 pages)
+- COMPLETE: Supabase CRM schema design file (`AutomatedFundraising/db/schema.sql`)
+- COMPLETE: Flask API refactor to Supabase-aware CRM endpoints with mock fallback (`AutomatedFundraising/server.py`, `AutomatedFundraising/db/crm.py`)
+- COMPLETE: GitHub workflow relocation/path fixes to repo-root `.github/workflows`
+- COMPLETE: Discover workflow summary artifact output
+- COMPLETE: `{{donation_impact}}` token support
+- COMPLETE: 24-hour same-org send cooldown enforcement
+- IN PROGRESS: Page-level frontend wiring to live API responses (beyond dashboard chart)
+- PENDING: Real-time progress UI polling/SSE integration on frontend
+- PENDING: Apply unified CRM schema to live Supabase project and seed CRM tables
+- BLOCKED: Live outbound email send/tracking validation (SendGrid inactive; provider under evaluation)
+
+### Required Validation Gates Going Forward
+- Gate A (Local): `python AutomatedFundraising/scripts/pre_deploy_check.py`
+- Gate B (Integration): `python AutomatedFundraising/scripts/test_connections.py` with Supabase env vars set
+- Gate C (Workflow): verify root `.github/workflows` discovery in GitHub Actions UI after push
+- Gate D (Email): provider-specific smoke test only after provider becomes active

@@ -1,0 +1,233 @@
+/**
+ * Funds 4 Furry Friends - Design Tokens
+ * Design System Variables
+ * Generated from design-tokens.json
+ */
+
+:root {
+  /* ============================================
+     COLORS
+     ============================================ */
+
+  /* Background Colors */
+  --bg-primary: #0A0A0A;
+  --bg-elevated: #141414;
+  --bg-card: #0F0F0F;
+  --bg-elevated-hover: #1A1A1A;
+
+  /* Accent Colors */
+  --accent-green: #10B981;
+  --accent-green-light: #34D399;
+  --accent-green-dark: #047857;
+  --accent-green-glow: rgba(16, 185, 129, 0.3);
+  --accent-urgent: #F59E0B;
+  --accent-celebration: #EC4899;
+
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D5DB;
+  --text-muted: #6B7280;
+  --text-impact: #10B981;
+
+  /* Semantic Colors */
+  --color-success: #10B981;
+  --color-urgent: #F59E0B;
+  --color-info: #3B82F6;
+  --color-celebration: #EC4899;
+  --color-danger: #EF4444;
+
+  /* Category Colors */
+  --category-dogs: #3B82F6;
+  --category-cats: #F59E0B;
+  --category-small-animals: #8B5CF6;
+  --category-medical: #EF4444;
+  --category-shelter: #10B981;
+  --category-education: #06B6D4;
+
+  /* Glass Effect Colors */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.15);
+
+  /* ============================================
+     TYPOGRAPHY
+     ============================================ */
+
+  /* Font Families */
+  --font-primary: "Nunito", "Poppins", "Inter", system-ui, -apple-system, sans-serif;
+  --font-numeric: "SF Mono", "JetBrains Mono", "Courier New", monospace;
+
+  /* Font Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Font Sizes */
+  --text-h1: 32px;
+  --text-h2: 24px;
+  --text-h3: 20px;
+  --text-body-large: 16px;
+  --text-body: 14px;
+  --text-caption: 12px;
+  --text-small: 11px;
+
+  /* Numeric Display Sizes */
+  --numeric-large: 48px;
+  --numeric-medium: 32px;
+  --numeric-small: 20px;
+
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ============================================
+     LAYOUT
+     ============================================ */
+
+  --sidebar-width: 280px;
+  --topbar-height: 80px;
+  --content-padding: 32px;
+  --column-gap: 24px;
+  --row-gap: 24px;
+
+  /* ============================================
+     SPACING
+     ============================================ */
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* ============================================
+     BORDER RADIUS
+     ============================================ */
+
+  --radius-card: 20px;
+  --radius-button: 12px;
+  --radius-pill: 999px;
+  --radius-input: 12px;
+  --radius-small: 8px;
+  --radius-animal-image: 16px;
+
+  /* ============================================
+     SHADOWS
+     ============================================ */
+
+  --shadow-card:
+    0 20px 60px rgba(0, 0, 0, 0.7),
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  --shadow-button:
+    0 8px 24px rgba(16, 185, 129, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  --shadow-pressed:
+    inset 0 4px 12px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+
+  --shadow-hover:
+    0 24px 72px rgba(0, 0, 0, 0.8),
+    0 12px 32px rgba(0, 0, 0, 0.6);
+
+  --shadow-sidebar:
+    0 4px 12px rgba(0, 0, 0, 0.6);
+
+  --shadow-sidebar-active:
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 0 20px rgba(16, 185, 129, 0.3);
+
+  /* ============================================
+     BLUR EFFECTS
+     ============================================ */
+
+  --blur-glass: blur(40px) saturate(180%);
+  --blur-light: blur(20px);
+
+  /* ============================================
+     TRANSITIONS
+     ============================================ */
+
+  --transition-default: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s ease-out;
+  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-heartbeat: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Easing Functions */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bouncy: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* ============================================
+     COMPONENT SPECIFIC
+     ============================================ */
+
+  /* Table */
+  --table-row-height: 64px;
+  --table-divider: rgba(255, 255, 255, 0.08);
+  --table-hover-bg: rgba(255, 255, 255, 0.03);
+
+  /* Progress Bar */
+  --progress-height: 8px;
+  --progress-bg: rgba(255, 255, 255, 0.1);
+  --progress-fill: linear-gradient(90deg, #10B981, #34D399);
+
+  /* Chart */
+  --chart-line-color: #10B981;
+  --chart-line-width: 3px;
+  --chart-fill-gradient: linear-gradient(180deg, rgba(16, 185, 129, 0.3), transparent);
+  --chart-grid-color: rgba(255, 255, 255, 0.05);
+
+  /* Sidebar */
+  --sidebar-bg: #0F0F0F;
+  --sidebar-item-height: 48px;
+  --sidebar-item-radius: 12px;
+  --sidebar-icon-size: 22px;
+  --sidebar-active-glow: rgba(16, 185, 129, 0.3);
+
+  /* Avatar */
+  --avatar-size-sm: 32px;
+  --avatar-size-md: 48px;
+  --avatar-size-lg: 64px;
+
+  /* ============================================
+     Z-INDEX LAYERS
+     ============================================ */
+
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+}
+
+/* ============================================
+   DARK THEME (Default)
+   ============================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* ============================================
+   UTILITY CLASSES FOR GRADIENTS
+   ============================================ */
+.gradient-green {
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
+}
+
+.gradient-urgent {
+  background: linear-gradient(135deg, var(--accent-urgent), #D97706);
+}
+
+.gradient-celebration {
+  background: linear-gradient(135deg, var(--accent-celebration), #DB2777);
+}

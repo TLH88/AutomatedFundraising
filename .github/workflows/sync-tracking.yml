@@ -16,6 +16,9 @@ jobs:
   sync-tracking:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: AutomatedFundraising
 
     steps:
       - name: Checkout repository
@@ -26,6 +29,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: AutomatedFundraising/requirements.txt
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -35,10 +39,12 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          HOURS_BACK: ${{ github.event.inputs.hours_back || '25' }}
         run: |
           python -c "
           from emailer.sync_tracking import sync_events
-          sync_events()
+          import os
+          sync_events(hours_back=int(os.environ.get('HOURS_BACK', '25')))
           "
 
       - name: Print sync summary

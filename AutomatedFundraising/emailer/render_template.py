@@ -7,6 +7,7 @@ Supported tokens (all double-curly-brace format):
   {{org_name}}         — Organization name
   {{org_reason}}       — Why this org was selected (from justification field)
   {{fundraiser_name}}  — Name of the active fundraiser campaign
+  {{donation_impact}}  — Impact message (campaign default or env fallback)
   {{sender_name}}      — Sender's full name
   {{sender_email}}     — Sender's email address
   {{unsubscribe_link}} — Unsubscribe URL (per contact)
@@ -22,6 +23,10 @@ import os
 SENDER_NAME = os.environ.get("SENDER_NAME", "Hope from Furry Friends")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "hope@furryfriendswa.org")
 FUNDRAISER_NAME = os.environ.get("FUNDRAISER_NAME", "2026 Animal Rescue Campaign")
+DONATION_IMPACT_DEFAULT = os.environ.get(
+    "DONATION_IMPACT_DEFAULT",
+    "Your support helps fund rescue care, shelter supplies, and life-saving medical treatment.",
+)
 UNSUBSCRIBE_BASE_URL = os.environ.get(
     "UNSUBSCRIBE_BASE_URL", "https://furryfriendswa.org/unsubscribe"
 )
@@ -37,7 +42,7 @@ def _first_name(full_name: str | None) -> str:
     return parts[0] if parts else "Friend"
 
 
-def build_token_map(contact: dict, org: dict, send_id: str) -> dict:
+def build_token_map(contact: dict, org: dict, send_id: str, campaign: dict | None = None) -> dict:
     """
     Build a complete token → value mapping for a given contact + org.
     `contact` should be the contacts row (may include nested org under 'organizations').
@@ -46,11 +51,14 @@ def build_token_map(contact: dict, org: dict, send_id: str) -> dict:
     """
     org_justification = contact.get("justification") or org.get("notes") or "your commitment to the community"
 
+    campaign_impact = (campaign or {}).get("donation_impact_default") or DONATION_IMPACT_DEFAULT
+
     return {
         "contact_name": _first_name(contact.get("full_name")),
         "org_name": org.get("name", "Your Organization"),
         "org_reason": org_justification,
         "fundraiser_name": FUNDRAISER_NAME,
+        "donation_impact": campaign_impact,
         "sender_name": SENDER_NAME,
         "sender_email": SENDER_EMAIL,
         "unsubscribe_link": f"{UNSUBSCRIBE_BASE_URL}?id={send_id}",
@@ -76,7 +84,7 @@ def render_email(campaign: dict, contact: dict, org: dict, send_id: str) -> tupl
     Returns:
         (rendered_subject, rendered_body)
     """
-    tokens = build_token_map(contact, org, send_id)
+    tokens = build_token_map(contact, org, send_id, campaign=campaign)
     subject = render(campaign.get("subject_template", ""), tokens)
     body = render(campaign.get("body_template", ""), tokens)
     return subject, body
@@ -89,7 +97,7 @@ def validate_template(template: str, expected_tokens: list[str] | None = None) -
     """
     known_tokens = {
         "contact_name", "org_name", "org_reason", "fundraiser_name",
-        "sender_name", "sender_email", "unsubscribe_link"
+        "donation_impact", "sender_name", "sender_email", "unsubscribe_link"
     }
     found = set(TOKEN_PATTERN.findall(template))
     warnings = []

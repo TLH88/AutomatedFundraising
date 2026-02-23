@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Management - Funds 4 Furry Friends</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/team.css">
+</head>
+<body>
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></div>
+    </div>
+    <div class="topbar-center">
+      <div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search team members..." class="search-input"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn"><span class="notification-badge">3</span>🔔</button>
+      <button class="icon-btn"><span class="notification-badge">5</span>💬</button>
+      <div class="user-menu"><img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar"><span class="user-name">Admin</span></div>
+    </div>
+  </nav>
+
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a href="campaigns.html" class="nav-item"><span class="nav-icon">🎯</span><span class="nav-label">Active Campaigns</span></a>
+      <a href="donors.html" class="nav-item"><span class="nav-icon">❤️</span><span class="nav-label">Donors & Sponsors</span></a>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Analytics & Reports</span></a>
+      <a href="animals.html" class="nav-item"><span class="nav-icon">🐕</span><span class="nav-label">Animals Helped</span></a>
+      <a href="events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Events Calendar</span></a>
+      <a href="communications.html" class="nav-item"><span class="nav-icon">📧</span><span class="nav-label">Communications</span></a>
+      <a href="stories.html" class="nav-item"><span class="nav-icon">✨</span><span class="nav-label">Success Stories</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+      <a href="team.html" class="nav-item active"><span class="nav-icon">👥</span><span class="nav-label">Team Management</span></a>
+      <a href="help.html" class="nav-item"><span class="nav-icon">❓</span><span class="nav-label">Help & Resources</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <div><h1 class="page-title">Team Management</h1><p class="page-subtitle">Manage team members, roles, and permissions</p></div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openModal('inviteModal')"><span>➕</span><span>Invite Member</span></button>
+        </div>
+      </div>
+
+      <div class="team-stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">👥</div>
+          <div class="stat-card-content"><p class="stat-card-label">Total Members</p><h3 class="stat-card-value">12</h3></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">⚡</div>
+          <div class="stat-card-content"><p class="stat-card-label">Active Today</p><h3 class="stat-card-value">8</h3></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">📧</div>
+          <div class="stat-card-content"><p class="stat-card-label">Pending Invites</p><h3 class="stat-card-value">3</h3></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">🔐</div>
+          <div class="stat-card-content"><p class="stat-card-label">Admin Users</p><h3 class="stat-card-value">4</h3></div>
+        </div>
+      </div>
+
+      <div class="team-list">
+        <div class="team-member-card">
+          <div class="team-member-avatar"><img src="https://i.pravatar.cc/150?img=12" alt="User"></div>
+          <div class="team-member-info">
+            <h3 class="team-member-name">Sarah Johnson</h3>
+            <p class="team-member-email">sarah.j@funds4furry.org</p>
+          </div>
+          <div class="team-member-role"><span class="role-badge admin">Administrator</span></div>
+          <div class="team-member-status"><span class="status-badge active">Active</span></div>
+          <div class="team-member-actions">
+            <button class="btn btn-sm btn-secondary">Edit</button>
+            <button class="btn btn-sm btn-secondary">Remove</button>
+          </div>
+        </div>
+
+        <div class="team-member-card">
+          <div class="team-member-avatar"><img src="https://i.pravatar.cc/150?img=2" alt="User"></div>
+          <div class="team-member-info">
+            <h3 class="team-member-name">Michael Chen</h3>
+            <p class="team-member-email">michael.c@funds4furry.org</p>
+          </div>
+          <div class="team-member-role"><span class="role-badge editor">Editor</span></div>
+          <div class="team-member-status"><span class="status-badge active">Active</span></div>
+          <div class="team-member-actions">
+            <button class="btn btn-sm btn-secondary">Edit</button>
+            <button class="btn btn-sm btn-secondary">Remove</button>
+          </div>
+        </div>
+
+        <div class="team-member-card">
+          <div class="team-member-avatar"><img src="https://i.pravatar.cc/150?img=3" alt="User"></div>
+          <div class="team-member-info">
+            <h3 class="team-member-name">Emily Rodriguez</h3>
+            <p class="team-member-email">emily.r@funds4furry.org</p>
+          </div>
+          <div class="team-member-role"><span class="role-badge editor">Editor</span></div>
+          <div class="team-member-status"><span class="status-badge active">Active</span></div>
+          <div class="team-member-actions">
+            <button class="btn btn-sm btn-secondary">Edit</button>
+            <button class="btn btn-sm btn-secondary">Remove</button>
+          </div>
+        </div>
+
+        <div class="team-member-card">
+          <div class="team-member-avatar"><img src="https://i.pravatar.cc/150?img=4" alt="User"></div>
+          <div class="team-member-info">
+            <h3 class="team-member-name">James Wilson</h3>
+            <p class="team-member-email">james.w@funds4furry.org</p>
+          </div>
+          <div class="team-member-role"><span class="role-badge viewer">Viewer</span></div>
+          <div class="team-member-status"><span class="status-badge inactive">Inactive</span></div>
+          <div class="team-member-actions">
+            <button class="btn btn-sm btn-secondary">Edit</button>
+            <button class="btn btn-sm btn-secondary">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="inviteModal">
+    <div class="modal-backdrop" onclick="closeModal('inviteModal')"></div>
+    <div class="modal-content">
+      <div class="modal-header"><h2 class="modal-title">Invite Team Member</h2><button class="modal-close" onclick="closeModal('inviteModal')">×</button></div>
+      <div class="modal-body">
+        <form class="form">
+          <div class="input-group"><label class="label">Email Address *</label><input type="email" class="input" required></div>
+          <div class="input-group"><label class="label">Role *</label><select class="input" required><option value="">Select role</option><option value="admin">Administrator</option><option value="editor">Editor</option><option value="viewer">Viewer</option></select></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('inviteModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Send Invite</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    function openModal(id) { document.getElementById(id)?.classList.add('active'); }
+    function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--accent-green);color:white;padding:16px 24px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:9999;font-weight:500;transition:opacity 0.3s ease;';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    // Team member card button handlers via event delegation
+    document.querySelector('.team-list')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+
+      const text = btn.textContent.trim();
+      if (text === 'Edit') {
+        showToast('Opening member editor...');
+      } else if (text === 'Remove') {
+        if (confirm('Are you sure you want to remove this team member?')) {
+          showToast('Member removed');
+        }
+      }
+    });
+
+    // Invite form submit handler
+    const inviteForm = document.querySelector('#inviteModal form');
+    if (inviteForm) {
+      inviteForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        showToast('Invitation sent!');
+        closeModal('inviteModal');
+        e.target.reset();
+      });
+    }
+  </script>
+</body>
+</html>

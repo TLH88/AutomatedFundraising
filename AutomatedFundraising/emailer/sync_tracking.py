@@ -73,13 +73,13 @@ def fetch_sendgrid_events(hours_back: int = 25) -> list[dict]:
         return []
 
 
-def sync_events() -> dict:
+def sync_events(hours_back: int = 25) -> dict:
     """
     Main sync function.
     Returns summary: {updated, flagged_dnc, errors}
     """
     db = get_client()
-    events = fetch_sendgrid_events()
+    events = fetch_sendgrid_events(hours_back=hours_back)
     logger.info(f"Fetched {len(events)} events from SendGrid.")
 
     results = {"updated": 0, "flagged_dnc": 0, "errors": 0}

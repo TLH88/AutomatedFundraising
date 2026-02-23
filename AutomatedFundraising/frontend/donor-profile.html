@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Donor Profile - Funds 4 Furry Friends">
+  <title>Donor Profile | Funds 4 Furry Friends</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/donor-profile.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="topbar glass">
+    <div class="topbar-left">
+      <div class="brand">
+        <span class="brand-icon">🐾</span>
+        <h1 class="brand-name">Funds 4 Furry Friends</h1>
+      </div>
+    </div>
+
+    <nav class="topbar-center">
+      <a href="index.html" class="nav-link">Dashboard</a>
+      <a href="campaigns.html" class="nav-link">Campaigns</a>
+      <a href="donors.html" class="nav-link active">Donors</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+      <a href="impact-reports.html" class="nav-link">Impact Reports</a>
+    </nav>
+
+    <div class="topbar-right">
+      <div class="search-container">
+        <input type="search" class="search-input" placeholder="Search...">
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <button class="btn-icon tooltip">
+        <span class="icon">🔔</span>
+        <span class="notification-badge">3</span>
+        <span class="tooltip-text">3 new notifications</span>
+      </button>
+
+      <button class="btn btn-primary">
+        <span class="icon">➕</span>
+        New Campaign
+      </button>
+
+      <div class="avatar avatar-md avatar-active" style="background: linear-gradient(135deg, #10B981, #059669);">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2310B981'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='white' font-size='40' font-family='sans-serif' font-weight='bold'%3EU%3C/text%3E%3C/svg%3E" alt="User avatar">
+      </div>
+
+      <button class="btn-icon">
+        <span class="icon">⚙️</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-container">
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-item">
+          <span class="sidebar-icon">🏠</span>
+          <span class="sidebar-label">Dashboard</span>
+        </a>
+        <a href="campaigns.html" class="sidebar-item">
+          <span class="sidebar-icon">🎯</span>
+          <span class="sidebar-label">Active Campaigns</span>
+        </a>
+        <a href="donors.html" class="sidebar-item active">
+          <span class="sidebar-icon">💚</span>
+          <span class="sidebar-label">Donors & Sponsors</span>
+        </a>
+        <a href="analytics.html" class="sidebar-item">
+          <span class="sidebar-icon">📊</span>
+          <span class="sidebar-label">Analytics & Reports</span>
+        </a>
+        <a href="animals.html" class="sidebar-item">
+          <span class="sidebar-icon">🐾</span>
+          <span class="sidebar-label">Animals Helped</span>
+        </a>
+        <a href="events.html" class="sidebar-item">
+          <span class="sidebar-icon">📅</span>
+          <span class="sidebar-label">Events Calendar</span>
+        </a>
+        <a href="communications.html" class="sidebar-item">
+          <span class="sidebar-icon">📧</span>
+          <span class="sidebar-label">Communications</span>
+        </a>
+        <a href="stories.html" class="sidebar-item">
+          <span class="sidebar-icon">🏆</span>
+          <span class="sidebar-label">Success Stories</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="settings.html" class="sidebar-item">
+          <span class="sidebar-icon">⚙️</span>
+          <span class="sidebar-label">Settings</span>
+        </a>
+        <a href="team.html" class="sidebar-item">
+          <span class="sidebar-icon">👥</span>
+          <span class="sidebar-label">Team Management</span>
+        </a>
+        <a href="help.html" class="sidebar-item">
+          <span class="sidebar-icon">ℹ️</span>
+          <span class="sidebar-label">Help & Resources</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb fade-in">
+        <a href="donors.html">Donors</a>
+        <span>/</span>
+        <span class="breadcrumb-current">Sarah Miller</span>
+      </nav>
+
+      <!-- Profile Header -->
+      <div class="profile-header fade-in stagger-1">
+        <div class="profile-header-left">
+          <div class="profile-avatar-large">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2310B981'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='white' font-size='40' font-family='sans-serif' font-weight='bold'%3ESM%3C/text%3E%3C/svg%3E" alt="SM">
+          </div>
+          <div class="profile-info">
+            <div class="donor-tier-badge hero">
+              <span>⭐</span>
+              Hero
+            </div>
+            <h1 class="profile-name">Sarah Miller</h1>
+            <p class="profile-meta">
+              <span>💚 Donor since Feb 23, 2024</span>
+              <span>•</span>
+              <span>🎂 2 year anniversary</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="profile-header-right">
+          <button class="btn btn-secondary" id="contactDonorBtn">
+            <span>📧</span>
+            Contact
+          </button>
+          <button class="btn btn-secondary">
+            <span>📝</span>
+            Add Note
+          </button>
+          <button class="btn btn-primary">
+            <span>💰</span>
+            Record Donation
+          </button>
+        </div>
+      </div>
+
+      <!-- Profile Stats -->
+      <div class="profile-stats-grid fade-in stagger-2">
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon" style="background: var(--accent-green);">
+            💰
+          </div>
+          <div>
+            <p class="profile-stat-label">Total Donated</p>
+            <h2 class="profile-stat-value numeric">$12,500</h2>
+            <p class="text-muted text-caption">24 donations</p>
+          </div>
+        </div>
+
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon" style="background: var(--accent-celebration);">
+            📅
+          </div>
+          <div>
+            <p class="profile-stat-label">Last Donation</p>
+            <h2 class="profile-stat-value">Today</h2>
+            <p class="text-muted text-caption">$500 - Medical Fund</p>
+          </div>
+        </div>
+
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon" style="background: var(--color-info);">
+            ❤️
+          </div>
+          <div>
+            <p class="profile-stat-label">Donation Type</p>
+            <h2 class="profile-stat-value">Monthly</h2>
+            <p class="text-muted text-caption">Recurring gift</p>
+          </div>
+        </div>
+
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon" style="background: var(--accent-urgent);">
+            📊
+          </div>
+          <div>
+            <p class="profile-stat-label">Engagement Score</p>
+            <h2 class="profile-stat-value numeric">95</h2>
+            <p class="text-impact text-caption">Highly engaged</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Content Grid -->
+      <div class="profile-grid">
+
+        <!-- Contact Information Card -->
+        <div class="card fade-in stagger-3">
+          <div class="card-header">
+            <h3 class="card-title">Contact Information</h3>
+            <button class="btn btn-secondary btn-pill">Edit</button>
+          </div>
+          <div class="card-body">
+            <div class="contact-info-list">
+              <div class="contact-info-item">
+                <span class="contact-info-label">📧 Email</span>
+                <a href="mailto:sarah.miller@email.com" class="contact-info-value">sarah.miller@email.com</a>
+              </div>
+              <div class="contact-info-item">
+                <span class="contact-info-label">📞 Phone</span>
+                <a href="tel:+15551234567" class="contact-info-value">(555) 123-4567</a>
+              </div>
+              <div class="contact-info-item">
+                <span class="contact-info-label">📍 Location</span>
+                <span class="contact-info-value">Seattle, WA</span>
+              </div>
+              <div class="contact-info-item">
+                <span class="contact-info-label">🏷️ Tags</span>
+                <div class="contact-info-tags">
+                  <span class="badge badge-success">Monthly Donor</span>
+                  <span class="badge badge-dogs">Loves Dogs</span>
+                  <span class="badge badge-info">2 Year Member</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preferred Causes Card -->
+        <div class="card fade-in stagger-3">
+          <div class="card-header">
+            <h3 class="card-title">Preferred Causes</h3>
+          </div>
+          <div class="card-body">
+            <div class="preferred-causes-list">
+              <div class="preferred-cause-item">
+                <div class="icon-container icon-container-md icon-container-success">
+                  🐕
+                </div>
+                <div>
+                  <p class="font-semibold">Dogs - Medical Fund</p>
+                  <p class="text-muted text-caption">$8,500 contributed</p>
+                </div>
+              </div>
+              <div class="preferred-cause-item">
+                <div class="icon-container icon-container-md icon-container-info">
+                  🏠
+                </div>
+                <div>
+                  <p class="font-semibold">Shelter Support</p>
+                  <p class="text-muted text-caption">$4,000 contributed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Donation History Card - Full Width -->
+        <div class="card card-full-width fade-in stagger-4">
+          <div class="card-header">
+            <h3 class="card-title">Donation History</h3>
+            <div class="btn-group">
+              <button class="btn btn-pill btn-primary">All</button>
+              <button class="btn btn-pill btn-secondary">Last Year</button>
+              <button class="btn btn-pill btn-secondary">Last 6 Months</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Campaign</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Feb 23, 2026</td>
+                    <td>Dogs - Medical Fund</td>
+                    <td class="text-impact font-semibold numeric">$500.00</td>
+                    <td><span class="badge badge-success">Monthly</span></td>
+                    <td><span class="badge badge-success">Completed</span></td>
+                    <td><button class="btn btn-secondary btn-pill">📄 View</button></td>
+                  </tr>
+                  <tr>
+                    <td>Jan 23, 2026</td>
+                    <td>Dogs - Medical Fund</td>
+                    <td class="text-impact font-semibold numeric">$500.00</td>
+                    <td><span class="badge badge-success">Monthly</span></td>
+                    <td><span class="badge badge-success">Completed</span></td>
+                    <td><button class="btn btn-secondary btn-pill">📄 View</button></td>
+                  </tr>
+                  <tr>
+                    <td>Dec 23, 2025</td>
+                    <td>Holiday Campaign</td>
+                    <td class="text-impact font-semibold numeric">$1,000.00</td>
+                    <td><span class="badge badge-celebration">Bonus</span></td>
+                    <td><span class="badge badge-success">Completed</span></td>
+                    <td><button class="btn btn-secondary btn-pill">📄 View</button></td>
+                  </tr>
+                  <tr>
+                    <td>Nov 23, 2025</td>
+                    <td>Dogs - Medical Fund</td>
+                    <td class="text-impact font-semibold numeric">$500.00</td>
+                    <td><span class="badge badge-success">Monthly</span></td>
+                    <td><span class="badge badge-success">Completed</span></td>
+                    <td><button class="btn btn-secondary btn-pill">📄 View</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Engagement Timeline Card -->
+        <div class="card fade-in stagger-5">
+          <div class="card-header">
+            <h3 class="card-title">Engagement Timeline</h3>
+          </div>
+          <div class="card-body">
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-dot" style="background: var(--accent-green);"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Donated $500</p>
+                  <p class="timeline-meta">Today • Dogs - Medical Fund</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot" style="background: var(--color-info);"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Attended Adoption Event</p>
+                  <p class="timeline-meta">1 week ago • Winter Adoption Fair</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot" style="background: var(--accent-celebration);"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">2 Year Anniversary!</p>
+                  <p class="timeline-meta">1 month ago • Donor since 2024</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot" style="background: var(--accent-green);"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Donated $1,000</p>
+                  <p class="timeline-meta">2 months ago • Holiday Campaign</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Card -->
+        <div class="card fade-in stagger-5">
+          <div class="card-header">
+            <h3 class="card-title">Notes</h3>
+            <button class="btn btn-secondary btn-pill">Add Note</button>
+          </div>
+          <div class="card-body">
+            <div class="notes-list">
+              <div class="note-item">
+                <div class="note-header">
+                  <span class="font-semibold">Admin</span>
+                  <span class="text-muted text-caption">2 days ago</span>
+                </div>
+                <p class="note-content">Sarah expressed interest in volunteering at upcoming adoption events. Follow up next week.</p>
+              </div>
+              <div class="note-item">
+                <div class="note-header">
+                  <span class="font-semibold">Admin</span>
+                  <span class="text-muted text-caption">1 month ago</span>
+                </div>
+                <p class="note-content">Long-time supporter, very passionate about animal welfare. Prefers email communication.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Contact Modal -->
+  <div class="modal" id="contactModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Contact Sarah Miller</h2>
+        <button class="modal-close" id="closeContactModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="contact-options">
+          <a href="tel:+15551234567" class="contact-option-card">
+            <div class="contact-option-icon" style="background: var(--accent-green);">
+              📞
+            </div>
+            <div>
+              <p class="contact-option-title">Call</p>
+              <p class="contact-option-value">(555) 123-4567</p>
+            </div>
+          </a>
+
+          <a href="mailto:sarah.miller@email.com" class="contact-option-card">
+            <div class="contact-option-icon" style="background: var(--color-info);">
+              📧
+            </div>
+            <div>
+              <p class="contact-option-title">Email</p>
+              <p class="contact-option-value">sarah.miller@email.com</p>
+            </div>
+          </a>
+
+          <button class="contact-option-card" onclick="alert('SMS feature coming soon!')">
+            <div class="contact-option-icon" style="background: var(--accent-celebration);">
+              💬
+            </div>
+            <div>
+              <p class="contact-option-title">Message</p>
+              <p class="contact-option-value">Send SMS</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="js/main.js"></script>
+  <script src="js/donor-profile.js"></script>
+</body>
+</html>

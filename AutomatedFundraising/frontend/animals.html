@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animals Helped - Funds 4 Furry Friends</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animals.css">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <span class="brand-icon">🐾</span>
+        <span class="brand-name">Funds 4 Furry Friends</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search animals by name, breed, or status..." class="search-input" id="animalSearch">
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="icon-btn" title="Notifications">
+        <span class="notification-badge">3</span>
+        🔔
+      </button>
+      <button class="icon-btn" title="Messages">
+        <span class="notification-badge">5</span>
+        💬
+      </button>
+      <div class="user-menu">
+        <img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar">
+        <span class="user-name">Admin</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a href="campaigns.html" class="nav-item">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Active Campaigns</span>
+      </a>
+
+      <a href="donors.html" class="nav-item">
+        <span class="nav-icon">❤️</span>
+        <span class="nav-label">Donors & Sponsors</span>
+      </a>
+
+      <a href="analytics.html" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Analytics & Reports</span>
+      </a>
+
+      <a href="animals.html" class="nav-item active">
+        <span class="nav-icon">🐕</span>
+        <span class="nav-label">Animals Helped</span>
+      </a>
+
+      <a href="events.html" class="nav-item">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Events Calendar</span>
+      </a>
+
+      <a href="communications.html" class="nav-item">
+        <span class="nav-icon">📧</span>
+        <span class="nav-label">Communications</span>
+      </a>
+
+      <a href="stories.html" class="nav-item">
+        <span class="nav-icon">✨</span>
+        <span class="nav-label">Success Stories</span>
+      </a>
+
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </a>
+      <a href="team.html" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Team Management</span>
+      </a>
+      <a href="help.html" class="nav-item">
+        <span class="nav-icon">❓</span>
+        <span class="nav-label">Help & Resources</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Animals Helped</h1>
+          <p class="page-subtitle">Track and manage rescued animals and their journeys to forever homes</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary">
+            <span>📥</span>
+            <span>Export List</span>
+          </button>
+          <button class="btn btn-primary" onclick="openModal('addAnimalModal')">
+            <span>➕</span>
+            <span>Add Animal</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Animal Statistics -->
+      <div class="animals-stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+            🐾
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">Total Rescued</p>
+            <h3 class="stat-card-value">1,247</h3>
+            <p class="stat-card-change positive">+42 this month</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+            ❤️
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">Adopted</p>
+            <h3 class="stat-card-value">892</h3>
+            <p class="stat-card-change positive">+28 this month</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+            🏥
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">In Care</p>
+            <h3 class="stat-card-value">234</h3>
+            <p class="stat-card-change neutral">At shelter</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">
+            📋
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">Available</p>
+            <h3 class="stat-card-value">156</h3>
+            <p class="stat-card-change positive">Ready for adoption</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animal Filters -->
+      <div class="animals-toolbar">
+        <div class="filter-group">
+          <select class="select" id="statusFilter">
+            <option value="all">All Status</option>
+            <option value="available">Available for Adoption</option>
+            <option value="in-care">In Care</option>
+            <option value="adopted">Adopted</option>
+            <option value="foster">In Foster</option>
+          </select>
+
+          <select class="select" id="speciesFilter">
+            <option value="all">All Species</option>
+            <option value="dog">Dogs</option>
+            <option value="cat">Cats</option>
+            <option value="other">Other</option>
+          </select>
+
+          <select class="select" id="ageFilter">
+            <option value="all">All Ages</option>
+            <option value="puppy">Puppy/Kitten</option>
+            <option value="young">Young</option>
+            <option value="adult">Adult</option>
+            <option value="senior">Senior</option>
+          </select>
+
+          <select class="select" id="sortBy">
+            <option value="recent">Recently Added</option>
+            <option value="name">By Name</option>
+            <option value="age">By Age</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Animals Grid -->
+      <div class="animals-grid" id="animalsGrid">
+        <!-- Animal Card 1 -->
+        <div class="animal-card">
+          <div class="animal-card-image" style="background-image: url('https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop');">
+            <div class="animal-status-badge available">Available</div>
+          </div>
+
+          <div class="animal-card-body">
+            <div class="animal-card-header">
+              <h3 class="animal-name">Max</h3>
+              <span class="animal-species">🐕 Dog</span>
+            </div>
+
+            <div class="animal-details">
+              <div class="animal-detail-item">
+                <span class="detail-label">Breed</span>
+                <span class="detail-value">Golden Retriever</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Age</span>
+                <span class="detail-value">3 years</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-value">Male</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Rescued</span>
+                <span class="detail-value">Dec 2025</span>
+              </div>
+            </div>
+
+            <p class="animal-description">
+              Friendly and energetic Golden Retriever looking for an active family. Great with kids and other dogs.
+            </p>
+
+            <div class="animal-tags">
+              <span class="tag">Vaccinated</span>
+              <span class="tag">Neutered</span>
+              <span class="tag">House Trained</span>
+            </div>
+          </div>
+
+          <div class="animal-card-footer">
+            <button class="btn btn-sm btn-secondary">
+              <span>👁️</span>
+              <span>View Profile</span>
+            </button>
+            <button class="btn btn-sm btn-primary">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Animal Card 2 -->
+        <div class="animal-card">
+          <div class="animal-card-image" style="background-image: url('https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=300&fit=crop');">
+            <div class="animal-status-badge adopted">Adopted</div>
+          </div>
+
+          <div class="animal-card-body">
+            <div class="animal-card-header">
+              <h3 class="animal-name">Luna</h3>
+              <span class="animal-species">🐱 Cat</span>
+            </div>
+
+            <div class="animal-details">
+              <div class="animal-detail-item">
+                <span class="detail-label">Breed</span>
+                <span class="detail-value">Persian</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Age</span>
+                <span class="detail-value">2 years</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-value">Female</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Adopted</span>
+                <span class="detail-value">Jan 2026</span>
+              </div>
+            </div>
+
+            <p class="animal-description">
+              Sweet and gentle Persian cat. Loves to cuddle and enjoys quiet environments. Perfect lap cat!
+            </p>
+
+            <div class="animal-tags">
+              <span class="tag">Vaccinated</span>
+              <span class="tag">Spayed</span>
+              <span class="tag">Indoor Cat</span>
+            </div>
+          </div>
+
+          <div class="animal-card-footer">
+            <button class="btn btn-sm btn-secondary">
+              <span>👁️</span>
+              <span>View Profile</span>
+            </button>
+            <button class="btn btn-sm btn-primary">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Animal Card 3 -->
+        <div class="animal-card">
+          <div class="animal-card-image" style="background-image: url('https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&h=300&fit=crop');">
+            <div class="animal-status-badge in-care">In Care</div>
+          </div>
+
+          <div class="animal-card-body">
+            <div class="animal-card-header">
+              <h3 class="animal-name">Buddy</h3>
+              <span class="animal-species">🐕 Dog</span>
+            </div>
+
+            <div class="animal-details">
+              <div class="animal-detail-item">
+                <span class="detail-label">Breed</span>
+                <span class="detail-value">Labrador Mix</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Age</span>
+                <span class="detail-value">5 years</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-value">Male</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Rescued</span>
+                <span class="detail-value">Feb 2026</span>
+              </div>
+            </div>
+
+            <p class="animal-description">
+              Recovering from surgery. Very loyal and loving dog. Will be available for adoption once fully healed.
+            </p>
+
+            <div class="animal-tags">
+              <span class="tag">Medical Care</span>
+              <span class="tag">Vaccinated</span>
+            </div>
+          </div>
+
+          <div class="animal-card-footer">
+            <button class="btn btn-sm btn-secondary">
+              <span>👁️</span>
+              <span>View Profile</span>
+            </button>
+            <button class="btn btn-sm btn-primary">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Animal Card 4 -->
+        <div class="animal-card">
+          <div class="animal-card-image" style="background-image: url('https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=400&h=300&fit=crop');">
+            <div class="animal-status-badge foster">In Foster</div>
+          </div>
+
+          <div class="animal-card-body">
+            <div class="animal-card-header">
+              <h3 class="animal-name">Mittens</h3>
+              <span class="animal-species">🐱 Cat</span>
+            </div>
+
+            <div class="animal-details">
+              <div class="animal-detail-item">
+                <span class="detail-label">Breed</span>
+                <span class="detail-value">Tabby</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Age</span>
+                <span class="detail-value">1 year</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-value">Female</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Fostered</span>
+                <span class="detail-value">Jan 2026</span>
+              </div>
+            </div>
+
+            <p class="animal-description">
+              Playful kitten in foster care learning socialization skills. Will be ready for adoption soon!
+            </p>
+
+            <div class="animal-tags">
+              <span class="tag">Vaccinated</span>
+              <span class="tag">Spayed</span>
+              <span class="tag">Playful</span>
+            </div>
+          </div>
+
+          <div class="animal-card-footer">
+            <button class="btn btn-sm btn-secondary">
+              <span>👁️</span>
+              <span>View Profile</span>
+            </button>
+            <button class="btn btn-sm btn-primary">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Animal Card 5 -->
+        <div class="animal-card">
+          <div class="animal-card-image" style="background-image: url('https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&h=300&fit=crop');">
+            <div class="animal-status-badge available">Available</div>
+          </div>
+
+          <div class="animal-card-body">
+            <div class="animal-card-header">
+              <h3 class="animal-name">Bella</h3>
+              <span class="animal-species">🐕 Dog</span>
+            </div>
+
+            <div class="animal-details">
+              <div class="animal-detail-item">
+                <span class="detail-label">Breed</span>
+                <span class="detail-value">Beagle</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Age</span>
+                <span class="detail-value">4 years</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-value">Female</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Rescued</span>
+                <span class="detail-value">Nov 2025</span>
+              </div>
+            </div>
+
+            <p class="animal-description">
+              Cheerful Beagle with lots of energy. Loves walks and playing fetch. Would thrive in an active household.
+            </p>
+
+            <div class="animal-tags">
+              <span class="tag">Vaccinated</span>
+              <span class="tag">Spayed</span>
+              <span class="tag">Good with Kids</span>
+            </div>
+          </div>
+
+          <div class="animal-card-footer">
+            <button class="btn btn-sm btn-secondary">
+              <span>👁️</span>
+              <span>View Profile</span>
+            </button>
+            <button class="btn btn-sm btn-primary">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Animal Card 6 -->
+        <div class="animal-card">
+          <div class="animal-card-image" style="background-image: url('https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&h=300&fit=crop');">
+            <div class="animal-status-badge available">Available</div>
+          </div>
+
+          <div class="animal-card-body">
+            <div class="animal-card-header">
+              <h3 class="animal-name">Whiskers</h3>
+              <span class="animal-species">🐱 Cat</span>
+            </div>
+
+            <div class="animal-details">
+              <div class="animal-detail-item">
+                <span class="detail-label">Breed</span>
+                <span class="detail-value">Siamese Mix</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Age</span>
+                <span class="detail-value">6 years</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-value">Male</span>
+              </div>
+              <div class="animal-detail-item">
+                <span class="detail-label">Rescued</span>
+                <span class="detail-value">Oct 2025</span>
+              </div>
+            </div>
+
+            <p class="animal-description">
+              Calm and affectionate senior cat. Perfect companion for a quiet home. Loves sunny window spots.
+            </p>
+
+            <div class="animal-tags">
+              <span class="tag">Vaccinated</span>
+              <span class="tag">Neutered</span>
+              <span class="tag">Senior</span>
+            </div>
+          </div>
+
+          <div class="animal-card-footer">
+            <button class="btn btn-sm btn-secondary">
+              <span>👁️</span>
+              <span>View Profile</span>
+            </button>
+            <button class="btn btn-sm btn-primary">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Load More -->
+      <div class="load-more-container">
+        <p class="text-muted">Showing 6 of 234 animals</p>
+        <button class="btn btn-secondary">Load More Animals</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Animal Modal -->
+  <div class="modal" id="addAnimalModal">
+    <div class="modal-backdrop" onclick="closeModal('addAnimalModal')"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2 class="modal-title">Add New Animal</h2>
+        <button class="modal-close" onclick="closeModal('addAnimalModal')">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form id="addAnimalForm" class="form">
+          <!-- Basic Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Basic Information</h3>
+
+            <div class="form-row">
+              <div class="input-group">
+                <label class="label">Name *</label>
+                <input type="text" class="input" placeholder="Animal name" required>
+              </div>
+
+              <div class="input-group">
+                <label class="label">Species *</label>
+                <select class="input" required>
+                  <option value="">Select species</option>
+                  <option value="dog">Dog</option>
+                  <option value="cat">Cat</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="input-group">
+                <label class="label">Breed</label>
+                <input type="text" class="input" placeholder="Breed">
+              </div>
+
+              <div class="input-group">
+                <label class="label">Age</label>
+                <input type="text" class="input" placeholder="e.g., 3 years">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="input-group">
+                <label class="label">Gender *</label>
+                <select class="input" required>
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+
+              <div class="input-group">
+                <label class="label">Status *</label>
+                <select class="input" required>
+                  <option value="">Select status</option>
+                  <option value="available">Available for Adoption</option>
+                  <option value="in-care">In Care</option>
+                  <option value="foster">In Foster</option>
+                  <option value="adopted">Adopted</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label class="label">Description</label>
+              <textarea class="input" rows="4" placeholder="Tell us about this animal..."></textarea>
+            </div>
+
+            <div class="input-group">
+              <label class="label">Photo URL</label>
+              <input type="url" class="input" placeholder="https://example.com/photo.jpg">
+            </div>
+
+            <div class="input-group">
+              <label class="label">Rescue Date *</label>
+              <input type="date" class="input" required>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('addAnimalModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Animal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/animals.js"></script>
+</body>
+</html>

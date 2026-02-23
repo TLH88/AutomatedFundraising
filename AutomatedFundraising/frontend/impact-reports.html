@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impact Reports - Funds 4 Furry Friends</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/impact-reports.css">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <span class="brand-icon">🐾</span>
+        <span class="brand-name">Funds 4 Furry Friends</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search campaigns, donors, or events..." class="search-input">
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="icon-btn" title="Notifications">
+        <span class="notification-badge">3</span>
+        🔔
+      </button>
+      <button class="icon-btn" title="Messages">
+        <span class="notification-badge">5</span>
+        💬
+      </button>
+      <div class="user-menu">
+        <img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar">
+        <span class="user-name">Admin</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a href="campaigns.html" class="nav-item">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Active Campaigns</span>
+      </a>
+
+      <a href="donors.html" class="nav-item">
+        <span class="nav-icon">❤️</span>
+        <span class="nav-label">Donors & Sponsors</span>
+      </a>
+
+      <a href="analytics.html" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Analytics & Reports</span>
+      </a>
+
+      <a href="animals.html" class="nav-item">
+        <span class="nav-icon">🐕</span>
+        <span class="nav-label">Animals Helped</span>
+      </a>
+
+      <a href="events.html" class="nav-item">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Events Calendar</span>
+      </a>
+
+      <a href="communications.html" class="nav-item">
+        <span class="nav-icon">📧</span>
+        <span class="nav-label">Communications</span>
+      </a>
+
+      <a href="stories.html" class="nav-item">
+        <span class="nav-icon">✨</span>
+        <span class="nav-label">Success Stories</span>
+      </a>
+
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </a>
+      <a href="team.html" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Team Management</span>
+      </a>
+      <a href="help.html" class="nav-item">
+        <span class="nav-icon">❓</span>
+        <span class="nav-label">Help & Resources</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Impact Reports</h1>
+          <p class="page-subtitle">Generate and share reports showcasing your organization's impact</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary">
+            <span>📋</span>
+            <span>Templates</span>
+          </button>
+          <button class="btn btn-primary" onclick="openModal('generateReportModal')">
+            <span>➕</span>
+            <span>Generate Report</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Impact Summary Cards -->
+      <div class="impact-summary-grid">
+        <div class="impact-card">
+          <div class="impact-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+            🐾
+          </div>
+          <div class="impact-card-content">
+            <h3 class="impact-card-value">1,247</h3>
+            <p class="impact-card-label">Animals Rescued</p>
+            <p class="impact-card-period">This year</p>
+          </div>
+        </div>
+
+        <div class="impact-card">
+          <div class="impact-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+            ❤️
+          </div>
+          <div class="impact-card-content">
+            <h3 class="impact-card-value">892</h3>
+            <p class="impact-card-label">Animals Adopted</p>
+            <p class="impact-card-period">This year</p>
+          </div>
+        </div>
+
+        <div class="impact-card">
+          <div class="impact-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+            🏥
+          </div>
+          <div class="impact-card-content">
+            <h3 class="impact-card-value">3,420</h3>
+            <p class="impact-card-label">Medical Treatments</p>
+            <p class="impact-card-period">This year</p>
+          </div>
+        </div>
+
+        <div class="impact-card">
+          <div class="impact-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">
+            💰
+          </div>
+          <div class="impact-card-content">
+            <h3 class="impact-card-value">$487K</h3>
+            <p class="impact-card-label">Funds Raised</p>
+            <p class="impact-card-period">This year</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports List -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Generated Reports</h2>
+          <div class="filter-group">
+            <select class="select" id="reportTypeFilter">
+              <option value="all">All Types</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annual">Annual</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="reports-grid">
+            <!-- Report Card 1 -->
+            <div class="report-card">
+              <div class="report-card-header">
+                <div class="report-type-badge annual">Annual Report</div>
+                <div class="report-status-badge published">Published</div>
+              </div>
+
+              <div class="report-card-body">
+                <h3 class="report-title">2025 Annual Impact Report</h3>
+                <p class="report-description">Complete overview of our organization's impact, fundraising, and success stories from 2025.</p>
+
+                <div class="report-meta">
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Generated</span>
+                    <span class="report-meta-value">Jan 15, 2026</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Period</span>
+                    <span class="report-meta-value">Jan 1 - Dec 31, 2025</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Pages</span>
+                    <span class="report-meta-value">24 pages</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card-footer">
+                <button class="btn btn-sm btn-secondary">
+                  <span>👁️</span>
+                  <span>Preview</span>
+                </button>
+                <button class="btn btn-sm btn-secondary">
+                  <span>📥</span>
+                  <span>Download</span>
+                </button>
+                <button class="btn btn-sm btn-primary">
+                  <span>📧</span>
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Report Card 2 -->
+            <div class="report-card">
+              <div class="report-card-header">
+                <div class="report-type-badge quarterly">Quarterly Report</div>
+                <div class="report-status-badge published">Published</div>
+              </div>
+
+              <div class="report-card-body">
+                <h3 class="report-title">Q4 2025 Impact Report</h3>
+                <p class="report-description">Fourth quarter highlights including holiday fundraising campaign results and animal rescue statistics.</p>
+
+                <div class="report-meta">
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Generated</span>
+                    <span class="report-meta-value">Jan 5, 2026</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Period</span>
+                    <span class="report-meta-value">Oct 1 - Dec 31, 2025</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Pages</span>
+                    <span class="report-meta-value">12 pages</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card-footer">
+                <button class="btn btn-sm btn-secondary">
+                  <span>👁️</span>
+                  <span>Preview</span>
+                </button>
+                <button class="btn btn-sm btn-secondary">
+                  <span>📥</span>
+                  <span>Download</span>
+                </button>
+                <button class="btn btn-sm btn-primary">
+                  <span>📧</span>
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Report Card 3 -->
+            <div class="report-card">
+              <div class="report-card-header">
+                <div class="report-type-badge monthly">Monthly Report</div>
+                <div class="report-status-badge draft">Draft</div>
+              </div>
+
+              <div class="report-card-body">
+                <h3 class="report-title">January 2026 Impact Report</h3>
+                <p class="report-description">Monthly summary of rescue operations, adoptions, and fundraising performance for January 2026.</p>
+
+                <div class="report-meta">
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Generated</span>
+                    <span class="report-meta-value">Feb 2, 2026</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Period</span>
+                    <span class="report-meta-value">Jan 1 - Jan 31, 2026</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Pages</span>
+                    <span class="report-meta-value">8 pages</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card-footer">
+                <button class="btn btn-sm btn-secondary">
+                  <span>👁️</span>
+                  <span>Preview</span>
+                </button>
+                <button class="btn btn-sm btn-secondary">
+                  <span>✏️</span>
+                  <span>Edit</span>
+                </button>
+                <button class="btn btn-sm btn-primary">
+                  <span>✅</span>
+                  <span>Publish</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Report Card 4 -->
+            <div class="report-card">
+              <div class="report-card-header">
+                <div class="report-type-badge custom">Custom Report</div>
+                <div class="report-status-badge published">Published</div>
+              </div>
+
+              <div class="report-card-body">
+                <h3 class="report-title">Holiday Campaign Impact</h3>
+                <p class="report-description">Special report showcasing the success and impact of our 2025 holiday fundraising campaign.</p>
+
+                <div class="report-meta">
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Generated</span>
+                    <span class="report-meta-value">Dec 28, 2025</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Period</span>
+                    <span class="report-meta-value">Nov 15 - Dec 25, 2025</span>
+                  </div>
+                  <div class="report-meta-item">
+                    <span class="report-meta-label">Pages</span>
+                    <span class="report-meta-value">6 pages</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card-footer">
+                <button class="btn btn-sm btn-secondary">
+                  <span>👁️</span>
+                  <span>Preview</span>
+                </button>
+                <button class="btn btn-sm btn-secondary">
+                  <span>📥</span>
+                  <span>Download</span>
+                </button>
+                <button class="btn btn-sm btn-primary">
+                  <span>📧</span>
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Generate Report Modal -->
+  <div class="modal" id="generateReportModal">
+    <div class="modal-backdrop" onclick="closeModal('generateReportModal')"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Generate Impact Report</h2>
+        <button class="modal-close" onclick="closeModal('generateReportModal')">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form id="generateReportForm" class="form">
+          <!-- Report Type -->
+          <div class="input-group">
+            <label class="label">Report Type *</label>
+            <select class="input" id="reportType" required>
+              <option value="">Select report type</option>
+              <option value="monthly">Monthly Report</option>
+              <option value="quarterly">Quarterly Report</option>
+              <option value="annual">Annual Report</option>
+              <option value="custom">Custom Report</option>
+            </select>
+          </div>
+
+          <!-- Report Title -->
+          <div class="input-group">
+            <label class="label">Report Title *</label>
+            <input type="text" class="input" placeholder="Enter report title" required>
+          </div>
+
+          <!-- Date Range -->
+          <div class="form-row">
+            <div class="input-group">
+              <label class="label">Start Date *</label>
+              <input type="date" class="input" required>
+            </div>
+
+            <div class="input-group">
+              <label class="label">End Date *</label>
+              <input type="date" class="input" required>
+            </div>
+          </div>
+
+          <!-- Include Sections -->
+          <div class="input-group">
+            <label class="label">Include Sections</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" checked>
+                <span>Executive Summary</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked>
+                <span>Fundraising Performance</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked>
+                <span>Animals Rescued & Adopted</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked>
+                <span>Success Stories</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox">
+                <span>Financial Breakdown</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox">
+                <span>Donor Recognition</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Format -->
+          <div class="input-group">
+            <label class="label">Export Format *</label>
+            <select class="input" required>
+              <option value="pdf">PDF Document</option>
+              <option value="docx">Word Document</option>
+              <option value="html">Web Page</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('generateReportModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Generate Report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/impact-reports.js"></script>
+</body>
+</html>

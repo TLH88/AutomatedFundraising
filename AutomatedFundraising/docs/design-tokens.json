@@ -1,0 +1,179 @@
+{
+  "theme": {
+    "mode": "dark",
+    "style": ["skeuomorphic", "glassmorphism", "non-profit-fundraising"],
+    "mission": "animal-welfare"
+  },
+
+  "layout": {
+    "type": "desktop-dashboard",
+    "grid": "three-column",
+    "sidebarWidth": 280,
+    "topbarHeight": 80,
+    "contentPadding": 32,
+    "columnGap": 24
+  },
+
+  "colors": {
+    "background": {
+      "primary": "#0A0A0A",
+      "elevated": "#141414",
+      "card": "#0F0F0F"
+    },
+    "accent": {
+      "primary": "#10B981",
+      "secondary": "#34D399",
+      "dark": "#047857",
+      "urgent": "#F59E0B",
+      "celebration": "#EC4899"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#D1D5DB",
+      "muted": "#6B7280",
+      "impact": "#10B981"
+    },
+    "semantic": {
+      "success": "#10B981",
+      "urgent": "#F59E0B",
+      "info": "#3B82F6",
+      "celebration": "#EC4899"
+    },
+    "categories": {
+      "dogs": "#3B82F6",
+      "cats": "#F59E0B",
+      "smallAnimals": "#8B5CF6",
+      "medical": "#EF4444",
+      "shelter": "#10B981",
+      "education": "#06B6D4"
+    },
+    "glass": {
+      "background": "rgba(255, 255, 255, 0.05)",
+      "border": "rgba(255, 255, 255, 0.1)",
+      "highlight": "rgba(255, 255, 255, 0.15)"
+    }
+  },
+
+  "typography": {
+    "fontFamily": {
+      "primary": "Nunito, Poppins, Inter, system-ui, sans-serif",
+      "numeric": "SF Mono, JetBrains Mono, monospace"
+    },
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "sizes": {
+      "h1": 32,
+      "h2": 24,
+      "h3": 20,
+      "bodyLarge": 16,
+      "body": 14,
+      "caption": 12,
+      "small": 11,
+      "numericLarge": 48,
+      "numericMedium": 32,
+      "numericSmall": 20
+    }
+  },
+
+  "effects": {
+    "shadows": {
+      "card": "0 20px 60px rgba(0,0,0,0.7), 0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+      "button": "0 8px 24px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2)",
+      "pressed": "inset 0 4px 12px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)",
+      "hover": "0 24px 72px rgba(0,0,0,0.8), 0 12px 32px rgba(0,0,0,0.6)"
+    },
+    "blur": {
+      "glass": "blur(40px) saturate(180%)",
+      "light": "blur(20px)"
+    },
+    "borderRadius": {
+      "card": 20,
+      "button": 12,
+      "pill": 999,
+      "input": 12,
+      "small": 8,
+      "animalImage": 16
+    }
+  },
+
+  "components": {
+    "card": {
+      "borderRadius": 20,
+      "padding": 32,
+      "background": "#0F0F0F",
+      "shadow": "card"
+    },
+    "button": {
+      "primary": {
+        "background": "linear-gradient(135deg, #10B981, #059669)",
+        "color": "#FFFFFF",
+        "borderRadius": 12,
+        "padding": "14px 28px"
+      },
+      "secondary": {
+        "background": "rgba(255, 255, 255, 0.08)",
+        "color": "#10B981",
+        "border": "1px solid rgba(255, 255, 255, 0.12)"
+      },
+      "urgent": {
+        "background": "linear-gradient(135deg, #F59E0B, #D97706)",
+        "color": "#FFFFFF"
+      }
+    },
+    "sidebar": {
+      "background": "#0F0F0F",
+      "itemHeight": 48,
+      "itemRadius": 12,
+      "iconSize": 22,
+      "activeGlow": "rgba(16, 185, 129, 0.3)"
+    },
+    "chart": {
+      "lineColor": "#10B981",
+      "lineWidth": 3,
+      "fillGradient": "linear-gradient(180deg, rgba(16, 185, 129, 0.3), transparent)",
+      "gridColor": "rgba(255, 255, 255, 0.05)",
+      "goalLine": "dashed 2px rgba(52, 211, 153, 0.6)"
+    },
+    "table": {
+      "rowHeight": 64,
+      "divider": "rgba(255, 255, 255, 0.08)",
+      "hoverBackground": "rgba(255, 255, 255, 0.03)"
+    },
+    "progressBar": {
+      "height": 8,
+      "radius": 999,
+      "fill": "linear-gradient(90deg, #10B981, #34D399)",
+      "background": "rgba(255, 255, 255, 0.1)"
+    },
+    "donationCard": {
+      "borderRadius": 16,
+      "padding": 24,
+      "avatarSize": 48,
+      "amountColor": "#10B981",
+      "recurringBadge": "#8B5CF6"
+    }
+  },
+
+  "transitions": {
+    "default": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    "fast": "all 0.15s ease-out",
+    "slow": "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+    "heartbeat": "all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)"
+  },
+
+  "specialElements": {
+    "pawPrint": {
+      "opacity": 0.05,
+      "position": "watermark",
+      "color": "#10B981"
+    },
+    "celebratory": {
+      "confetti": "on milestone achievements",
+      "animation": "heartbeat on major donations"
+    }
+  }
+}

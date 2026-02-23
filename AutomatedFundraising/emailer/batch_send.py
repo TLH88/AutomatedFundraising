@@ -24,7 +24,7 @@ from sendgrid.helpers.mail import Mail, Email, To, Content, TrackingSettings, Cl
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from db.client import (
     get_contactable_leads, get_active_campaign,
-    create_email_send, update_send_status
+    create_email_send, update_send_status, get_recently_contacted_org_ids
 )
 from emailer.render_template import render_email, SENDER_NAME, SENDER_EMAIL
 
@@ -35,6 +35,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
 BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "50"))
 SEND_DELAY_SECONDS = float(os.environ.get("SEND_DELAY_SECONDS", "1.5"))  # rate limiting
+ORG_SEND_GAP_HOURS = int(os.environ.get("ORG_SEND_GAP_HOURS", "24"))
 
 
 def send_one(sg_client, subject: str, body: str,
@@ -98,10 +99,20 @@ def run_batch(campaign_id: str, limit: int = BATCH_SIZE) -> dict:
     sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
 
     results = {"sent": 0, "failed": 0, "skipped": 0}
+    recently_contacted_orgs = get_recently_contacted_org_ids(hours_back=ORG_SEND_GAP_HOURS)
 
     for lead in leads:
         contact = lead
         org = lead.get("organizations") or {}
+        org_id = contact.get("org_id") or org.get("id")
+
+        if org_id and org_id in recently_contacted_orgs:
+            logger.info(
+                f"  Skipping '{contact.get('full_name', 'Unknown')}' — "
+                f"org contacted within last {ORG_SEND_GAP_HOURS}h."
+            )
+            results["skipped"] += 1
+            continue
 
         to_email = contact.get("email", "").strip()
         if not to_email:
@@ -129,6 +140,8 @@ def run_batch(campaign_id: str, limit: int = BATCH_SIZE) -> dict:
         if success:
             update_send_status(send_id, "sent")
             results["sent"] += 1
+            if org_id:
+                recently_contacted_orgs.add(org_id)
             logger.info("    ✓ Sent")
         else:
             update_send_status(send_id, "failed", error=error)

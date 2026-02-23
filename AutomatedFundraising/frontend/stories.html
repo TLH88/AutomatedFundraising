@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Success Stories - Funds 4 Furry Friends</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/stories.css">
+</head>
+<body>
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></div>
+    </div>
+    <div class="topbar-center">
+      <div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search stories..." class="search-input"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn"><span class="notification-badge">3</span>🔔</button>
+      <button class="icon-btn"><span class="notification-badge">5</span>💬</button>
+      <div class="user-menu"><img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar"><span class="user-name">Admin</span></div>
+    </div>
+  </nav>
+
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a href="campaigns.html" class="nav-item"><span class="nav-icon">🎯</span><span class="nav-label">Active Campaigns</span></a>
+      <a href="donors.html" class="nav-item"><span class="nav-icon">❤️</span><span class="nav-label">Donors & Sponsors</span></a>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Analytics & Reports</span></a>
+      <a href="animals.html" class="nav-item"><span class="nav-icon">🐕</span><span class="nav-label">Animals Helped</span></a>
+      <a href="events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Events Calendar</span></a>
+      <a href="communications.html" class="nav-item"><span class="nav-icon">📧</span><span class="nav-label">Communications</span></a>
+      <a href="stories.html" class="nav-item active"><span class="nav-icon">✨</span><span class="nav-label">Success Stories</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+      <a href="team.html" class="nav-item"><span class="nav-icon">👥</span><span class="nav-label">Team Management</span></a>
+      <a href="help.html" class="nav-item"><span class="nav-icon">❓</span><span class="nav-label">Help & Resources</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <div><h1 class="page-title">Success Stories</h1><p class="page-subtitle">Share inspiring rescue and adoption stories</p></div>
+        <div class="page-actions">
+          <button class="btn btn-secondary"><span>📋</span><span>Published Stories</span></button>
+          <button class="btn btn-primary" onclick="openModal('newStoryModal')"><span>➕</span><span>New Story</span></button>
+        </div>
+      </div>
+
+      <div class="stories-stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">✨</div>
+          <div class="stat-card-content"><p class="stat-card-label">Published</p><h3 class="stat-card-value">127</h3><p class="stat-card-change">Total stories</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">👁️</div>
+          <div class="stat-card-content"><p class="stat-card-label">Total Views</p><h3 class="stat-card-value">45.2K</h3><p class="stat-card-change positive">+2.4K this month</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">❤️</div>
+          <div class="stat-card-content"><p class="stat-card-label">Engagement</p><h3 class="stat-card-value">8.7K</h3><p class="stat-card-change positive">Likes & shares</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">💰</div>
+          <div class="stat-card-content"><p class="stat-card-label">Impact</p><h3 class="stat-card-value">$12.5K</h3><p class="stat-card-change positive">Donations driven</p></div>
+        </div>
+      </div>
+
+      <div class="stories-grid">
+        <div class="story-card">
+          <div class="story-card-image" style="background-image: url('https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=400&fit=crop');"></div>
+          <div class="story-card-body">
+            <div class="story-card-header">
+              <h3 class="story-title">Max's Journey to Recovery</h3>
+              <div class="story-status-badge published">Published</div>
+            </div>
+            <p class="story-excerpt">From rescue to recovery: Max's incredible transformation after emergency surgery and months of rehabilitation...</p>
+            <div class="story-meta">
+              <span class="story-meta-item">📅 Published Feb 15, 2026</span>
+              <span class="story-meta-item">👁️ 2.4K views</span>
+              <span class="story-meta-item">❤️ 342 likes</span>
+            </div>
+            <div class="story-actions">
+              <button class="btn btn-sm btn-secondary">View</button>
+              <button class="btn btn-sm btn-secondary">Edit</button>
+              <button class="btn btn-sm btn-primary">Share</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="story-card">
+          <div class="story-card-image" style="background-image: url('https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&h=400&fit=crop');"></div>
+          <div class="story-card-body">
+            <div class="story-card-header">
+              <h3 class="story-title">Luna Finds Her Forever Home</h3>
+              <div class="story-status-badge published">Published</div>
+            </div>
+            <p class="story-excerpt">After 8 months in our shelter, Luna finally met her perfect match and is now living her best life...</p>
+            <div class="story-meta">
+              <span class="story-meta-item">📅 Published Jan 28, 2026</span>
+              <span class="story-meta-item">👁️ 3.1K views</span>
+              <span class="story-meta-item">❤️ 487 likes</span>
+            </div>
+            <div class="story-actions">
+              <button class="btn btn-sm btn-secondary">View</button>
+              <button class="btn btn-sm btn-secondary">Edit</button>
+              <button class="btn btn-sm btn-primary">Share</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="story-card">
+          <div class="story-card-image" style="background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=600&h=400&fit=crop');"></div>
+          <div class="story-card-body">
+            <div class="story-card-header">
+              <h3 class="story-title">Wildfire Rescue Heroes</h3>
+              <div class="story-status-badge draft">Draft</div>
+            </div>
+            <p class="story-excerpt">Our team's heroic efforts rescuing 30+ animals from the recent wildfires. A story of courage and compassion...</p>
+            <div class="story-meta">
+              <span class="story-meta-item">📅 Created Feb 20, 2026</span>
+              <span class="story-meta-item">📝 Draft</span>
+            </div>
+            <div class="story-actions">
+              <button class="btn btn-sm btn-secondary">Edit</button>
+              <button class="btn btn-sm btn-primary">Publish</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="newStoryModal">
+    <div class="modal-backdrop" onclick="closeModal('newStoryModal')"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header"><h2 class="modal-title">Create Success Story</h2><button class="modal-close" onclick="closeModal('newStoryModal')">×</button></div>
+      <div class="modal-body">
+        <form id="newStoryForm" class="form">
+          <div class="input-group"><label class="label">Story Title *</label><input type="text" class="input" required></div>
+          <div class="input-group"><label class="label">Featured Animal</label><input type="text" class="input" placeholder="Link to animal profile"></div>
+          <div class="input-group"><label class="label">Story Content *</label><textarea class="input" rows="10" required></textarea></div>
+          <div class="input-group"><label class="label">Cover Image URL</label><input type="url" class="input" placeholder="https://"></div>
+          <div class="input-group"><label class="label">Status</label><select class="input"><option value="draft">Save as Draft</option><option value="published">Publish Now</option></select></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('newStoryModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Story</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    function openModal(id) { document.getElementById(id)?.classList.add('active'); }
+    function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
+    document.getElementById('newStoryForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      console.log('Story created');
+      closeModal('newStoryModal');
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

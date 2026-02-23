@@ -11,6 +11,10 @@ feedparser==6.0.11
 # Email
 sendgrid==6.11.0
 
+# Web Server
+flask==3.0.0
+flask-cors==4.0.0
+
 # Optional: Playwright for JS-rendered pages
 # Uncomment and set PLAYWRIGHT_ENABLED=true to activate
 # playwright==1.49.0

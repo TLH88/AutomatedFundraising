@@ -1,0 +1,562 @@
+/**
+ * Funds 4 Furry Friends - Donors Page Styles
+ * Donor directory and management interface
+ */
+
+/* ============================================
+   PAGE HEADER
+   ============================================ */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--table-divider);
+}
+
+.page-title {
+  font-size: var(--text-h1);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.page-subtitle {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.page-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+/* ============================================
+   DONOR STATISTICS GRID
+   ============================================ */
+
+.donors-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--column-gap);
+  margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  gap: var(--spacing-md);
+  transition: var(--transition-default);
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.stat-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card-content {
+  flex: 1;
+}
+
+.stat-card-label {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--spacing-xs) 0;
+  font-weight: var(--weight-semibold);
+}
+
+.stat-card-value {
+  font-family: var(--font-numeric);
+  font-size: var(--numeric-medium);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+  line-height: 1;
+}
+
+/* ============================================
+   DONORS TOOLBAR
+   ============================================ */
+
+.donors-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.search-group {
+  flex: 1;
+}
+
+.search-group .input {
+  width: 100%;
+}
+
+.filter-group {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.filter-group .select {
+  min-width: 180px;
+}
+
+/* ============================================
+   DONORS GRID
+   ============================================ */
+
+.donors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--column-gap);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* ============================================
+   DONOR CARD
+   ============================================ */
+
+.donor-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  transition: var(--transition-default);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.donor-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-4px);
+}
+
+/* Donor Card Header */
+.donor-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.donor-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 3px solid var(--bg-elevated);
+}
+
+.donor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Donor Tier Badges */
+.donor-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.donor-tier-badge.hero {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #FFFFFF;
+}
+
+.donor-tier-badge.champion {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+}
+
+.donor-tier-badge.supporter {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: #FFFFFF;
+}
+
+.donor-tier-badge.friend {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  color: #FFFFFF;
+}
+
+/* Donor Card Body */
+.donor-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.donor-name {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.donor-email {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.donor-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--table-divider);
+}
+
+.donor-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.donor-stat-label {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.donor-stat-value {
+  font-size: var(--text-body-large);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.donor-stat-value.numeric {
+  color: var(--accent-green);
+}
+
+.donor-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+/* Donor Card Footer */
+.donor-card-footer {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--table-divider);
+}
+
+.donor-card-footer .btn {
+  flex: 1;
+  font-size: var(--text-caption);
+}
+
+/* ============================================
+   LOAD MORE SECTION
+   ============================================ */
+
+.load-more-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-xl) 0;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1023px) {
+  .donors-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .donors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .filter-group {
+    flex-direction: column;
+  }
+
+  .filter-group .select {
+    width: 100%;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+
+  .page-actions .btn {
+    flex: 1;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .donors-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .donors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .donor-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-card-icon {
+    margin: 0 auto;
+  }
+
+  .donors-toolbar {
+    gap: var(--spacing-sm);
+  }
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.donors-empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.donors-empty-state-icon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.donors-empty-state-title {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.donors-empty-state-text {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-modal);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-hover);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s var(--ease-default);
+}
+
+.modal-large {
+  max-width: 800px;
+}
+
+.modal-header {
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--table-divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+.modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-default);
+}
+
+.modal-close:hover {
+  background: var(--glass-border);
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: var(--spacing-xl);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-xl);
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 767px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   CONTACT OPTIONS
+   ============================================ */
+
+.contact-options {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.contact-option-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  transition: var(--transition-default);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.contact-option-card:hover {
+  background: var(--glass-border);
+  border-color: var(--accent-green);
+  transform: translateX(4px);
+}
+
+.contact-option-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.contact-option-title {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 0 0 var(--spacing-xs) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--weight-semibold);
+}
+
+.contact-option-value {
+  font-size: var(--text-body-large);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}

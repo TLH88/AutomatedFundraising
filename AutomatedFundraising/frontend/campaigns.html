@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaigns - Funds 4 Furry Friends</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/campaigns.css">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <span class="brand-icon">🐾</span>
+        <span class="brand-name">Funds 4 Furry Friends</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search campaigns, donors, or events..." class="search-input">
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="icon-btn" title="Notifications">
+        <span class="notification-badge">3</span>
+        🔔
+      </button>
+      <button class="icon-btn" title="Messages">
+        <span class="notification-badge">5</span>
+        💬
+      </button>
+      <div class="user-menu">
+        <img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar">
+        <span class="user-name">Admin</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a href="campaigns.html" class="nav-item active">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Active Campaigns</span>
+      </a>
+
+      <a href="donors.html" class="nav-item">
+        <span class="nav-icon">❤️</span>
+        <span class="nav-label">Donors & Sponsors</span>
+      </a>
+
+      <a href="analytics.html" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Analytics & Reports</span>
+      </a>
+
+      <a href="animals.html" class="nav-item">
+        <span class="nav-icon">🐕</span>
+        <span class="nav-label">Animals Helped</span>
+      </a>
+
+      <a href="events.html" class="nav-item">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Events Calendar</span>
+      </a>
+
+      <a href="communications.html" class="nav-item">
+        <span class="nav-icon">📧</span>
+        <span class="nav-label">Communications</span>
+      </a>
+
+      <a href="stories.html" class="nav-item">
+        <span class="nav-icon">✨</span>
+        <span class="nav-label">Success Stories</span>
+      </a>
+
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </a>
+      <a href="team.html" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Team Management</span>
+      </a>
+      <a href="help.html" class="nav-item">
+        <span class="nav-icon">❓</span>
+        <span class="nav-label">Help & Resources</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Active Campaigns</h1>
+          <p class="page-subtitle">Manage your fundraising campaigns and track performance</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary">
+            <span>📊</span>
+            <span>Campaign Reports</span>
+          </button>
+          <button class="btn btn-primary" onclick="openModal('addCampaignModal')">
+            <span>➕</span>
+            <span>New Campaign</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Campaign Statistics -->
+      <div class="campaigns-stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+            🎯
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">Active Campaigns</p>
+            <h3 class="stat-card-value">8</h3>
+            <p class="stat-card-change positive">+2 this month</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+            💰
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">Total Raised</p>
+            <h3 class="stat-card-value">$142,850</h3>
+            <p class="stat-card-change positive">+$18,400 this week</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+            📈
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">Avg. Goal Progress</p>
+            <h3 class="stat-card-value">68%</h3>
+            <p class="stat-card-change positive">+12% from last month</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">
+            ⏱️
+          </div>
+          <div class="stat-card-content">
+            <p class="stat-card-label">Ending Soon</p>
+            <h3 class="stat-card-value">3</h3>
+            <p class="stat-card-change neutral">Within 7 days</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaign Toolbar -->
+      <div class="campaigns-toolbar">
+        <div class="search-group">
+          <input type="text" class="input" placeholder="Search campaigns..." id="campaignSearch">
+        </div>
+
+        <div class="filter-group">
+          <select class="select" id="statusFilter">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="paused">Paused</option>
+            <option value="completed">Completed</option>
+          </select>
+
+          <select class="select" id="categoryFilter">
+            <option value="all">All Categories</option>
+            <option value="medical">Medical Care</option>
+            <option value="rescue">Rescue Operations</option>
+            <option value="shelter">Shelter & Housing</option>
+            <option value="emergency">Emergency Fund</option>
+          </select>
+
+          <select class="select" id="sortBy">
+            <option value="recent">Most Recent</option>
+            <option value="progress">By Progress</option>
+            <option value="raised">Amount Raised</option>
+            <option value="ending">Ending Soon</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Campaigns Grid -->
+      <div class="campaigns-grid" id="campaignsGrid">
+        <!-- Campaign Card 1 -->
+        <div class="campaign-card">
+          <div class="campaign-card-image" style="background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=600&h=300&fit=crop');">
+            <div class="campaign-status-badge active">Active</div>
+            <div class="campaign-category-badge">Medical Care</div>
+          </div>
+
+          <div class="campaign-card-body">
+            <h3 class="campaign-title">Emergency Surgery Fund for Max</h3>
+            <p class="campaign-description">Help us save Max, a 5-year-old rescue dog who needs immediate surgery to remove a tumor.</p>
+
+            <div class="campaign-progress-section">
+              <div class="campaign-progress-header">
+                <span class="campaign-raised">$8,450</span>
+                <span class="campaign-goal">of $10,000</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 84.5%"></div>
+              </div>
+              <div class="campaign-progress-footer">
+                <span class="campaign-donors">142 donors</span>
+                <span class="campaign-days">5 days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card-footer">
+            <button class="btn btn-secondary btn-sm" onclick="viewCampaign(1)">
+              <span>👁️</span>
+              <span>View</span>
+            </button>
+            <button class="btn btn-secondary btn-sm">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+            <button class="btn btn-primary btn-sm">
+              <span>📊</span>
+              <span>Analytics</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Campaign Card 2 -->
+        <div class="campaign-card">
+          <div class="campaign-card-image" style="background-image: url('https://images.unsplash.com/photo-1548681528-6a5c45b66b42?w=600&h=300&fit=crop');">
+            <div class="campaign-status-badge active">Active</div>
+            <div class="campaign-category-badge">Shelter</div>
+          </div>
+
+          <div class="campaign-card-body">
+            <h3 class="campaign-title">New Shelter Expansion Project</h3>
+            <p class="campaign-description">Expand our shelter to accommodate 50 more rescued animals with improved facilities.</p>
+
+            <div class="campaign-progress-section">
+              <div class="campaign-progress-header">
+                <span class="campaign-raised">$45,200</span>
+                <span class="campaign-goal">of $75,000</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 60.3%"></div>
+              </div>
+              <div class="campaign-progress-footer">
+                <span class="campaign-donors">324 donors</span>
+                <span class="campaign-days">23 days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card-footer">
+            <button class="btn btn-secondary btn-sm" onclick="viewCampaign(2)">
+              <span>👁️</span>
+              <span>View</span>
+            </button>
+            <button class="btn btn-secondary btn-sm">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+            <button class="btn btn-primary btn-sm">
+              <span>📊</span>
+              <span>Analytics</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Campaign Card 3 -->
+        <div class="campaign-card">
+          <div class="campaign-card-image" style="background-image: url('https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=300&fit=crop');">
+            <div class="campaign-status-badge active">Active</div>
+            <div class="campaign-category-badge">Emergency</div>
+          </div>
+
+          <div class="campaign-card-body">
+            <h3 class="campaign-title">Wildfire Rescue Emergency Fund</h3>
+            <p class="campaign-description">Support our team rescuing animals displaced by recent wildfires in the region.</p>
+
+            <div class="campaign-progress-section">
+              <div class="campaign-progress-header">
+                <span class="campaign-raised">$12,800</span>
+                <span class="campaign-goal">of $15,000</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 85.3%"></div>
+              </div>
+              <div class="campaign-progress-footer">
+                <span class="campaign-donors">218 donors</span>
+                <span class="campaign-days">2 days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card-footer">
+            <button class="btn btn-secondary btn-sm" onclick="viewCampaign(3)">
+              <span>👁️</span>
+              <span>View</span>
+            </button>
+            <button class="btn btn-secondary btn-sm">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+            <button class="btn btn-primary btn-sm">
+              <span>📊</span>
+              <span>Analytics</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Campaign Card 4 -->
+        <div class="campaign-card">
+          <div class="campaign-card-image" style="background-image: url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=300&fit=crop');">
+            <div class="campaign-status-badge active">Active</div>
+            <div class="campaign-category-badge">Medical Care</div>
+          </div>
+
+          <div class="campaign-card-body">
+            <h3 class="campaign-title">Senior Dog Medical Fund</h3>
+            <p class="campaign-description">Provide ongoing medical care and comfort for our senior rescue dogs.</p>
+
+            <div class="campaign-progress-section">
+              <div class="campaign-progress-header">
+                <span class="campaign-raised">$18,950</span>
+                <span class="campaign-goal">of $25,000</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 75.8%"></div>
+              </div>
+              <div class="campaign-progress-footer">
+                <span class="campaign-donors">267 donors</span>
+                <span class="campaign-days">15 days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card-footer">
+            <button class="btn btn-secondary btn-sm" onclick="viewCampaign(4)">
+              <span>👁️</span>
+              <span>View</span>
+            </button>
+            <button class="btn btn-secondary btn-sm">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+            <button class="btn btn-primary btn-sm">
+              <span>📊</span>
+              <span>Analytics</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Campaign Card 5 -->
+        <div class="campaign-card">
+          <div class="campaign-card-image" style="background-image: url('https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=600&h=300&fit=crop');">
+            <div class="campaign-status-badge active">Active</div>
+            <div class="campaign-category-badge">Rescue</div>
+          </div>
+
+          <div class="campaign-card-body">
+            <h3 class="campaign-title">Cat Colony Rescue & Rehabilitation</h3>
+            <p class="campaign-description">Rescue and rehabilitate a colony of 30+ feral cats discovered in an abandoned building.</p>
+
+            <div class="campaign-progress-section">
+              <div class="campaign-progress-header">
+                <span class="campaign-raised">$6,200</span>
+                <span class="campaign-goal">of $12,000</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 51.7%"></div>
+              </div>
+              <div class="campaign-progress-footer">
+                <span class="campaign-donors">98 donors</span>
+                <span class="campaign-days">18 days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card-footer">
+            <button class="btn btn-secondary btn-sm" onclick="viewCampaign(5)">
+              <span>👁️</span>
+              <span>View</span>
+            </button>
+            <button class="btn btn-secondary btn-sm">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+            <button class="btn btn-primary btn-sm">
+              <span>📊</span>
+              <span>Analytics</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Campaign Card 6 -->
+        <div class="campaign-card">
+          <div class="campaign-card-image" style="background-image: url('https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&h=300&fit=crop');">
+            <div class="campaign-status-badge active">Active</div>
+            <div class="campaign-category-badge">Shelter</div>
+          </div>
+
+          <div class="campaign-card-body">
+            <h3 class="campaign-title">Winter Warmth Initiative</h3>
+            <p class="campaign-description">Provide heating, warm bedding, and winter supplies for shelter animals during cold months.</p>
+
+            <div class="campaign-progress-section">
+              <div class="campaign-progress-header">
+                <span class="campaign-raised">$3,450</span>
+                <span class="campaign-goal">of $8,000</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 43.1%"></div>
+              </div>
+              <div class="campaign-progress-footer">
+                <span class="campaign-donors">76 donors</span>
+                <span class="campaign-days">30 days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card-footer">
+            <button class="btn btn-secondary btn-sm" onclick="viewCampaign(6)">
+              <span>👁️</span>
+              <span>View</span>
+            </button>
+            <button class="btn btn-secondary btn-sm">
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+            <button class="btn btn-primary btn-sm">
+              <span>📊</span>
+              <span>Analytics</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Load More -->
+      <div class="load-more-container">
+        <p class="text-muted">Showing 6 of 8 campaigns</p>
+        <button class="btn btn-secondary">Load More Campaigns</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Campaign Modal -->
+  <div class="modal" id="addCampaignModal">
+    <div class="modal-backdrop" onclick="closeModal('addCampaignModal')"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2 class="modal-title">Create New Campaign</h2>
+        <button class="modal-close" onclick="closeModal('addCampaignModal')">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form id="addCampaignForm" class="form">
+          <!-- Basic Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Basic Information</h3>
+
+            <div class="input-group">
+              <label class="label">Campaign Title *</label>
+              <input type="text" class="input" placeholder="Enter campaign title" required>
+            </div>
+
+            <div class="input-group">
+              <label class="label">Campaign Description *</label>
+              <textarea class="input" rows="4" placeholder="Describe your campaign and its goals..." required></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="input-group">
+                <label class="label">Category *</label>
+                <select class="input" required>
+                  <option value="">Select category</option>
+                  <option value="medical">Medical Care</option>
+                  <option value="rescue">Rescue Operations</option>
+                  <option value="shelter">Shelter & Housing</option>
+                  <option value="emergency">Emergency Fund</option>
+                </select>
+              </div>
+
+              <div class="input-group">
+                <label class="label">Goal Amount *</label>
+                <input type="number" class="input" placeholder="10000" min="1" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div class="form-section">
+            <h3 class="form-section-title">Timeline</h3>
+
+            <div class="form-row">
+              <div class="input-group">
+                <label class="label">Start Date *</label>
+                <input type="date" class="input" required>
+              </div>
+
+              <div class="input-group">
+                <label class="label">End Date *</label>
+                <input type="date" class="input" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campaign Image -->
+          <div class="form-section">
+            <h3 class="form-section-title">Campaign Image</h3>
+
+            <div class="input-group">
+              <label class="label">Image URL</label>
+              <input type="url" class="input" placeholder="https://example.com/image.jpg">
+              <small class="input-hint">Recommended size: 1200x600px</small>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('addCampaignModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Campaign</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/campaigns.js"></script>
+</body>
+</html>

@@ -1,0 +1,458 @@
+/**
+ * Funds 4 Furry Friends - Impact Reports Page Styles
+ */
+
+/* ============================================
+   PAGE HEADER
+   ============================================ */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--table-divider);
+}
+
+.page-title {
+  font-size: var(--text-h1);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.page-subtitle {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.page-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+/* ============================================
+   IMPACT SUMMARY GRID
+   ============================================ */
+
+.impact-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--column-gap);
+  margin-bottom: var(--spacing-xl);
+}
+
+.impact-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: var(--transition-default);
+}
+
+.impact-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.impact-card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.impact-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.impact-card-value {
+  font-family: var(--font-numeric);
+  font-size: var(--numeric-large);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1;
+}
+
+.impact-card-label {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.impact-card-period {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ============================================
+   REPORTS GRID
+   ============================================ */
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: var(--column-gap);
+}
+
+/* ============================================
+   REPORT CARD
+   ============================================ */
+
+.report-card {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  transition: var(--transition-default);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.report-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* Report Card Header */
+.report-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report-type-badge {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.report-type-badge.annual {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #FFFFFF;
+}
+
+.report-type-badge.quarterly {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: #FFFFFF;
+}
+
+.report-type-badge.monthly {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+}
+
+.report-type-badge.custom {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  color: #FFFFFF;
+}
+
+.report-status-badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+}
+
+.report-status-badge.published {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-green);
+}
+
+.report-status-badge.draft {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-muted);
+}
+
+/* Report Card Body */
+.report-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.report-title {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.report-description {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.report-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--table-divider);
+}
+
+.report-meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-small);
+}
+
+.report-meta-label {
+  color: var(--text-muted);
+}
+
+.report-meta-value {
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+
+/* Report Card Footer */
+.report-card-footer {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--table-divider);
+}
+
+.report-card-footer .btn {
+  flex: 1;
+  font-size: var(--text-caption);
+}
+
+/* ============================================
+   FILTERS
+   ============================================ */
+
+.filter-group {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-modal);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-hover);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s var(--ease-default);
+}
+
+.modal-header {
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--table-divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+.modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-default);
+}
+
+.modal-close:hover {
+  background: var(--glass-border);
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: var(--spacing-xl);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-xl);
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--glass-bg);
+  border-radius: var(--radius-small);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: var(--transition-default);
+}
+
+.checkbox-label:hover {
+  background: var(--glass-border);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent-green);
+}
+
+.checkbox-label span {
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1023px) {
+  .impact-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .reports-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+
+  .page-actions .btn {
+    flex: 1;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .impact-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .report-card-footer {
+    flex-direction: column;
+  }
+
+  .impact-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .report-card-header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .filter-group {
+    flex-direction: column;
+  }
+
+  .filter-group .select {
+    width: 100%;
+  }
+}
