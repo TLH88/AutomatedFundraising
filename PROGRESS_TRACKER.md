@@ -149,8 +149,9 @@
 | `emailer/__init__.py` | ✅ | Package marker |
 | `db/__init__.py` | ✅ | Package marker |
 | All Python files — syntax check (pyflakes) | ✅ | CLEAN — zero errors |
-| GitHub Actions Secrets added to repo | 🚫 | Tony needs to add 8 secrets (documented in README) |
-| Code pushed to GitHub repo | ⏳ | Files exist locally in workspace; not yet pushed |
+| GitHub Actions Secrets added to repo | ✅ | All 8 secrets added (temp SendGrid values until verification complete) |
+| Code pushed to GitHub repo | ✅ | Pushed to https://github.com/TLH88/AutomatedFundraising |
+| SerpAPI key configured | ✅ | Key added to GitHub Secrets |
 
 ---
 
@@ -160,19 +161,19 @@
 |---|---|---|
 | Step 1–8 build sequence | ✅ | All code built and verified locally |
 | Live Supabase connection test | ✅ | Tables, indexes, policies all confirmed via MCP |
-| End-to-end test run (Step 9) | 🚫 | Blocked: requires GitHub Secrets + SendGrid sender verification first |
-| First live scrape run | ⏳ | Pending code push + secrets |
-| First live email campaign | ⏳ | Pending SendGrid verification + scrape run |
+| End-to-end test run (Step 9) | ⏳ | Ready to run — awaiting user approval to proceed |
+| First live scrape run | ⏳ | Ready to run (discovery + contact extraction) — on hold per user request |
+| First live email campaign | 🚫 | Blocked: requires SendGrid sender verification |
 
 ---
 
 ## Open Items Requiring Action
 
 ### Tony (External)
-- [ ] Verify `hope@furryfriendswa.org` as a SendGrid sender (Settings → Sender Authentication)
-- [ ] Add 8 GitHub Actions Secrets to https://github.com/TLH88/AutomatedFundraising/settings/secrets/actions
-- [ ] Push codebase to GitHub repo (or grant access for automated push)
-- [ ] (Optional) Register for SerpAPI free key to enable Google search discovery
+- [ ] Verify `hope@furryfriendswa.org` as a SendGrid sender (Settings → Sender Authentication) — **BLOCKING EMAIL CAMPAIGNS**
+- [x] Add 8 GitHub Actions Secrets to https://github.com/TLH88/AutomatedFundraising/settings/secrets/actions
+- [x] Push codebase to GitHub repo
+- [x] Register for SerpAPI key to enable Google search discovery
 
 ### Claude (Next Session)
 - [ ] Create `db/schema.sql` file for reproducibility
@@ -181,6 +182,25 @@
 - [ ] Add GitHub Actions summary artifact to `discover-and-scrape.yml`
 - [ ] Create `scraper/playwright_helper.py` as a separate module (per original plan)
 - [ ] Investigate Charity Navigator API or GuideStar alternative for discovery
+
+---
+
+---
+
+## Current Status — Ready to Test
+
+**✅ COMPLETE:**
+- All code written, tested, and pushed to GitHub
+- All GitHub Actions Secrets configured
+- SerpAPI key active for enhanced discovery
+
+**🚫 BLOCKING EMAIL SENDS:**
+- SendGrid sender verification pending (will complete later)
+
+**⏳ READY TO RUN (on hold per user request):**
+- Discovery & Scrape workflow can run immediately (does NOT require SendGrid)
+- Will populate database with organizations and contacts
+- Safe to test without affecting any email sending
 
 ---
 
