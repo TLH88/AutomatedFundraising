@@ -30,11 +30,32 @@ def upsert_organization(data: dict) -> dict:
     Returns the upserted row.
     """
     client = get_client()
-    result = (
+
+    # Check if organization already exists
+    existing = (
         client.table("organizations")
-        .upsert(data, on_conflict="name,website")
+        .select("id")
+        .eq("name", data.get("name"))
+        .eq("website", data.get("website"))
         .execute()
     )
+
+    if existing.data:
+        # Update existing
+        result = (
+            client.table("organizations")
+            .update(data)
+            .eq("id", existing.data[0]["id"])
+            .execute()
+        )
+    else:
+        # Insert new
+        result = (
+            client.table("organizations")
+            .insert(data)
+            .execute()
+        )
+
     return result.data[0] if result.data else {}
 
 

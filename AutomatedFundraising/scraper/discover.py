@@ -136,7 +136,6 @@ def search_via_serpapi(query: str, num: int = 10) -> list[dict]:
                 "category": "other",
                 "donation_potential_score": 5,
                 "notes": r.get("snippet", "")[:500],
-                "source_url": r.get("link", ""),
             })
         return orgs
     except Exception as e:
@@ -157,7 +156,6 @@ def fetch_petfinder_orgs() -> list[dict]:
                 "category": "nonprofit",
                 "donation_potential_score": 5,
                 "notes": "Petfinder-listed shelter.",
-                "source_url": entry.get("link", ""),
             })
         return orgs
     except Exception as e:
