@@ -125,6 +125,48 @@ Changes are recorded in chronological order. Each entry notes the date, what cha
 
 ---
 
+### Change #008 — Real-Time Progress Updates for Script Execution
+**Date:** Feb 22, 2026
+**Type:** New requirement / UX enhancement
+**Initiated by:** Tony
+**Original:** Scripts run via GitHub Actions or CLI with no live progress visibility until completion
+**New requirement:** System needs to provide users with script running updates that refresh every 5 seconds until completion, at which point the user is notified the script has completed successfully
+**Impact:**
+- Requires WebSocket or server-sent events (SSE) for real-time updates
+- Scripts need to emit progress events during execution
+- Frontend component to display progress with auto-refresh
+- Affects: all three workflow scripts (discover, send-campaign, sync-tracking)
+**Status:** ⏳ Proposed — requires architecture discussion
+**Implementation Options:**
+1. GitHub Actions live logs viewer (simplest — use GitHub's native UI)
+2. Custom webhook endpoint that receives progress events → stores in Supabase → UI polls every 5s
+3. WebSocket server for true real-time streaming (most complex)
+
+---
+
+### Change #009 — Web UI for Tool Management
+**Date:** Feb 22, 2026
+**Type:** New requirement / Major scope addition
+**Initiated by:** Tony
+**Original:** Staff access via Supabase table UI only; GitHub Actions triggered manually via GitHub UI
+**New requirement:** A UI will be needed to allow for easy access, execution, and management of this tool
+**Impact:** Major scope expansion — requires building a full web application
+**Proposed features:**
+- Dashboard showing org/contact counts, recent activity, campaign status
+- One-click buttons to trigger discovery, scraping, and email campaigns
+- Campaign management (create, edit, pause campaigns)
+- View organizations and contacts with filtering/search
+- Real-time progress indicators (integrates with Change #008)
+- Email send logs and tracking data visualization
+**Technology Stack Options:**
+1. **Next.js + Supabase Auth** — modern, fast, works with existing Supabase backend
+2. **Streamlit (Python)** — rapid prototyping, Python-native, simpler but less polished
+3. **React + Supabase** — maximum flexibility, more development time
+**Status:** ⏳ Proposed — requires tech stack selection and architecture design
+**Estimated Effort:** 2-3 full development sessions (20-30 hours)
+
+---
+
 ## Pending Scope Items (Planned but Not Yet Built)
 
 These items were in the original plan or emerged during development but have not been implemented yet. They are candidates for upcoming work sessions.
@@ -157,7 +199,7 @@ These items are deliberately not included in this project and should not be adde
 | Payment processing / donation intake | Separate system; not part of the outreach pipeline |
 | Donor relationship management (gift tracking, stewardship) | Downstream of this pipeline; separate tool/process |
 | Multi-shelter deployment | Currently built specifically for Furry Friends Shelter |
-| Public-facing web UI for staff | Supabase table UI is the staff interface; no custom web app planned |
+| ~~Public-facing web UI for staff~~ | ~~Moved to scope — see Change #009~~ |
 
 ---
 

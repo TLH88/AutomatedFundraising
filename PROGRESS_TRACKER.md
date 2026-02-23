@@ -176,10 +176,28 @@
 - [x] Register for SerpAPI key to enable Google search discovery
 
 ### Claude (Next Session)
+
+**High Priority — New Requirements:**
+- [ ] **Design & build Web UI** for tool management (Change #009)
+  - Dashboard with org/contact counts and activity overview
+  - One-click workflow triggers (discover, scrape, send campaigns)
+  - Campaign management interface
+  - Organizations and contacts browser with search/filter
+  - Real-time progress indicators
+  - Technology decision needed: Next.js, Streamlit, or React
+- [ ] **Implement real-time progress updates** (Change #008)
+  - Scripts emit progress events during execution
+  - 5-second auto-refresh progress display
+  - Completion notification
+  - Integration with web UI
+
+**Medium Priority — Existing Gaps:**
 - [ ] Create `db/schema.sql` file for reproducibility
 - [ ] Implement `{{donation_impact}}` token in `render_template.py`
 - [ ] Implement 24-hour gap enforcement between sends to same org
 - [ ] Add GitHub Actions summary artifact to `discover-and-scrape.yml`
+
+**Low Priority — Optional Enhancements:**
 - [ ] Create `scraper/playwright_helper.py` as a separate module (per original plan)
 - [ ] Investigate Charity Navigator API or GuideStar alternative for discovery
 
