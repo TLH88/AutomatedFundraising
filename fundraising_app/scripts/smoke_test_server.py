@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:
 
 def main() -> int:
     try:
-        from AutomatedFundraising.server import app
+        from fundraising_app.server import app
     except ModuleNotFoundError:
         from server import app
 

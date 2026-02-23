@@ -340,8 +340,8 @@ This plan has been expanded beyond the original outreach-only pipeline.
 
 ### Current Build Sequence (Superseding prior Step 9+ statuses)
 - COMPLETE: Frontend page buildout (13 pages)
-- COMPLETE: Supabase CRM schema design file (`AutomatedFundraising/db/schema.sql`)
-- COMPLETE: Flask API refactor to Supabase-aware CRM endpoints with mock fallback (`AutomatedFundraising/server.py`, `AutomatedFundraising/db/crm.py`)
+- COMPLETE: Supabase CRM schema design file (`fundraising_app/db/schema.sql`)
+- COMPLETE: Flask API refactor to Supabase-aware CRM endpoints with mock fallback (`fundraising_app/server.py`, `fundraising_app/db/crm.py`)
 - COMPLETE: GitHub workflow relocation/path fixes to repo-root `.github/workflows`
 - COMPLETE: Discover workflow summary artifact output
 - COMPLETE: `{{donation_impact}}` token support
@@ -352,7 +352,7 @@ This plan has been expanded beyond the original outreach-only pipeline.
 - BLOCKED: Live outbound email send/tracking validation (SendGrid inactive; provider under evaluation)
 
 ### Required Validation Gates Going Forward
-- Gate A (Local): `python AutomatedFundraising/scripts/pre_deploy_check.py`
-- Gate B (Integration): `python AutomatedFundraising/scripts/test_connections.py` with Supabase env vars set
+- Gate A (Local): `python fundraising_app/scripts/pre_deploy_check.py`
+- Gate B (Integration): `python fundraising_app/scripts/test_connections.py` with Supabase env vars set
 - Gate C (Workflow): verify root `.github/workflows` discovery in GitHub Actions UI after push
 - Gate D (Email): provider-specific smoke test only after provider becomes active

@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 60
     defaults:
       run:
-        working-directory: AutomatedFundraising
+        working-directory: fundraising_app
 
     steps:
       - name: Checkout repository
@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: AutomatedFundraising/requirements.txt
+          cache-dependency-path: fundraising_app/requirements.txt
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -84,7 +84,7 @@ jobs:
         with:
           name: discover-and-scrape-summary-${{ github.run_number }}
           path: |
-            AutomatedFundraising/discover_run_summary.txt
-            AutomatedFundraising/discover.log
-            AutomatedFundraising/extract.log
+            fundraising_app/discover_run_summary.txt
+            fundraising_app/discover.log
+            fundraising_app/extract.log
           if-no-files-found: warn

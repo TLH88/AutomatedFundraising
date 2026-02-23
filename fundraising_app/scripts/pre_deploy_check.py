@@ -40,19 +40,19 @@ def run(cmd: list[str], label: str, optional: bool = False) -> bool:
 def main() -> int:
     all_ok = True
 
-    all_ok &= run([sys.executable, "-m", "compileall", "AutomatedFundraising"], "Python compile")
+    all_ok &= run([sys.executable, "-m", "compileall", "fundraising_app"], "Python compile")
     all_ok &= run(
         [sys.executable, "-c", "import flask, requests, bs4, feedparser; print('core imports ok')"],
         "Core imports",
     )
     all_ok &= run(
-        [sys.executable, "AutomatedFundraising/scripts/smoke_test_server.py"],
+        [sys.executable, "fundraising_app/scripts/smoke_test_server.py"],
         "Flask API smoke tests",
     )
 
     if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_PUBLISHABLE_KEY"):
         all_ok &= run(
-            [sys.executable, "AutomatedFundraising/scripts/test_connections.py"],
+            [sys.executable, "fundraising_app/scripts/test_connections.py"],
             "External connection checks",
             optional=True,
         )

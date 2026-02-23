@@ -269,9 +269,9 @@ This section supersedes stale page-status and pending-item notes earlier in this
 
 ### Scope Decisions Finalized This Session
 - Scope expanded to a unified internal fundraising CRM + outreach automation platform (Supabase-backed).
-- A full Supabase schema design now exists in `AutomatedFundraising/db/schema.sql`.
+- A full Supabase schema design now exists in `fundraising_app/db/schema.sql`.
 - CRM entities added to scope: donors, donations, campaigns, animals, events, communications, reports, stories, team, settings/help content, activity logs, automation progress runs/events.
-- Flask backend API now targets this expanded model via `AutomatedFundraising/server.py` + `AutomatedFundraising/db/crm.py` with mock fallback when Supabase is not configured.
+- Flask backend API now targets this expanded model via `fundraising_app/server.py` + `fundraising_app/db/crm.py` with mock fallback when Supabase is not configured.
 
 ### Scope Clarifications
 - Frontend page buildout is complete as a UI shell (13 pages exist locally).

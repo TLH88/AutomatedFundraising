@@ -11,14 +11,14 @@ The dashboard runs on Flask and can use Supabase data when configured, with mock
 ## Repo Layout
 
 - Repository root contains GitHub Actions workflows in `.github/workflows/`
-- Application code lives in `AutomatedFundraising/`
+- Application code lives in `fundraising_app/`
 
 ## Quick Start (Local)
 
 From the repository root:
 
 ```bash
-cd AutomatedFundraising
+cd fundraising_app
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -40,7 +40,7 @@ Email note:
 ## Run Dashboard Server
 
 ```bash
-cd AutomatedFundraising
+cd fundraising_app
 python server.py
 ```
 
@@ -83,18 +83,18 @@ From the repository root:
 
 ```bash
 # API smoke tests (mock mode if Supabase not configured)
-python AutomatedFundraising/scripts/smoke_test_server.py
+python fundraising_app/scripts/smoke_test_server.py
 
 # Pre-deploy checks (compile, imports, smoke tests, optional connection checks)
-python AutomatedFundraising/scripts/pre_deploy_check.py
+python fundraising_app/scripts/pre_deploy_check.py
 
 # Optional deeper external validation (if Supabase env vars are set)
-python AutomatedFundraising/scripts/test_connections.py
+python fundraising_app/scripts/test_connections.py
 ```
 
 ## Outreach Pipeline Commands
 
-From `AutomatedFundraising/`:
+From `fundraising_app/`:
 
 ```bash
 python -m scraper.discover
@@ -114,7 +114,7 @@ Workflow files are in the repository root:
 - `.github/workflows/send-campaign.yml`
 - `.github/workflows/sync-tracking.yml`
 
-Each workflow runs commands in `AutomatedFundraising/` and the discover workflow now uploads a summary artifact.
+Each workflow runs commands in `fundraising_app/` and the discover workflow now uploads a summary artifact.
 
 ## Email Template Tokens
 

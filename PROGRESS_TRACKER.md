@@ -200,7 +200,7 @@
 
 ### Tony (External)
 - [ ] Verify `hope@furryfriendswa.org` as a SendGrid sender (Settings → Sender Authentication) — **BLOCKING EMAIL CAMPAIGNS**
-- [x] Add 8 GitHub Actions Secrets to https://github.com/TLH88/AutomatedFundraising/settings/secrets/actions
+- [x] Add 8 GitHub Actions Secrets to https://github.com/TLH88/fundraising_app/settings/secrets/actions
 - [x] Push codebase to GitHub repo
 - [x] Register for SerpAPI key to enable Google search discovery
 
@@ -271,7 +271,7 @@ This section is the authoritative status snapshot for the current codebase.
 ### Major Status Changes This Session
 - Web dashboard UI page buildout: COMPLETE (13-page frontend exists locally).
 - Backend integration: PARTIAL (Supabase-aware Flask API implemented with mock fallback).
-- Supabase CRM schema design: COMPLETE (`AutomatedFundraising/db/schema.sql`).
+- Supabase CRM schema design: COMPLETE (`fundraising_app/db/schema.sql`).
 - GitHub workflow location/pathing: FIXED (moved to repo-root `.github/workflows`, working directory set to `AutomatedFundraising`).
 - Discover workflow artifact summary: IMPLEMENTED.
 - `{{donation_impact}}` token: IMPLEMENTED.
@@ -293,13 +293,13 @@ This section is the authoritative status snapshot for the current codebase.
 - Milestone O2: Email provider migration/selection - PENDING
 
 ### Validation / Smoke Tests Added This Session
-- `AutomatedFundraising/scripts/smoke_test_server.py` (Flask API smoke tests)
-- `AutomatedFundraising/scripts/pre_deploy_check.py` (compile, imports, smoke tests, optional connection checks)
+- `fundraising_app/scripts/smoke_test_server.py` (Flask API smoke tests)
+- `fundraising_app/scripts/pre_deploy_check.py` (compile, imports, smoke tests, optional connection checks)
 - Local smoke tests passed in mock mode on February 23, 2026
 
 ### Pre-Deployment Check Gate (Use Before Push/Deploy)
-1. Run `python AutomatedFundraising/scripts/pre_deploy_check.py`
-2. If using Supabase, run `python AutomatedFundraising/scripts/test_connections.py`
+1. Run `python fundraising_app/scripts/pre_deploy_check.py`
+2. If using Supabase, run `python fundraising_app/scripts/test_connections.py`
 3. If email provider is active, validate send/tracking scripts against non-production data first
 4. Confirm workflow files exist in repo-root `.github/workflows`
 5. Confirm tracker/docs updates for the session are committed with code changes

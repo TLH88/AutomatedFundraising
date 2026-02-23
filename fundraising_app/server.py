@@ -16,9 +16,9 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 try:
-    from db import crm  # when running `python server.py` from AutomatedFundraising/
+    from db import crm  # when running `python server.py` from fundraising_app/
 except ModuleNotFoundError:  # pragma: no cover - import fallback
-    from .db import crm  # when importing as `AutomatedFundraising.server`
+    from .db import crm  # when importing as `fundraising_app.server`
 
 app = Flask(__name__, static_folder="frontend")
 CORS(app)

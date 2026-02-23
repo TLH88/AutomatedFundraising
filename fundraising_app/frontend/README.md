@@ -38,14 +38,14 @@ frontend/
 
 1. **Using Python:**
    ```bash
-   cd AutomatedFundraising/frontend
+   cd fundraising_app/frontend
    python -m http.server 8000
    ```
    Then open: http://localhost:8000
 
 2. **Using Node.js (npx):**
    ```bash
-   cd AutomatedFundraising/frontend
+   cd fundraising_app/frontend
    npx serve
    ```
 

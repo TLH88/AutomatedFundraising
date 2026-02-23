@@ -66,7 +66,7 @@
 
 ### Backend Server
 
-- **[server.py](AutomatedFundraising/server.py)** - Flask API with mock endpoints
+- **[server.py](fundraising_app/server.py)** - Flask API with mock endpoints
   - CORS enabled
   - RESTful JSON responses
   - Mock data for all entities
@@ -228,7 +228,7 @@ NP Fundraising Automation/
 │   ├── DESIGN_BRIEF.md
 │   ├── design-tokens.json
 │   └── DESIGN_SYSTEM.md
-├── AutomatedFundraising/
+├── fundraising_app/
 │   ├── frontend/
 │   │   ├── css/
 │   │   │   ├── variables.css
