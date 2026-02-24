@@ -6,6 +6,8 @@ Shared utilities: rate limiting, robots.txt checking, HTML helpers.
 import time
 import random
 import logging
+import math
+import re
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
@@ -26,9 +28,110 @@ SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
 
+STATE_ABBR = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
+}
+
+
 def polite_delay(min_s: float = 1.5, max_s: float = 3.5) -> None:
     """Sleep a random amount to avoid overwhelming servers."""
     time.sleep(random.uniform(min_s, max_s))
+
+
+def parse_search_location(value: str | None) -> dict:
+    """
+    Parse user-provided discovery location input.
+    Supports:
+    - City ST   (e.g. 'Portland OR')
+    - City, ST  (e.g. 'Portland, OR')
+    - ZIP       (e.g. '97201')
+    """
+    raw = (value or "").strip()
+    parsed = {
+        "raw": raw,
+        "zip_code": None,
+        "city": None,
+        "state": None,
+        "query": None,
+    }
+    if not raw:
+        return parsed
+
+    if re.fullmatch(r"\d{5}(?:-\d{4})?", raw):
+        parsed["zip_code"] = raw[:5]
+        parsed["query"] = parsed["zip_code"]
+        return parsed
+
+    normalized = re.sub(r"\s+", " ", raw.replace(",", " ")).strip()
+    parts = normalized.split(" ")
+    if len(parts) >= 2 and parts[-1].upper() in STATE_ABBR:
+        parsed["state"] = parts[-1].upper()
+        parsed["city"] = " ".join(parts[:-1]).strip()
+    else:
+        parsed["city"] = normalized
+
+    parsed["query"] = ", ".join([p for p in [parsed["city"], parsed["state"]] if p])
+    return parsed
+
+
+def geocode_location(location_query: str | None) -> dict | None:
+    """
+    Geocode a location string using Nominatim (OpenStreetMap).
+    Returns {latitude, longitude, display_name} or None.
+    Best-effort only; callers should gracefully fall back to text matching.
+    """
+    query = (location_query or "").strip()
+    if not query:
+        return None
+    try:
+        resp = SESSION.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": query, "format": "jsonv2", "limit": 1, "countrycodes": "us"},
+            timeout=12,
+        )
+        resp.raise_for_status()
+        rows = resp.json() or []
+        if not rows:
+            return None
+        row = rows[0]
+        return {
+            "latitude": float(row["lat"]),
+            "longitude": float(row["lon"]),
+            "display_name": row.get("display_name"),
+        }
+    except Exception as e:
+        logger.warning(f"Geocode failed for '{query}': {e}")
+        return None
+
+
+def haversine_miles(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance between two points in miles."""
+    r_miles = 3958.8
+    p1 = math.radians(float(lat1))
+    p2 = math.radians(float(lat2))
+    d_lat = math.radians(float(lat2) - float(lat1))
+    d_lon = math.radians(float(lon2) - float(lon1))
+    a = math.sin(d_lat / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(d_lon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return r_miles * c
+
+
+def within_radius_miles(origin: dict | None, lat: float | None, lon: float | None, radius_miles: float | None) -> bool:
+    """
+    Return True if point lies within radius of origin.
+    If origin/point/radius is missing, returns False (caller can use text fallback).
+    """
+    if not origin or radius_miles in (None, ""):
+        return False
+    try:
+        distance = haversine_miles(origin["latitude"], origin["longitude"], float(lat), float(lon))
+        return distance <= float(radius_miles)
+    except Exception:
+        return False
 
 
 def can_fetch(url: str) -> bool:

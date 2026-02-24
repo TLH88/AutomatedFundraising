@@ -17,7 +17,7 @@ import re
 import logging
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from db.client import get_organizations, upsert_contact
+from db.client import get_client, get_organizations, upsert_contact
 from scraper.utils import (
     fetch_page, extract_emails_from_soup,
     extract_phone_from_soup, find_subpages
@@ -40,6 +40,55 @@ CONTACT_PAGE_KEYWORDS = [
     "giving", "donate", "philanthropy", "csr", "foundation",
     "responsibility", "grant", "community",
 ]
+
+
+def classify_contact_role(title: str | None) -> str:
+    """Map a raw title to a user-facing contact category."""
+    t = str(title or "").strip().lower()
+    if not t:
+        return "General Contact"
+    if any(k in t for k in ["owner", "founder", "co-founder", "principal"]):
+        return "Business Owner"
+    if any(k in t for k in ["philanthropy", "giving", "development", "donations", "grants", "foundation"]):
+        return "Giving Manager"
+    if any(k in t for k in ["ceo", "chief executive", "president", "executive director", "director"]):
+        return "Executive Leader"
+    if any(k in t for k in ["community", "outreach", "partnership", "communications", "marketing"]):
+        return "Community / Outreach Lead"
+    return "Prospective Contact"
+
+
+def _load_existing_contact_emails() -> set[str]:
+    """Load existing contact emails to avoid surfacing existing contacts as new."""
+    try:
+        client = get_client()
+    except Exception:
+        return set()
+    emails: set[str] = set()
+    page = 0
+    page_size = 1000
+    while True:
+        try:
+            rows = (
+                client.table("contacts")
+                .select("email")
+                .range(page * page_size, page * page_size + page_size - 1)
+                .execute()
+                .data
+                or []
+            )
+        except Exception:
+            return emails
+        for row in rows:
+            email = str((row or {}).get("email") or "").strip().lower()
+            if email:
+                emails.add(email)
+        if len(rows) < page_size:
+            break
+        page += 1
+        if page >= 50:
+            break
+    return emails
 
 
 def score_title(title: str) -> int:
@@ -287,13 +336,18 @@ def extract_contacts_playwright(website: str, org_id: str) -> list[dict]:
         return []
 
 
-def run_extraction(min_score: int = 5) -> int:
+def run_extraction(min_score: int = 5, org_ids: list[str] | None = None, org_limit: int | None = None) -> int:
     """
     Main entry point.
     Fetches orgs from Supabase, extracts contacts, upserts results.
     Returns count of contacts saved.
     """
     orgs = get_organizations(min_score=min_score)
+    if org_ids:
+        org_id_set = {str(x) for x in org_ids if x}
+        orgs = [o for o in orgs if str(o.get("id")) in org_id_set]
+    if org_limit:
+        orgs = orgs[: max(1, int(org_limit))]
     logger.info(f"Found {len(orgs)} organizations to process.")
 
     total_saved = 0
@@ -326,6 +380,53 @@ def run_extraction(min_score: int = 5) -> int:
 
     logger.info(f"Extraction complete. {total_saved} contacts saved.")
     return total_saved
+
+
+def extract_contacts_preview_for_orgs(orgs: list[dict], per_org_limit: int = 5) -> list[dict]:
+    """
+    Preview-mode extraction for discovery results (no DB writes).
+    Returns contact candidates enriched with org metadata and a contact category.
+    """
+    results: list[dict] = []
+    seen_keys: set[str] = set()
+    existing_emails = _load_existing_contact_emails()
+    for org in (orgs or []):
+        website = str(org.get("website") or "").strip()
+        if not website:
+            continue
+        org_key = str(org.get("_preview_key") or org.get("id") or org.get("name") or "").strip()
+        if not org_key:
+            continue
+        org_id_hint = str(org.get("id") or f"preview:{org_key}")
+        contacts = extract_contacts_static(website, org_id_hint)
+        if not contacts:
+            contacts = extract_contacts_playwright(website, org_id_hint)
+        for contact in (contacts or [])[: max(1, int(per_org_limit or 5))]:
+            email = str(contact.get("email") or "").strip().lower()
+            full_name = str(contact.get("full_name") or "").strip()
+            if email and email in existing_emails:
+                continue
+            dedupe_key = f"{org_key}|{email or full_name}|{str(contact.get('title') or '').strip().lower()}"
+            if not (email or full_name) or dedupe_key in seen_keys:
+                continue
+            seen_keys.add(dedupe_key)
+            title = contact.get("title") or "General Contact"
+            results.append({
+                **contact,
+                "record_type": "contact",
+                "target_table": "contacts",
+                "record_key": f"contact:{dedupe_key}",
+                "category": classify_contact_role(title),
+                "organization_name": org.get("name"),
+                "organization_website": org.get("website"),
+                "organization_address": org.get("address"),
+                "organization_city": org.get("city"),
+                "organization_state": org.get("state"),
+                "organization_postal_code": org.get("postal_code"),
+                "org_preview_key": org_key,
+                "donation_potential_score": org.get("donation_potential_score"),
+            })
+    return results
 
 
 if __name__ == "__main__":

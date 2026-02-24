@@ -20,13 +20,75 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/layout.css">
   <style>
-    .explorer-filter-grid { display:grid; gap:12px; grid-template-columns: 1.2fr .8fr .8fr .8fr auto; align-items:end; }
+    .main-content .container > * + * { margin-top: var(--spacing-xl); }
+    .explorer-progress-card { display:none; }
+    .explorer-progress-card.is-visible { display:block; }
+    .explorer-progress-shell { display:grid; gap:12px; }
+    .explorer-progress-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .explorer-progress-title { display:flex; align-items:center; gap:10px; color:var(--text-primary); font-weight:700; }
+    .explorer-progress-dot {
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--accent-green);
+      box-shadow: 0 0 0 0 rgba(var(--accent-green-rgb), .45);
+      animation: explorerPulse 1.6s ease-out infinite;
+    }
+    .explorer-progress-card[data-status="completed"] .explorer-progress-dot { background: #10B981; animation: none; box-shadow: 0 0 0 4px rgba(16,185,129,.14); }
+    .explorer-progress-card[data-status="failed"] .explorer-progress-dot { background: #EF4444; animation: none; box-shadow: 0 0 0 4px rgba(239,68,68,.12); }
+    .explorer-progress-track {
+      position: relative; height: 12px; border-radius: 999px; overflow: hidden;
+      background: rgba(var(--accent-green-rgb), .08);
+      border: 1px solid rgba(var(--accent-green-rgb), .18);
+    }
+    .explorer-progress-fill {
+      position:absolute; inset:0 auto 0 0; width:0%;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-green-light));
+      box-shadow: 0 0 18px rgba(var(--accent-green-rgb), .25);
+      transition: width .35s ease;
+    }
+    .explorer-progress-fill::after {
+      content:''; position:absolute; inset:0 -30% 0 auto; width:30%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
+      animation: explorerShimmer 1.2s linear infinite;
+    }
+    html[data-theme="light"] .explorer-progress-fill::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); }
+    .explorer-progress-card[data-status="completed"] .explorer-progress-fill::after,
+    .explorer-progress-card[data-status="failed"] .explorer-progress-fill::after { display:none; }
+    .explorer-progress-line { color: var(--text-secondary); font-size: .95rem; }
+    .explorer-progress-meta { color: var(--text-muted); font-size: .85rem; }
+    .explorer-progress-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    @keyframes explorerPulse {
+      0% { box-shadow: 0 0 0 0 rgba(var(--accent-green-rgb), .45); }
+      70% { box-shadow: 0 0 0 10px rgba(var(--accent-green-rgb), 0); }
+      100% { box-shadow: 0 0 0 0 rgba(var(--accent-green-rgb), 0); }
+    }
+    @keyframes explorerShimmer {
+      from { transform: translateX(0); }
+      to { transform: translateX(220%); }
+    }
+    .explorer-search-card.collapsed .card-body { display:none; }
+    .explorer-search-toggle { margin-left:auto; }
+    .explorer-filter-grid { display:grid; gap:12px; grid-template-columns: 1.2fr .8fr .8fr .8fr .9fr auto; align-items:end; }
+    .inline-label-help { display:inline-flex; align-items:center; gap:6px; }
+    .info-tip {
+      width: 18px; height: 18px; border-radius:999px;
+      display:inline-flex; align-items:center; justify-content:center;
+      border:1px solid rgba(var(--accent-green-rgb), .35);
+      background: rgba(var(--accent-green-rgb), .10);
+      color: var(--text-primary); font-size:11px; font-weight:700;
+      cursor: help; user-select:none;
+    }
     .explorer-results-list { display:grid; gap:10px; }
-    .explorer-result-item { display:grid; grid-template-columns: minmax(0,1.8fr) minmax(0,1fr) 180px 130px; gap:12px; align-items:center; padding:14px; border:1px solid var(--glass-border); border-radius:14px; background: var(--glass-bg); }
+    .explorer-result-item { display:grid; grid-template-columns: minmax(0,1.8fr) 120px minmax(0,1fr) 160px 130px 96px; gap:12px; align-items:center; padding:14px; border:1px solid var(--glass-border); border-radius:14px; background: var(--glass-bg); }
     .explorer-result-name { color: var(--text-primary); font-weight:600; margin:0; }
     .explorer-result-sub { color: var(--text-muted); font-size: .85rem; margin:4px 0 0; }
     .explorer-score-pill { justify-self:start; border:1px solid rgba(var(--accent-green-rgb), .35); background: rgba(var(--accent-green-rgb), .12); color: var(--text-primary); border-radius:999px; padding:6px 10px; font-weight:600; font-size:.85rem; }
-    .explorer-header-row { display:grid; grid-template-columns: minmax(0,1.8fr) minmax(0,1fr) 180px 130px; gap:12px; padding:0 14px 8px; color:var(--text-muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; }
+    .explorer-score-pill.score-high { border-color: rgba(5,150,105,.45); background: rgba(5,150,105,.18); color: #D1FAE5; }
+    .explorer-score-pill.score-mid { border-color: rgba(34,211,238,.40); background: rgba(34,211,238,.16); color: #CFFAFE; }
+    .explorer-score-pill.score-low { border-color: rgba(251,146,60,.40); background: rgba(251,146,60,.16); color: #FED7AA; }
+    html[data-theme="light"] .explorer-score-pill.score-high { color:#065F46; background:rgba(5,150,105,.15); }
+    html[data-theme="light"] .explorer-score-pill.score-mid { color:#0E7490; background:rgba(34,211,238,.18); }
+    html[data-theme="light"] .explorer-score-pill.score-low { color:#9A3412; background:rgba(251,146,60,.18); }
+    .explorer-header-row { display:grid; grid-template-columns: minmax(0,1.8fr) 120px minmax(0,1fr) 160px 130px 96px; gap:12px; padding:0 14px 8px; color:var(--text-muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; }
     .explorer-empty { border:1px dashed var(--glass-border); border-radius:14px; padding:18px; color:var(--text-muted); }
     .explorer-modal-shell { display:grid; gap:var(--spacing-lg); }
     .explorer-profile-hero { border:1px solid var(--border-color); border-radius:16px; overflow:hidden; background:
@@ -40,8 +102,14 @@
     .explorer-profile-name { margin:0; color:var(--text-primary); }
     .explorer-profile-meta { margin:8px 0 0; color:var(--text-muted); display:flex; gap:10px; flex-wrap:wrap; }
     .explorer-profile-pill { border:1px solid rgba(var(--accent-green-rgb), .35); background: rgba(var(--accent-green-rgb), .12); border-radius:999px; padding:6px 10px; font-size:.8rem; font-weight:600; color:var(--text-primary); }
+    .explorer-profile-pill.score-high { border-color: rgba(5,150,105,.45); background: rgba(5,150,105,.18); }
+    .explorer-profile-pill.score-mid { border-color: rgba(34,211,238,.40); background: rgba(34,211,238,.16); }
+    .explorer-profile-pill.score-low { border-color: rgba(251,146,60,.40); background: rgba(251,146,60,.16); }
     .explorer-detail-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
     .explorer-detail-item { border:1px solid var(--glass-border); border-radius:12px; padding:10px 12px; background: var(--glass-bg); }
+    .explorer-detail-item.score-high { border-color: rgba(5,150,105,.32); background: rgba(5,150,105,.10); }
+    .explorer-detail-item.score-mid { border-color: rgba(34,211,238,.28); background: rgba(34,211,238,.10); }
+    .explorer-detail-item.score-low { border-color: rgba(251,146,60,.30); background: rgba(251,146,60,.10); }
     .explorer-detail-label { margin:0 0 4px; color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; }
     .explorer-detail-value { margin:0; color:var(--text-primary); font-weight:600; word-break:break-word; }
     .explorer-contact-list { display:grid; gap:10px; }
@@ -77,10 +145,15 @@
     <nav class="sidebar-nav">
       <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
       <a href="campaigns.html" class="nav-item"><span class="nav-icon">🎯</span><span class="nav-label">Active Campaigns</span></a>
-      <a href="donors.html" class="nav-item"><span class="nav-icon">❤️</span><span class="nav-label">Donors & Sponsors</span></a>
+      <a href="donors.html" class="nav-item active"><span class="nav-icon">❤️</span><span class="nav-label">Donors & Sponsors</span></a>
+      <div class="sidebar-subnav" aria-label="Donors sub-pages">
+        <a href="funds-explorer.html" class="nav-item active"><span class="nav-icon">&rsaquo;</span><span class="nav-label">Funds Explorer</span></a>
+      </div>
       <a href="analytics.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Analytics & Reports</span></a>
+      <a href="animals.html" class="nav-item"><span class="nav-icon">&#128021;</span><span class="nav-label">Animals Helped</span></a>
+      <a href="events.html" class="nav-item"><span class="nav-icon">&#128197;</span><span class="nav-label">Events Calendar</span></a>
       <a href="communications.html" class="nav-item"><span class="nav-icon">📧</span><span class="nav-label">Communications</span></a>
-      <a href="funds-explorer.html" class="nav-item active"><span class="nav-icon">🧭</span><span class="nav-label">Funds Explorer</span></a>
+      <a href="stories.html" class="nav-item"><span class="nav-icon">&#10024;</span><span class="nav-label">Success Stories</span></a>
     </nav>
     <div class="sidebar-footer">
       <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
@@ -98,8 +171,23 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header"><h2 class="card-title">Search Inputs</h2></div>
+      <div class="card" id="explorerSchemaBanner" style="display:none; border-color: rgba(245, 158, 11, 0.35); background: linear-gradient(180deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03));">
+        <div class="card-body" style="display:flex; gap:12px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;">
+          <div>
+            <p style="margin:0; font-weight:700; color:var(--text-primary);">Import unavailable: Organizations schema needs an update</p>
+            <p class="text-muted text-caption" id="explorerSchemaBannerText" style="margin:6px 0 0 0;">
+              Preview search is available. Import actions will stay disabled until the organizations table includes the required columns.
+            </p>
+          </div>
+          <code id="explorerSchemaBannerMigration" style="font-size:12px; padding:6px 10px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);">fundraising_app/db/migrations/2026-02-24_organizations_contact_fields.sql</code>
+        </div>
+      </div>
+
+      <div class="card explorer-search-card collapsed" id="explorerSearchCard">
+        <div class="card-header">
+          <h2 class="card-title">Search Inputs</h2>
+          <button type="button" class="btn btn-primary btn-pill explorer-search-toggle" id="explorerSearchToggle">Run New Donor Search</button>
+        </div>
         <div class="card-body">
           <form id="explorerSearchForm" class="form">
             <div class="explorer-filter-grid">
@@ -108,7 +196,16 @@
                 <input class="input" id="explorerLocation" name="location" placeholder="Seattle">
               </div>
               <div class="input-group">
-                <label class="input-label">Radius (miles)</label>
+                <label class="input-label inline-label-help">
+                  <span>Radius (miles)</span>
+                  <span
+                    class="info-tip"
+                    tabindex="0"
+                    title="Searches with a radius greater than 10 miles can take significantly longer due to expanded Google Places tile coverage."
+                    aria-label="Radius help: searches over 10 miles can take longer">
+                    i
+                  </span>
+                </label>
                 <input class="input" id="explorerRadius" name="radius_miles" type="number" min="1" value="25">
               </div>
               <div class="input-group">
@@ -125,6 +222,16 @@
                   <option value="90">&gt;90</option>
                 </select>
               </div>
+              <div class="input-group">
+                <label class="input-label">Discovery Mode</label>
+                <select class="select" id="explorerDiscoveryMode" name="discovery_mode">
+                  <option value="all">All Sources</option>
+                  <option value="businesses">Businesses</option>
+                  <option value="foundations">Foundations</option>
+                  <option value="nonprofits">Nonprofits</option>
+                  <option value="wealth_related">Wealth-related Firms</option>
+                </select>
+              </div>
               <div class="input-group" style="margin-bottom:0;">
                 <button type="submit" class="btn btn-primary" style="width:100%;">Search</button>
               </div>
@@ -134,17 +241,51 @@
         </div>
       </div>
 
+      <div class="card explorer-progress-card" id="explorerProgressCard" data-status="idle" aria-live="polite">
+        <div class="card-body">
+          <div class="explorer-progress-shell">
+            <div class="explorer-progress-top">
+              <div class="explorer-progress-title">
+                <span class="explorer-progress-dot" aria-hidden="true"></span>
+                <span id="explorerProgressTitle">Funds Explorer Search Status</span>
+              </div>
+              <div class="explorer-progress-actions">
+                <button type="button" class="btn btn-secondary btn-pill" id="explorerProgressDismissBtn">Dismiss</button>
+              </div>
+            </div>
+            <div class="explorer-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="explorerProgressTrack">
+              <div class="explorer-progress-fill" id="explorerProgressFill"></div>
+            </div>
+            <div class="explorer-progress-line" id="explorerProgressLine">No active search.</div>
+            <div class="explorer-progress-meta" id="explorerProgressMeta">Start a search to run the discovery pipeline and import new organizations.</div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Results</h2>
-          <span class="badge badge-info" id="explorerResultsCount">0 results</span>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted);">
+              <input type="checkbox" id="explorerImportContactsToggle">
+              Also extract contacts after import
+            </label>
+            <button type="button" class="btn btn-secondary btn-pill" id="explorerImportSelectedBtn" disabled>Import Selected</button>
+            <button type="button" class="btn btn-primary btn-pill" id="explorerImportAllBtn" disabled>Import All</button>
+            <span class="badge badge-info" id="explorerResultsCount">0 results</span>
+          </div>
         </div>
         <div class="card-body">
           <div class="explorer-header-row">
             <div>Name</div>
+            <div>Type</div>
             <div>Category</div>
-            <div>Donation Potential Score</div>
+            <div>Donor Score</div>
             <div>Actions</div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+              <span>Select All</span>
+              <input type="checkbox" id="explorerSelectAllResults" aria-label="Select all explorer results">
+            </div>
           </div>
           <div id="explorerResultsList" class="explorer-results-list">
             <div class="explorer-empty">Run a search to load potential donor organizations.</div>

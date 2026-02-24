@@ -84,9 +84,26 @@ def upsert_contact(data: dict) -> dict:
     Returns the upserted row.
     """
     client = get_client()
+    email = data.get("email")
+    if email:
+        existing = (
+            client.table("contacts")
+            .select("id")
+            .eq("email", email)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            result = (
+                client.table("contacts")
+                .update(data)
+                .eq("id", existing.data[0]["id"])
+                .execute()
+            )
+            return result.data[0] if result.data else {}
     result = (
         client.table("contacts")
-        .upsert(data, on_conflict="email")
+        .insert(data)
         .execute()
     )
     return result.data[0] if result.data else {}

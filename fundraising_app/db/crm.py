@@ -59,6 +59,62 @@ def data_source():
     return "supabase" if _client() else "mock"
 
 
+def get_explorer_schema_status():
+    required_columns = [
+        "address", "city", "state", "postal_code",
+        "latitude", "longitude", "email", "phone", "website",
+    ]
+    if not supabase_configured():
+        return {
+            "import_ready": False,
+            "preview_ready": True,
+            "data_source": data_source(),
+            "required_table": "organizations",
+            "required_columns": required_columns,
+            "missing_columns": required_columns,
+            "message": "Supabase is not configured. Preview search can run, but import is unavailable.",
+            "migration": "fundraising_app/db/migrations/2026-02-24_organizations_contact_fields.sql",
+        }
+
+    try:
+        client = get_client()
+    except Exception:
+        return {
+            "import_ready": False,
+            "preview_ready": True,
+            "data_source": data_source(),
+            "required_table": "organizations",
+            "required_columns": required_columns,
+            "missing_columns": required_columns,
+            "message": "Unable to connect to Supabase to validate organizations schema.",
+            "migration": "fundraising_app/db/migrations/2026-02-24_organizations_contact_fields.sql",
+        }
+
+    missing: list[str] = []
+    for col in required_columns:
+        try:
+            client.table("organizations").select(col).limit(1).execute()
+        except Exception:
+            missing.append(col)
+
+    import_ready = len(missing) == 0
+    msg = (
+        "Organizations schema is ready for import."
+        if import_ready
+        else f"Organizations table is missing required columns: {', '.join(missing)}."
+    )
+    return {
+        "import_ready": import_ready,
+        "preview_ready": True,
+        "data_source": data_source(),
+        "required_table": "organizations",
+        "required_columns": required_columns,
+        "missing_columns": missing,
+        "message": msg,
+        "migration": "fundraising_app/db/migrations/2026-02-24_organizations_contact_fields.sql",
+    }
+
+
 def _fetch(table, select="*", filters=None, order_by=None, desc=False, limit=None):
     client = _client()
     if not client:

@@ -11,6 +11,7 @@ const APP_KEYS = {
   primaryColor: 'funds_primary_color',
   brandLogo: 'funds_brand_logo',
   brandName: 'funds_brand_name',
+  explorerDiscoveryJob: 'funds_explorer_discovery_job',
 };
 
 const DEFAULT_NOTIFICATIONS = [
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTooltips();
   initProgressBars();
   initNotifications();
+  initExplorerDiscoveryMonitor();
   initGlobalButtons();
 });
 
@@ -37,6 +39,7 @@ function initAppShell() {
   ensureAccounts();
   ensureSession();
   removeMessagesControl();
+  normalizeSidebarNavigation();
   injectHeaderControls();
   applyRoleAccessRestrictions();
   enforceReadOnlyMode();
@@ -493,6 +496,52 @@ function removeMessagesControl() {
       btn.remove();
     }
   });
+}
+
+function normalizeSidebarNavigation() {
+  const sidebarNav = document.querySelector('.sidebar .sidebar-nav');
+  if (!sidebarNav) return;
+
+  const directNavLinks = Array.from(sidebarNav.children).filter((el) => el.tagName === 'A');
+  const donorsLink = directNavLinks.find((a) => /(^|\/)donors\.html$/i.test(a.getAttribute('href') || ''));
+  if (!donorsLink) return;
+
+  Array.from(sidebarNav.children).forEach((child) => {
+    if (child === donorsLink) return;
+    if (child.tagName !== 'A') return;
+    const href = child.getAttribute('href') || '';
+    if (/(^|\/)funds-explorer\.html$/i.test(href)) {
+      child.remove();
+    }
+  });
+
+  let subnav = sidebarNav.querySelector('.sidebar-subnav[data-global-subnav="donors"]')
+    || Array.from(sidebarNav.querySelectorAll('.sidebar-subnav')).find((el) => el.querySelector('a[href$="funds-explorer.html"]'));
+  if (!subnav) {
+    subnav = document.createElement('div');
+    subnav.className = 'sidebar-subnav';
+    subnav.setAttribute('aria-label', 'Donors sub-pages');
+  }
+  subnav.dataset.globalSubnav = 'donors';
+
+  let explorerLink = subnav.querySelector('a[href$="funds-explorer.html"]');
+  if (!explorerLink) {
+    explorerLink = document.createElement('a');
+    explorerLink.href = 'funds-explorer.html';
+    explorerLink.className = 'nav-item';
+    explorerLink.innerHTML = '<span class="nav-icon">&rsaquo;</span><span class="nav-label">Funds Explorer</span>';
+    subnav.appendChild(explorerLink);
+  }
+
+  if (donorsLink.nextElementSibling !== subnav) {
+    donorsLink.insertAdjacentElement('afterend', subnav);
+  }
+
+  const page = String(location.pathname || '').split('/').pop().toLowerCase() || 'index.html';
+  const onDonorsPage = page === 'donors.html';
+  const onExplorerPage = page === 'funds-explorer.html';
+  donorsLink.classList.toggle('active', onDonorsPage || onExplorerPage);
+  explorerLink.classList.toggle('active', onExplorerPage);
 }
 
 function injectHeaderControls() {
@@ -1009,6 +1058,133 @@ function normalizeAudiences(audiences) {
   return out.length ? Array.from(new Set(out)) : ['all'];
 }
 
+function getExplorerDiscoveryJobState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(APP_KEYS.explorerDiscoveryJob) || 'null');
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch {}
+  return null;
+}
+
+function setExplorerDiscoveryJobState(nextState) {
+  if (!nextState) {
+    localStorage.removeItem(APP_KEYS.explorerDiscoveryJob);
+    window.dispatchEvent(new CustomEvent('funds:explorer-job-update', { detail: null }));
+    return null;
+  }
+  const merged = {
+    ...getExplorerDiscoveryJobState(),
+    ...nextState,
+    updatedAtLocal: new Date().toISOString(),
+  };
+  localStorage.setItem(APP_KEYS.explorerDiscoveryJob, JSON.stringify(merged));
+  window.dispatchEvent(new CustomEvent('funds:explorer-job-update', { detail: merged }));
+  return merged;
+}
+
+function clearExplorerDiscoveryJobState() {
+  setExplorerDiscoveryJobState(null);
+}
+
+let explorerDiscoveryMonitorStarted = false;
+let explorerDiscoveryPollTimer = null;
+let explorerDiscoveryPollInFlight = false;
+
+function initExplorerDiscoveryMonitor() {
+  if (explorerDiscoveryMonitorStarted) return;
+  explorerDiscoveryMonitorStarted = true;
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === APP_KEYS.explorerDiscoveryJob) {
+      window.dispatchEvent(new CustomEvent('funds:explorer-job-update', { detail: getExplorerDiscoveryJobState() }));
+    }
+  });
+
+  const tick = () => { pollExplorerDiscoveryJob().catch(() => {}); };
+  tick();
+  explorerDiscoveryPollTimer = window.setInterval(tick, 2500);
+}
+
+async function pollExplorerDiscoveryJob() {
+  const state = getExplorerDiscoveryJobState();
+  if (!state?.job_id) return;
+  if (explorerDiscoveryPollInFlight) return;
+  const status = String(state.status || '').toLowerCase();
+  if (status && ['completed', 'failed', 'cancelled'].includes(status)) return;
+
+  explorerDiscoveryPollInFlight = true;
+  try {
+    const response = await fetch(`/api/explorer/discover/jobs/${encodeURIComponent(state.job_id)}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        handleExplorerJobMonitorNotification({ ...state, status: 'failed', message: 'Explorer search job no longer exists.' });
+        setExplorerDiscoveryJobState({ ...state, status: 'failed', message: 'Explorer search job no longer exists.' });
+      }
+      return;
+    }
+    const payload = await response.json();
+    const job = payload?.job || {};
+    const next = setExplorerDiscoveryJobState({
+      job_id: job.job_id || state.job_id,
+      status: job.status || state.status || 'running',
+      progress: typeof job.progress === 'number' ? job.progress : (state.progress || 0),
+      step: job.step || state.step || '',
+      message: job.message || state.message || '',
+      result: job.result || state.result || null,
+      error: job.error || null,
+      started_at: job.started_at || state.started_at || null,
+      finished_at: job.finished_at || state.finished_at || null,
+      created_at: job.created_at || state.created_at || null,
+      notifications: state.notifications || {},
+    });
+    handleExplorerJobMonitorNotification(next);
+  } catch {
+    // Silent poll failure; next tick may recover.
+  } finally {
+    explorerDiscoveryPollInFlight = false;
+  }
+}
+
+function handleExplorerJobMonitorNotification(state) {
+  if (!state?.job_id) return;
+  const notificationsState = { ...(state.notifications || {}) };
+  const status = String(state.status || '').toLowerCase();
+  const step = String(state.step || '').toLowerCase();
+  const msg = String(state.message || '').trim();
+  let changed = false;
+
+  if (status === 'warning' && msg && notificationsState.lastWarningMessage !== msg) {
+    notify('Funds Explorer Issue', msg, ['all']);
+    notificationsState.lastWarningMessage = msg;
+    changed = true;
+  }
+
+  if (status === 'failed' && !notificationsState.failed) {
+    notify('Funds Explorer Failed', msg || 'The donor discovery search encountered an error.', ['all']);
+    notificationsState.failed = true;
+    changed = true;
+  }
+
+  if (status === 'completed' && !notificationsState.completed) {
+    const result = state.result || {};
+    const saved = Number(result.saved_count || 0);
+    const matched = Number(result.matched_count || saved);
+    notify('Funds Explorer Complete', `Imported ${saved} organization${saved === 1 ? '' : 's'} (${matched} matched).`, ['all']);
+    notificationsState.completed = true;
+    changed = true;
+  }
+
+  if (step === 'starting' && status === 'running' && !notificationsState.started) {
+    notify('Funds Explorer Started', msg || 'A donor discovery search is now running.', ['all']);
+    notificationsState.started = true;
+    changed = true;
+  }
+
+  if (changed) {
+    setExplorerDiscoveryJobState({ ...state, notifications: notificationsState });
+  }
+}
+
 function initGlobalButtons() {
   document.addEventListener('click', (e) => {
     if (e.target.closest('.btn') && e.target.textContent.includes('Record Donation')) {
@@ -1267,6 +1443,9 @@ window.FundsApp = {
   showToast,
   copyToClipboard,
   notify,
+  getExplorerDiscoveryJobState,
+  setExplorerDiscoveryJobState,
+  clearExplorerDiscoveryJobState,
   getSession,
   setSession,
   getAccounts,

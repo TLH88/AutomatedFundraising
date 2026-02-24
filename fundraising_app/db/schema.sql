@@ -48,6 +48,18 @@ create table if not exists public.organizations (
   constraint organizations_name_website_unique unique (name, website)
 );
 
+-- Existing deployments may have an older `organizations` table created before
+-- contact/address fields were added. `create table if not exists` will not
+-- alter those tables, so apply these idempotent upgrades.
+alter table if exists public.organizations add column if not exists address text;
+alter table if exists public.organizations add column if not exists city text;
+alter table if exists public.organizations add column if not exists state text;
+alter table if exists public.organizations add column if not exists postal_code text;
+alter table if exists public.organizations add column if not exists latitude double precision;
+alter table if exists public.organizations add column if not exists longitude double precision;
+alter table if exists public.organizations add column if not exists email text;
+alter table if exists public.organizations add column if not exists phone text;
+
 create table if not exists public.contacts (
   id uuid primary key default gen_random_uuid(),
   org_id uuid references public.organizations(id) on delete cascade,
