@@ -12,14 +12,23 @@ document.addEventListener('DOMContentLoaded', () => {
   initDateRangeFilter();
 });
 
+const analyticsChartRefs = {
+  donationTrends: null,
+  campaignPerformance: null,
+  donorDemographics: null,
+  donationSources: null,
+};
+
 /**
  * Initialize Donation Trends Chart
  */
 function initDonationTrendsChart() {
   const ctx = document.getElementById('donationTrendsChart');
   if (!ctx) return;
+  analyticsChartRefs.donationTrends?.destroy?.();
+  const theme = getAnalyticsChartTheme();
 
-  new Chart(ctx, {
+  analyticsChartRefs.donationTrends = new Chart(ctx, {
     type: 'line',
     data: {
       labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
@@ -27,14 +36,14 @@ function initDonationTrendsChart() {
         {
           label: 'Donations',
           data: [28500, 35200, 42800, 48950],
-          borderColor: '#10B981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderColor: theme.primary,
+          backgroundColor: `rgba(${theme.primaryRgb}, 0.1)`,
           borderWidth: 3,
           fill: true,
           tension: 0.4,
           pointRadius: 6,
           pointHoverRadius: 8,
-          pointBackgroundColor: '#10B981',
+          pointBackgroundColor: theme.primary,
           pointBorderColor: '#FFFFFF',
           pointBorderWidth: 2
         },
@@ -73,10 +82,10 @@ function initDonationTrendsChart() {
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          backgroundColor: theme.tooltipBg,
           titleColor: '#F3F4F6',
           bodyColor: '#D1D5DB',
-          borderColor: '#374151',
+          borderColor: theme.tooltipBorder,
           borderWidth: 1,
           padding: 12,
           displayColors: true,
@@ -129,15 +138,17 @@ function initDonationTrendsChart() {
 function initCampaignPerformanceChart() {
   const ctx = document.getElementById('campaignPerformanceChart');
   if (!ctx) return;
+  analyticsChartRefs.campaignPerformance?.destroy?.();
+  const theme = getAnalyticsChartTheme();
 
-  new Chart(ctx, {
+  analyticsChartRefs.campaignPerformance = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Completed', 'In Progress', 'At Risk', 'Draft'],
       datasets: [{
         data: [45, 35, 15, 5],
         backgroundColor: [
-          '#10B981',
+          theme.primary,
           '#3B82F6',
           '#F59E0B',
           '#6B7280'
@@ -165,10 +176,10 @@ function initCampaignPerformanceChart() {
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          backgroundColor: theme.tooltipBg,
           titleColor: '#F3F4F6',
           bodyColor: '#D1D5DB',
-          borderColor: '#374151',
+          borderColor: theme.tooltipBorder,
           borderWidth: 1,
           padding: 12,
           callbacks: {
@@ -188,8 +199,10 @@ function initCampaignPerformanceChart() {
 function initDonorDemographicsChart() {
   const ctx = document.getElementById('donorDemographicsChart');
   if (!ctx) return;
+  analyticsChartRefs.donorDemographics?.destroy?.();
+  const theme = getAnalyticsChartTheme();
 
-  new Chart(ctx, {
+  analyticsChartRefs.donorDemographics = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'],
@@ -199,7 +212,7 @@ function initDonorDemographicsChart() {
         backgroundColor: [
           'rgba(139, 92, 246, 0.8)',
           'rgba(59, 130, 246, 0.8)',
-          'rgba(16, 185, 129, 0.8)',
+          `rgba(${theme.primaryRgb}, 0.8)`,
           'rgba(245, 158, 11, 0.8)',
           'rgba(239, 68, 68, 0.8)',
           'rgba(107, 114, 128, 0.8)'
@@ -207,7 +220,7 @@ function initDonorDemographicsChart() {
         borderColor: [
           '#8B5CF6',
           '#3B82F6',
-          '#10B981',
+          theme.primary,
           '#F59E0B',
           '#EF4444',
           '#6B7280'
@@ -224,10 +237,10 @@ function initDonorDemographicsChart() {
           display: false
         },
         tooltip: {
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          backgroundColor: theme.tooltipBg,
           titleColor: '#F3F4F6',
           bodyColor: '#D1D5DB',
-          borderColor: '#374151',
+          borderColor: theme.tooltipBorder,
           borderWidth: 1,
           padding: 12
         }
@@ -271,15 +284,17 @@ function initDonorDemographicsChart() {
 function initDonationSourcesChart() {
   const ctx = document.getElementById('donationSourcesChart');
   if (!ctx) return;
+  analyticsChartRefs.donationSources?.destroy?.();
+  const theme = getAnalyticsChartTheme();
 
-  new Chart(ctx, {
+  analyticsChartRefs.donationSources = new Chart(ctx, {
     type: 'pie',
     data: {
       labels: ['Website', 'Social Media', 'Events', 'Email Campaigns', 'Direct Mail'],
       datasets: [{
         data: [42, 25, 18, 10, 5],
         backgroundColor: [
-          '#10B981',
+          theme.primary,
           '#3B82F6',
           '#F59E0B',
           '#8B5CF6',
@@ -308,10 +323,10 @@ function initDonationSourcesChart() {
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          backgroundColor: theme.tooltipBg,
           titleColor: '#F3F4F6',
           bodyColor: '#D1D5DB',
-          borderColor: '#374151',
+          borderColor: theme.tooltipBorder,
           borderWidth: 1,
           padding: 12,
           callbacks: {
@@ -345,4 +360,25 @@ function initDateRangeFilter() {
       }
     });
   }
+}
+
+window.addEventListener('funds:primary-color-change', () => {
+  if (!document.getElementById('donationTrendsChart')) return;
+  initDonationTrendsChart();
+  initCampaignPerformanceChart();
+  initDonorDemographicsChart();
+  initDonationSourcesChart();
+});
+
+function getAnalyticsChartTheme() {
+  const styles = getComputedStyle(document.documentElement);
+  const themeMode = document.documentElement.getAttribute('data-theme') || 'dark';
+  const primary = (styles.getPropertyValue('--accent-green') || '').trim() || '#10B981';
+  const primaryRgb = (styles.getPropertyValue('--accent-green-rgb') || '').trim() || '16, 185, 129';
+  return {
+    primary,
+    primaryRgb,
+    tooltipBg: themeMode === 'light' ? 'rgba(255, 255, 255, 0.96)' : 'rgba(17, 24, 39, 0.95)',
+    tooltipBorder: themeMode === 'light' ? '#D1D5DB' : '#374151',
+  };
 }

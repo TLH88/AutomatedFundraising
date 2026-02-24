@@ -42,6 +42,8 @@ def main() -> int:
             failed += 1
 
     create_checks = [
+        ("/api/donations", {"amount": 25, "donation_type": "one-time", "source": "manual"}),
+        ("/api/donors", {"full_name": "Smoke Donor", "email": "donor-smoke@example.org", "tier": "friend"}),
         ("/api/campaigns", {"name": "Smoke Campaign", "goal": 5000}),
         ("/api/animals", {"name": "Smoke Animal", "species": "dog"}),
         ("/api/events", {"name": "Smoke Event", "type": "fundraiser"}),

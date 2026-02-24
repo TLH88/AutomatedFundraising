@@ -11,9 +11,14 @@ from __future__ import annotations
 import io
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+# Load local app env file for both `python server.py` and package imports.
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 try:
     from db import crm  # when running `python server.py` from fundraising_app/
@@ -41,12 +46,12 @@ def _json_error(message: str, status: int = 400):
 
 @app.route("/")
 def serve_dashboard():
-    return send_from_directory("frontend", "index.html")
+    return send_from_directory(app.static_folder, "index.html")
 
 
 @app.route("/<path:path>")
 def serve_static(path: str):
-    return send_from_directory("frontend", path)
+    return send_from_directory(app.static_folder, path)
 
 
 # ---------------------------------------------------------------------------
@@ -68,6 +73,13 @@ def fundraising_total():
 def recent_donations():
     limit = int(request.args.get("limit", 10))
     return _json_ok(crm.get_recent_donations(limit=limit))
+
+
+@app.route("/api/donations", methods=["POST"])
+def create_donation():
+    payload = request.get_json(silent=True) or {}
+    created = crm.create_donation(payload)
+    return _json_ok({"donation": created}, status=201)
 
 
 @app.route("/api/campaigns/active")
@@ -95,8 +107,12 @@ def recent_updates():
 # ---------------------------------------------------------------------------
 
 
-@app.route("/api/donors", methods=["GET"])
+@app.route("/api/donors", methods=["GET", "POST"])
 def get_donors():
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or {}
+        created = crm.create_donor(payload)
+        return _json_ok({"donor": created}, status=201)
     limit = int(request.args.get("limit", 100))
     return _json_ok(crm.get_donors(limit=limit))
 
@@ -184,8 +200,31 @@ def team():
         limit = int(request.args.get("limit", 100))
         return _json_ok(crm.get_team(limit=limit))
     payload = request.get_json(silent=True) or {}
-    created = crm.invite_team_member(payload)
+    create_mode = str(payload.get("mode") or "").lower()
+    if create_mode == "member" or str(payload.get("status", "")).lower() == "active":
+        created = crm.create_team_member(payload)
+    else:
+        created = crm.invite_team_member(payload)
     return _json_ok({"member": created}, status=201)
+
+
+@app.route("/api/team/<member_id>", methods=["GET", "PUT", "DELETE"])
+def team_member(member_id: str):
+    if request.method == "GET":
+        member = crm.get_team_member(member_id)
+        if not member:
+            return _json_error("Team member not found", 404)
+        return _json_ok({"member": member})
+    if request.method == "PUT":
+        payload = request.get_json(silent=True) or {}
+        updated = crm.update_team_member(member_id, payload)
+        if not updated:
+            return _json_error("Team member not found", 404)
+        return _json_ok({"member": updated})
+    deleted = crm.delete_team_member(member_id)
+    if not deleted:
+        return _json_error("Team member not found", 404)
+    return _json_ok({"deleted": True, "id": member_id})
 
 
 # ---------------------------------------------------------------------------

@@ -2,8 +2,14 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Funds 4 Furry Friends - Non-Profit Fundraising Dashboard">
+    <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('funds_theme');
+        if (theme) document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>  <meta name="description" content="Funds 4 Furry Friends - Non-Profit Fundraising Dashboard">
   <title>Dashboard | Funds 4 Furry Friends</title>
 
   <!-- Fonts -->
@@ -152,7 +158,7 @@
           </div>
 
           <div class="welcome-right">
-            <button class="btn btn-secondary btn-pill">
+            <button class="btn btn-secondary btn-pill" id="recordDonationBtn" data-write-action="true">
               <span class="icon">💰</span>
               Record Donation
             </button>
@@ -233,16 +239,16 @@
               <h3 class="card-title">Recent Donations</h3>
               <p class="card-subtitle">Latest contributions to your campaigns</p>
             </div>
-            <div class="btn-group">
-              <button class="btn btn-pill btn-primary">All</button>
-              <button class="btn btn-pill btn-secondary">One-time</button>
-              <button class="btn btn-pill btn-secondary">Recurring</button>
-              <button class="btn btn-pill btn-secondary">Major Gifts</button>
+            <div class="btn-group" id="recentDonationsFilters">
+              <button class="btn btn-pill btn-primary" data-donation-filter="all">All</button>
+              <button class="btn btn-pill btn-secondary" data-donation-filter="one-time">One-time</button>
+              <button class="btn btn-pill btn-secondary" data-donation-filter="recurring">Recurring</button>
+              <button class="btn btn-pill btn-secondary" data-donation-filter="major">Major Gifts</button>
             </div>
           </div>
           <div class="card-body">
             <div class="table-container">
-              <table class="table">
+              <table class="table" id="recentDonationsTable">
                 <thead>
                   <tr>
                     <th>Donor</th>
@@ -250,10 +256,9 @@
                     <th>Amount</th>
                     <th>Date</th>
                     <th>Type</th>
-                    <th>Action</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody id="recentDonationsTableBody">
                   <tr>
                     <td>
                       <div class="flex gap-md" style="align-items: center;">
@@ -277,9 +282,6 @@
                     <td>
                       <span class="badge badge-success">Monthly</span>
                     </td>
-                    <td>
-                      <button class="btn btn-secondary btn-pill">Send Thanks</button>
-                    </td>
                   </tr>
                   <tr>
                     <td>
@@ -302,9 +304,6 @@
                     <td class="text-secondary">Today, 11:15 AM</td>
                     <td>
                       <span class="badge badge-info">One-time</span>
-                    </td>
-                    <td>
-                      <button class="btn btn-secondary btn-pill">Send Thanks</button>
                     </td>
                   </tr>
                   <tr>
@@ -330,9 +329,6 @@
                     <td>
                       <span class="badge badge-success">Monthly</span>
                     </td>
-                    <td>
-                      <button class="btn btn-secondary btn-pill">Send Thanks</button>
-                    </td>
                   </tr>
                   <tr>
                     <td>
@@ -356,9 +352,6 @@
                     <td>
                       <span class="badge badge-info">One-time</span>
                     </td>
-                    <td>
-                      <button class="btn btn-secondary btn-pill">Send Thanks</button>
-                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -370,10 +363,10 @@
         <div class="card fade-in stagger-4">
           <div class="card-header">
             <h3 class="card-title">Recent Updates</h3>
-            <a href="#" class="text-impact font-medium">View all →</a>
+            <a href="stories.html" class="text-impact font-medium">View all →</a>
           </div>
           <div class="card-body">
-            <div class="news-list">
+            <div class="news-list" id="recentUpdatesList">
               <div class="news-item">
                 <div class="news-image" style="background: linear-gradient(135deg, #10B981, #059669); border-radius: 8px; width: 60px; height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">
                   🎉
@@ -431,7 +424,7 @@
             <p class="text-muted" style="margin-top: 8px; font-size: var(--text-caption);">
               Top performer: Medical Fund
             </p>
-            <a href="#" class="text-impact font-medium" style="margin-top: 12px; display: inline-block;">View all →</a>
+            <a href="campaigns.html?status=all" id="activeCampaignsViewAllLink" class="text-impact font-medium" style="margin-top: 12px; display: inline-block;">View all →</a>
           </div>
         </div>
 
@@ -474,5 +467,8 @@
   <!-- JavaScript -->
   <script src="js/main.js"></script>
   <script src="js/chart.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
 </html>
+
+

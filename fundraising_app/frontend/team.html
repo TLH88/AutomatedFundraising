@@ -2,8 +2,14 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Team Management - Funds 4 Furry Friends</title>
+    <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('funds_theme');
+        if (theme) document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>  <title>Team Management - Funds 4 Furry Friends</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -52,30 +58,31 @@
       <div class="page-header">
         <div><h1 class="page-title">Team Management</h1><p class="page-subtitle">Manage team members, roles, and permissions</p></div>
         <div class="page-actions">
-          <button class="btn btn-primary" onclick="openModal('inviteModal')"><span>➕</span><span>Invite Member</span></button>
+          <button class="btn btn-secondary" id="newMemberBtn"><span>👤</span><span>New Member</span></button>
+          <button class="btn btn-primary" id="inviteMemberBtn"><span>➕</span><span>Invite Member</span></button>
         </div>
       </div>
 
       <div class="team-stats-grid">
         <div class="stat-card">
           <div class="stat-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">👥</div>
-          <div class="stat-card-content"><p class="stat-card-label">Total Members</p><h3 class="stat-card-value">12</h3></div>
+          <div class="stat-card-content"><p class="stat-card-label">Total Members</p><h3 class="stat-card-value" id="teamStatTotal">12</h3></div>
         </div>
         <div class="stat-card">
           <div class="stat-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">⚡</div>
-          <div class="stat-card-content"><p class="stat-card-label">Active Today</p><h3 class="stat-card-value">8</h3></div>
+          <div class="stat-card-content"><p class="stat-card-label">Active Today</p><h3 class="stat-card-value" id="teamStatActive">8</h3></div>
         </div>
         <div class="stat-card">
           <div class="stat-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">📧</div>
-          <div class="stat-card-content"><p class="stat-card-label">Pending Invites</p><h3 class="stat-card-value">3</h3></div>
+          <div class="stat-card-content"><p class="stat-card-label">Pending Invites</p><h3 class="stat-card-value" id="teamStatInvited">3</h3></div>
         </div>
         <div class="stat-card">
           <div class="stat-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">🔐</div>
-          <div class="stat-card-content"><p class="stat-card-label">Admin Users</p><h3 class="stat-card-value">4</h3></div>
+          <div class="stat-card-content"><p class="stat-card-label">Admin Users</p><h3 class="stat-card-value" id="teamStatAdmins">4</h3></div>
         </div>
       </div>
 
-      <div class="team-list">
+      <div class="team-list" id="teamList">
         <div class="team-member-card">
           <div class="team-member-avatar"><img src="https://i.pravatar.cc/150?img=12" alt="User"></div>
           <div class="team-member-info">
@@ -140,9 +147,11 @@
     <div class="modal-content">
       <div class="modal-header"><h2 class="modal-title">Invite Team Member</h2><button class="modal-close" onclick="closeModal('inviteModal')">×</button></div>
       <div class="modal-body">
-        <form class="form">
-          <div class="input-group"><label class="label">Email Address *</label><input type="email" class="input" required></div>
-          <div class="input-group"><label class="label">Role *</label><select class="input" required><option value="">Select role</option><option value="admin">Administrator</option><option value="editor">Editor</option><option value="viewer">Viewer</option></select></div>
+        <form class="form" id="inviteMemberForm">
+          <div class="input-group"><label class="label">Full Name *</label><input type="text" class="input" name="full_name" required></div>
+          <div class="input-group"><label class="label">Email Address *</label><input type="email" class="input" name="email" required></div>
+          <div class="input-group"><label class="label">Title</label><input type="text" class="input" name="title" placeholder="Coordinator"></div>
+          <div class="input-group"><label class="label">Role *</label><select class="input" name="role" required><option value="">Select role</option><option value="administrator">Administrator</option><option value="editor">Member</option><option value="viewer">Visitor</option></select></div>
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="closeModal('inviteModal')">Cancel</button>
             <button type="submit" class="btn btn-primary">Send Invite</button>
@@ -153,43 +162,7 @@
   </div>
 
   <script src="js/main.js"></script>
-  <script>
-    function openModal(id) { document.getElementById(id)?.classList.add('active'); }
-    function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
-
-    function showToast(message) {
-      const toast = document.createElement('div');
-      toast.textContent = message;
-      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--accent-green);color:white;padding:16px 24px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:9999;font-weight:500;transition:opacity 0.3s ease;';
-      document.body.appendChild(toast);
-      setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
-    }
-
-    // Team member card button handlers via event delegation
-    document.querySelector('.team-list')?.addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-
-      const text = btn.textContent.trim();
-      if (text === 'Edit') {
-        showToast('Opening member editor...');
-      } else if (text === 'Remove') {
-        if (confirm('Are you sure you want to remove this team member?')) {
-          showToast('Member removed');
-        }
-      }
-    });
-
-    // Invite form submit handler
-    const inviteForm = document.querySelector('#inviteModal form');
-    if (inviteForm) {
-      inviteForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        showToast('Invitation sent!');
-        closeModal('inviteModal');
-        e.target.reset();
-      });
-    }
-  </script>
+  <script src="js/team.js"></script>
 </body>
 </html>
+

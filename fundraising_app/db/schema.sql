@@ -89,7 +89,9 @@ create table if not exists public.donors (
   external_ref text,
   first_name text not null,
   last_name text,
-  display_name text generated always as (trim(concat(first_name, ' ', coalesce(last_name, '')))) stored,
+  display_name text generated always as (
+    btrim(first_name || ' ' || coalesce(last_name, ''))
+  ) stored,
   email text unique,
   phone text,
   donor_tier text not null default 'friend' check (donor_tier in ('hero','champion','supporter','friend')),
@@ -283,7 +285,7 @@ create table if not exists public.team_members (
   full_name text not null,
   email text not null unique,
   role text not null default 'viewer' check (role in ('administrator','editor','viewer')),
-  status text not null default 'active' check (status in ('active','inactive','invited')),
+  status text not null default 'active' check (status in ('active','inactive','invited','disabled')),
   title text,
   avatar_url text,
   last_active_at timestamptz,

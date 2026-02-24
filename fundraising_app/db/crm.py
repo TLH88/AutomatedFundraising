@@ -14,6 +14,9 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - package import fallback
     from .client import get_client
 
+_CRM_SCHEMA_CHECKED = False
+_CRM_SCHEMA_AVAILABLE = False
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -35,10 +38,19 @@ def supabase_configured() -> bool:
 
 
 def _client():
+    global _CRM_SCHEMA_CHECKED, _CRM_SCHEMA_AVAILABLE
     if not supabase_configured():
         return None
     try:
-        return get_client()
+        client = get_client()
+        if not _CRM_SCHEMA_CHECKED:
+            try:
+                client.table("campaigns").select("id").limit(1).execute()
+                _CRM_SCHEMA_AVAILABLE = True
+            except Exception:
+                _CRM_SCHEMA_AVAILABLE = False
+            _CRM_SCHEMA_CHECKED = True
+        return client if _CRM_SCHEMA_AVAILABLE else None
     except Exception:
         return None
 
@@ -66,15 +78,43 @@ def _fetch(table, select="*", filters=None, order_by=None, desc=False, limit=Non
         q = q.order(order_by, desc=desc)
     if limit:
         q = q.limit(limit)
-    return (q.execute().data or [])
+    try:
+        return (q.execute().data or [])
+    except Exception:
+        return []
 
 
 def _insert(table, payload):
     client = _client()
     if not client:
         return {"id": f"mock-{table}-{int(_now().timestamp())}", "mock": True, **payload}
-    result = client.table(table).insert(payload).execute()
-    return (result.data or [{}])[0]
+    try:
+        result = client.table(table).insert(payload).execute()
+        return (result.data or [{}])[0]
+    except Exception:
+        return {"id": f"mock-{table}-{int(_now().timestamp())}", "mock": True, **payload}
+
+
+def _update(table, row_id, payload):
+    client = _client()
+    if not client:
+        return {"id": row_id, "mock": True, **payload}
+    try:
+        result = client.table(table).update(payload).eq("id", row_id).execute()
+        return (result.data or [{"id": row_id, **payload}])[0]
+    except Exception:
+        return {"id": row_id, "mock": True, **payload}
+
+
+def _delete(table, row_id):
+    client = _client()
+    if not client:
+        return True
+    try:
+        client.table(table).delete().eq("id", row_id).execute()
+        return True
+    except Exception:
+        return False
 
 
 MOCK = {
@@ -183,6 +223,95 @@ def get_recent_donations(limit=10):
     return {"donations": out}
 
 
+def create_donation(payload):
+    client = _client()
+    amount = float(payload.get("amount") or 0)
+    if amount <= 0:
+        amount = 1.0
+
+    donation_type = str(payload.get("donation_type") or payload.get("type") or "one-time").lower()
+    source = str(payload.get("source") or "manual").lower()
+    payment_status = str(payload.get("payment_status") or "completed").lower()
+    donor_id = payload.get("donor_id")
+    campaign_id = payload.get("campaign_id")
+    donation_date = payload.get("donation_date") or _now().isoformat()
+
+    if not client:
+        return {
+            "id": f"mock-donation-{int(_now().timestamp())}",
+            "donor": payload.get("donor_name") or "Anonymous",
+            "amount": amount,
+            "campaign": payload.get("campaign_name") or "General Fund",
+            "category": payload.get("category") or "general",
+            "date": donation_date,
+            "type": donation_type.title(),
+            "recurring": donation_type in {"monthly", "quarterly", "annual"},
+            "major_gift": amount >= 1000,
+            "mock": True,
+        }
+
+    inserted = _insert("donations", {
+        "donor_id": donor_id,
+        "campaign_id": campaign_id,
+        "amount": amount,
+        "donation_date": donation_date,
+        "donation_type": donation_type,
+        "source": source,
+        "payment_status": payment_status,
+        "receipt_sent": bool(payload.get("receipt_sent", False)),
+        "is_major_gift": bool(payload.get("is_major_gift", amount >= 1000)),
+        "notes": payload.get("notes"),
+    })
+
+    # Best-effort aggregate updates for dashboard convenience.
+    try:
+        if donor_id:
+            donor_rows = _fetch("donors", select="id,total_donated", filters=[{"col": "id", "val": donor_id}], limit=1)
+            if donor_rows:
+                current_total = float(donor_rows[0].get("total_donated") or 0)
+                donor_update = {
+                    "total_donated": round(current_total + amount, 2),
+                    "last_donation_date": str(donation_date)[:10],
+                }
+                if current_total <= 0:
+                    donor_update["first_donation_date"] = str(donation_date)[:10]
+                client.table("donors").update(donor_update).eq("id", donor_id).execute()
+        if campaign_id:
+            camp_rows = _fetch("campaigns", select="id,raised_amount", filters=[{"col": "id", "val": campaign_id}], limit=1)
+            if camp_rows:
+                current_raised = float(camp_rows[0].get("raised_amount") or 0)
+                client.table("campaigns").update({
+                    "raised_amount": round(current_raised + amount, 2),
+                }).eq("id", campaign_id).execute()
+    except Exception:
+        pass
+
+    donor_name = payload.get("donor_name") or "Anonymous"
+    campaign_name = payload.get("campaign_name") or "General Fund"
+    category = payload.get("category") or "general"
+    if donor_id:
+        d = _fetch("donors", select="id,display_name", filters=[{"col": "id", "val": donor_id}], limit=1)
+        if d:
+            donor_name = d[0].get("display_name") or donor_name
+    if campaign_id:
+        c = _fetch("campaigns", select="id,name,category", filters=[{"col": "id", "val": campaign_id}], limit=1)
+        if c:
+            campaign_name = c[0].get("name") or campaign_name
+            category = c[0].get("category") or category
+
+    return {
+        "id": inserted.get("id"),
+        "donor": donor_name,
+        "amount": amount,
+        "campaign": campaign_name,
+        "category": category,
+        "date": inserted.get("donation_date") or donation_date,
+        "type": donation_type.title(),
+        "recurring": donation_type in {"monthly", "quarterly", "annual"},
+        "major_gift": bool(inserted.get("is_major_gift", amount >= 1000)),
+    }
+
+
 def get_campaigns(limit=100):
     if not _client():
         return {"campaigns": MOCK["campaigns"][:limit], "total": len(MOCK["campaigns"])}
@@ -274,6 +403,55 @@ def get_donor_stats():
 def get_donor_detail(donor_id):
     rows = get_donors(limit=1, donor_id=donor_id)["donors"]
     return rows[0] if rows else None
+
+
+def create_donor(payload):
+    full_name = (payload.get("full_name") or payload.get("name") or "").strip()
+    if not full_name:
+        first_name = "New"
+        last_name = "Donor"
+    else:
+        parts = full_name.split()
+        first_name = parts[0]
+        last_name = " ".join(parts[1:]) if len(parts) > 1 else None
+
+    initial_amount = float(payload.get("initial_donation") or payload.get("total_donated") or 0)
+    today = _now().date().isoformat()
+    created = _insert("donors", {
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": payload.get("email"),
+        "phone": payload.get("phone"),
+        "donor_tier": payload.get("tier") or payload.get("donor_tier") or "friend",
+        "donor_status": payload.get("status") or "active",
+        "donation_type_preference": payload.get("donation_type"),
+        "engagement_score": int(payload.get("engagement_score") or 50),
+        "total_donated": initial_amount,
+        "first_donation_date": (today if initial_amount > 0 else None),
+        "last_donation_date": (today if initial_amount > 0 else None),
+        "notes": payload.get("notes"),
+    })
+
+    # Normalize response shape for frontend regardless of data source.
+    donor_name = created.get("display_name") or " ".join(
+        p for p in [created.get("first_name"), created.get("last_name")] if p
+    ).strip() or full_name or "New Donor"
+    return {
+        "id": created.get("id"),
+        "name": donor_name,
+        "email": created.get("email"),
+        "phone": created.get("phone"),
+        "tier": created.get("donor_tier") or payload.get("tier") or "friend",
+        "status": created.get("donor_status") or "active",
+        "total_donated": float(created.get("total_donated") or initial_amount or 0),
+        "first_donation_date": created.get("first_donation_date"),
+        "last_donation_date": created.get("last_donation_date"),
+        "donation_type": created.get("donation_type_preference"),
+        "engagement_score": int(created.get("engagement_score") or 50),
+        "notes": created.get("notes"),
+        "tags": payload.get("tags") or [],
+        "mock": bool(created.get("mock")),
+    }
 
 
 def get_animals(limit=100):
@@ -368,27 +546,164 @@ def create_report(payload):
 def get_team(limit=100):
     if not _client():
         return {"team": MOCK["team"][:limit], "total": len(MOCK["team"])}
-    return {"team": _fetch("team_members", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("team_members", select="id", limit=5000))}
+    rows = _fetch("team_members", order_by="updated_at", desc=True, limit=limit)
+    out = []
+    for r in rows:
+        out.append(_normalize_team_member(r))
+    return {"team": out, "total": len(_fetch("team_members", select="id", limit=5000))}
+
+
+def get_team_member(member_id):
+    if not _client():
+        rows = [m for m in MOCK["team"] if str(m.get("id")) == str(member_id)]
+        return rows[0] if rows else None
+    rows = _fetch("team_members", filters=[{"col": "id", "val": member_id}], limit=1)
+    return _normalize_team_member(rows[0]) if rows else None
 
 
 def invite_team_member(payload):
-    return _insert("team_members", {
+    created = _insert("team_members", {
         "full_name": payload.get("full_name") or payload.get("name") or "New Team Member",
         "email": payload.get("email"),
-        "role": payload.get("role", "viewer"),
+        "role": _map_team_role(payload.get("role", "viewer")),
         "status": payload.get("status", "invited"),
         "title": payload.get("title"),
+        "avatar_url": payload.get("avatar_url"),
         "invited_at": _now().isoformat(),
+        "joined_at": payload.get("joined_at"),
     })
+    return _normalize_team_member(created)
+
+
+def create_team_member(payload):
+    created = _insert("team_members", {
+        "full_name": payload.get("full_name") or payload.get("name") or "New Team Member",
+        "email": payload.get("email"),
+        "role": _map_team_role(payload.get("role", "viewer")),
+        "status": payload.get("status") or "active",
+        "title": payload.get("title"),
+        "avatar_url": payload.get("avatar_url"),
+        "joined_at": payload.get("joined_at") or _now().isoformat(),
+        "last_active_at": payload.get("last_active_at"),
+    })
+    return _normalize_team_member(created)
+
+
+def update_team_member(member_id, payload):
+    if not _client():
+        for idx, member in enumerate(MOCK["team"]):
+            if str(member.get("id")) == str(member_id):
+                updated = {
+                    **member,
+                    "full_name": payload.get("full_name", member.get("full_name") or member.get("name")),
+                    "email": payload.get("email", member.get("email")),
+                    "role": payload.get("role", member.get("role")),
+                    "status": payload.get("status", member.get("status")),
+                    "title": payload.get("title", member.get("title")),
+                    "avatar_url": payload.get("avatar_url", member.get("avatar_url")),
+                }
+                MOCK["team"][idx] = updated
+                return _normalize_team_member(updated)
+        return None
+
+    existing = _fetch("team_members", filters=[{"col": "id", "val": member_id}], limit=1)
+    if not existing:
+        return None
+    current = existing[0]
+    update_payload = {}
+    if "full_name" in payload or "name" in payload:
+        update_payload["full_name"] = payload.get("full_name") or payload.get("name") or current.get("full_name")
+    for field in ["email", "status", "title", "avatar_url", "last_active_at", "joined_at"]:
+        if field in payload:
+            update_payload[field] = payload.get(field)
+    if "role" in payload:
+        update_payload["role"] = _map_team_role(payload.get("role"))
+    if not update_payload:
+        return _normalize_team_member(current)
+    updated = _update("team_members", member_id, update_payload)
+    merged = {**current, **updated}
+    return _normalize_team_member(merged)
+
+
+def delete_team_member(member_id):
+    if not _client():
+        for idx, member in enumerate(MOCK["team"]):
+            if str(member.get("id")) == str(member_id):
+                updated = {**member, "status": "disabled"}
+                MOCK["team"][idx] = updated
+                return True
+        return False
+    _update("team_members", member_id, {"status": "disabled"})
+    verify = _fetch("team_members", select="id,status", filters=[{"col": "id", "val": member_id}], limit=1)
+    if verify and str((verify[0] or {}).get("status") or "").lower() == "disabled":
+      return True
+    _update("team_members", member_id, {"status": "inactive"})
+    verify = _fetch("team_members", select="id,status", filters=[{"col": "id", "val": member_id}], limit=1)
+    return bool(verify and str((verify[0] or {}).get("status") or "").lower() == "inactive")
+
+
+def _map_team_role(role):
+    val = str(role or "viewer").lower().strip()
+    if val in {"member", "editor"}:
+        return "editor"
+    if val in {"administrator", "admin"}:
+        return "administrator"
+    return "viewer"
+
+
+def _normalize_team_member(row):
+    if not row:
+        return row
+    full_name = row.get("full_name") or row.get("name") or "Team Member"
+    role = str(row.get("role") or "viewer").lower()
+    role_label = "Administrator" if role == "administrator" else ("Member" if role == "editor" else "Visitor")
+    return {
+        "id": row.get("id"),
+        "full_name": full_name,
+        "name": full_name,
+        "email": row.get("email"),
+        "role": role,
+        "role_label": role_label,
+        "status": row.get("status") or "active",
+        "title": row.get("title"),
+        "avatar_url": row.get("avatar_url"),
+        "last_active_at": row.get("last_active_at"),
+        "joined_at": row.get("joined_at"),
+        "invited_at": row.get("invited_at"),
+    }
 
 
 def get_recent_updates():
     if not _client():
-        return {"updates": [{"id": 1, "title": "Max finds forever home!", "category": "Success Story", "time": "2 hours ago", "icon": "story"}, {"id": 2, "title": "Adoption Event This Weekend", "category": "Event", "time": "5 hours ago", "icon": "event"}, {"id": 3, "title": "Goal Reached: 100 Rescues!", "category": "Milestone", "time": "1 day ago", "icon": "milestone"}]}
+        return {"updates": [
+            {"id": "story-1", "title": "Max finds forever home!", "category": "Success Story", "time": "2 hours ago", "icon": "story", "page": "stories.html", "record_type": "story", "summary": "Success story published for Max's adoption."},
+            {"id": "event-1", "title": "Adoption Event This Weekend", "category": "Event", "time": "5 hours ago", "icon": "event", "page": "events.html", "record_type": "event", "summary": "Upcoming adoption event was published and is collecting RSVPs."},
+            {"id": "milestone-1", "title": "Goal Reached: 100 Rescues!", "category": "Milestone", "time": "1 day ago", "icon": "milestone", "page": "analytics.html", "record_type": "milestone", "summary": "Rescue milestone reached and highlighted for dashboard visibility."},
+        ]}
     stories = _fetch("success_stories", select="id,title,published_at", filters=[{"col": "status", "val": "published"}], order_by="published_at", desc=True, limit=3)
     events = _fetch("events", select="id,name,starts_at", order_by="starts_at", desc=False, limit=3)
-    updates = [{"id": s["id"], "title": s["title"], "category": "Success Story", "time": "recent", "icon": "story"} for s in stories]
-    updates.extend({"id": e["id"], "title": e["name"], "category": "Event", "time": "upcoming", "icon": "event"} for e in events)
+    updates = [{
+        "id": s["id"],
+        "title": s["title"],
+        "category": "Success Story",
+        "time": "recent",
+        "icon": "story",
+        "page": "stories.html",
+        "record_type": "story",
+        "record_id": s["id"],
+        "summary": "Published success story update.",
+    } for s in stories]
+    updates.extend({
+        "id": e["id"],
+        "title": e["name"],
+        "category": "Event",
+        "time": "upcoming",
+        "icon": "event",
+        "page": "events.html",
+        "record_type": "event",
+        "record_id": e["id"],
+        "summary": "Upcoming event update.",
+    } for e in events)
     return {"updates": updates[:6]}
 
 

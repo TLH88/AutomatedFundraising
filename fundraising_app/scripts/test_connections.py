@@ -18,6 +18,19 @@ import os
 import sys
 from typing import Dict, List, Tuple
 from datetime import datetime
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(ROOT / ".env")
+
+for path in (str(ROOT), str(ROOT.parent)):
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # Color codes for terminal output
 GREEN = "\033[92m"

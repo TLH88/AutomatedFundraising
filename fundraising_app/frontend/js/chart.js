@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initFundraisingChart();
 });
 
+let fundraisingChartInstance = null;
+
 /**
  * Initialize Fundraising Trends Chart
  */
@@ -20,6 +22,7 @@ async function initFundraisingChart() {
 
   const chartData = await fetchFundraisingTrendData();
 
+  const theme = getChartTheme();
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -28,27 +31,23 @@ async function initFundraisingChart() {
         {
           label: 'Fundraising Amount',
           data: chartData.values,
-          borderColor: '#10B981',
+          borderColor: theme.primary,
           backgroundColor: (context) => {
-            const ctx = context.chart.ctx;
-            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-            gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-            return gradient;
+            return createPrimaryAreaGradient(context.chart, theme);
           },
           borderWidth: 3,
           fill: true,
           tension: 0.4,
           pointRadius: 0,
           pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#10B981',
+          pointHoverBackgroundColor: theme.primary,
           pointHoverBorderColor: '#FFFFFF',
           pointHoverBorderWidth: 2,
         },
         {
           label: 'Goal',
           data: chartData.goal,
-          borderColor: 'rgba(52, 211, 153, 0.6)',
+          borderColor: theme.goalLine,
           backgroundColor: 'transparent',
           borderWidth: 2,
           borderDash: [8, 4],
@@ -72,7 +71,7 @@ async function initFundraisingChart() {
           position: 'top',
           align: 'end',
           labels: {
-            color: '#D1D5DB',
+            color: theme.legendText,
             font: {
               family: "'Nunito', sans-serif",
               size: 12,
@@ -85,7 +84,7 @@ async function initFundraisingChart() {
         },
         tooltip: {
           enabled: true,
-          backgroundColor: 'rgba(20, 23, 28, 0.95)',
+          backgroundColor: theme.tooltipBg,
           backdropFilter: 'blur(40px)',
           titleColor: '#FFFFFF',
           titleFont: {
@@ -93,14 +92,14 @@ async function initFundraisingChart() {
             size: 14,
             weight: '600',
           },
-          bodyColor: '#D1D5DB',
+          bodyColor: theme.legendText,
           bodyFont: {
             family: "'SF Mono', monospace",
             size: 13,
             weight: '500',
           },
           padding: 16,
-          borderColor: 'rgba(16, 185, 129, 0.3)',
+          borderColor: theme.primaryBorder,
           borderWidth: 1,
           cornerRadius: 12,
           displayColors: true,
@@ -136,7 +135,7 @@ async function initFundraisingChart() {
             drawBorder: false,
           },
           ticks: {
-            color: '#6B7280',
+            color: theme.tickText,
             font: {
               family: "'Nunito', sans-serif",
               size: 11,
@@ -152,7 +151,7 @@ async function initFundraisingChart() {
             drawBorder: false,
           },
           ticks: {
-            color: '#6B7280',
+            color: theme.tickText,
             font: {
               family: "'SF Mono', monospace",
               size: 11,
@@ -182,6 +181,7 @@ async function initFundraisingChart() {
 
   // Update chart when time range changes
   initChartControls(chart);
+  fundraisingChartInstance = chart;
 }
 
 async function fetchFundraisingTrendData() {
@@ -334,3 +334,58 @@ window.ChartManager = {
   updateChartData,
   generateSampleData,
 };
+
+window.addEventListener('funds:primary-color-change', () => {
+  applyFundraisingChartTheme();
+});
+
+function applyFundraisingChartTheme() {
+  const chart = fundraisingChartInstance;
+  if (!chart) return;
+  const theme = getChartTheme();
+  chart.data.datasets[0].borderColor = theme.primary;
+  chart.data.datasets[0].backgroundColor = (context) => createPrimaryAreaGradient(context.chart, theme);
+  chart.data.datasets[0].pointHoverBackgroundColor = theme.primary;
+  chart.data.datasets[1].borderColor = theme.goalLine;
+
+  if (chart.options?.plugins?.legend?.labels) chart.options.plugins.legend.labels.color = theme.legendText;
+  if (chart.options?.plugins?.tooltip) {
+    chart.options.plugins.tooltip.backgroundColor = theme.tooltipBg;
+    chart.options.plugins.tooltip.bodyColor = theme.legendText;
+    chart.options.plugins.tooltip.borderColor = theme.primaryBorder;
+  }
+  if (chart.options?.scales?.x?.ticks) chart.options.scales.x.ticks.color = theme.tickText;
+  if (chart.options?.scales?.y?.ticks) chart.options.scales.y.ticks.color = theme.tickText;
+  chart.update('none');
+}
+
+function createPrimaryAreaGradient(chart, theme) {
+  const ctx = chart.ctx;
+  const chartArea = chart.chartArea;
+  const gradient = ctx.createLinearGradient(0, chartArea ? chartArea.top : 0, 0, chartArea ? chartArea.bottom : 300);
+  gradient.addColorStop(0, theme.primaryFillTop);
+  gradient.addColorStop(1, theme.primaryFillBottom);
+  return gradient;
+}
+
+function getChartTheme() {
+  const styles = getComputedStyle(document.documentElement);
+  const themeMode = document.documentElement.getAttribute('data-theme') || 'dark';
+  const primary = readCssVar(styles, '--accent-green', '#10B981');
+  const primaryRgb = readCssVar(styles, '--accent-green-rgb', '16, 185, 129');
+  return {
+    primary,
+    goalLine: `rgba(${primaryRgb}, 0.60)`,
+    primaryBorder: `rgba(${primaryRgb}, 0.30)`,
+    primaryFillTop: `rgba(${primaryRgb}, 0.30)`,
+    primaryFillBottom: `rgba(${primaryRgb}, 0.00)`,
+    legendText: themeMode === 'light' ? '#374151' : '#D1D5DB',
+    tickText: themeMode === 'light' ? '#6B7280' : '#6B7280',
+    tooltipBg: themeMode === 'light' ? 'rgba(255, 255, 255, 0.96)' : 'rgba(20, 23, 28, 0.95)',
+  };
+}
+
+function readCssVar(styles, name, fallback) {
+  const value = styles.getPropertyValue(name).trim();
+  return value || fallback;
+}

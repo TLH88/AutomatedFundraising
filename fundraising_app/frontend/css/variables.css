@@ -17,6 +17,7 @@
 
   /* Accent Colors */
   --accent-green: #10B981;
+  --accent-green-rgb: 16, 185, 129;
   --accent-green-light: #34D399;
   --accent-green-dark: #047857;
   --accent-green-glow: rgba(16, 185, 129, 0.3);
@@ -215,6 +216,37 @@
    ============================================ */
 [data-theme="dark"] {
   color-scheme: dark;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: #F5F7FB;
+  --bg-elevated: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-elevated-hover: #EEF2F7;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-impact: #0F9F6E;
+  --glass-bg: rgba(15, 23, 42, 0.04);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-highlight: rgba(15, 23, 42, 0.08);
+  --table-divider: rgba(15, 23, 42, 0.08);
+  --table-hover-bg: rgba(15, 23, 42, 0.03);
+  --progress-bg: rgba(15, 23, 42, 0.08);
+  --sidebar-bg: #F8FAFC;
+  --shadow-card:
+    0 10px 30px rgba(15, 23, 42, 0.08),
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --shadow-hover:
+    0 14px 40px rgba(15, 23, 42, 0.12),
+    0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-sidebar:
+    0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-sidebar-active:
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    inset 0 0 20px rgba(16, 185, 129, 0.12);
 }
 
 /* ============================================
