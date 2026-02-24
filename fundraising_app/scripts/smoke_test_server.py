@@ -29,6 +29,7 @@ def main() -> int:
         ("/api/events", 200),
         ("/api/stories", 200),
         ("/api/reports", 200),
+        ("/api/explorer/organizations", 200),
         ("/api/team", 200),
         ("/api/progress/runs", 200),
     ]
@@ -40,6 +41,24 @@ def main() -> int:
         print(f"{'PASS' if ok else 'FAIL'} {path} -> {resp.status_code}")
         if not ok:
             failed += 1
+
+    # Explorer detail smoke: only if at least one organization is available.
+    explorer_resp = client.get("/api/explorer/organizations?limit=1")
+    if explorer_resp.status_code == 200:
+        payload = explorer_resp.get_json(silent=True) or {}
+        orgs = payload.get("organizations") or []
+        if orgs and orgs[0].get("id"):
+            org_id = orgs[0]["id"]
+            detail_resp = client.get(f"/api/explorer/organizations/{org_id}")
+            ok = detail_resp.status_code == 200
+            print(f"{'PASS' if ok else 'FAIL'} /api/explorer/organizations/{org_id} -> {detail_resp.status_code}")
+            if not ok:
+                failed += 1
+        else:
+            print("PASS /api/explorer/organizations/<id> -> skipped (no organizations available)")
+    else:
+        print(f"FAIL /api/explorer/organizations?limit=1 precheck -> {explorer_resp.status_code}")
+        failed += 1
 
     create_checks = [
         ("/api/donations", {"amount": 25, "donation_type": "one-time", "source": "manual"}),

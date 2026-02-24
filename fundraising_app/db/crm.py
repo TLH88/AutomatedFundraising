@@ -118,6 +118,34 @@ def _delete(table, row_id):
 
 
 MOCK = {
+    "organizations": [
+        {
+            "id": "org1", "name": "PetSmart Charities", "website": "https://www.petsmartcharities.org",
+            "category": "pet_industry", "donation_potential_score": 95,
+            "address": "19601 N 27th Ave, Phoenix, AZ 85027", "city": "Phoenix", "state": "AZ",
+            "email": "info@petsmartcharities.org", "phone": "(800) 738-1385",
+            "notes": "National grant-making leader for animal welfare."
+        },
+        {
+            "id": "org2", "name": "Petco Love", "website": "https://petcolove.org",
+            "category": "pet_industry", "donation_potential_score": 94,
+            "address": "10850 Via Frontera, San Diego, CA 92127", "city": "San Diego", "state": "CA",
+            "email": "hello@petcolove.org", "phone": "(858) 453-7845",
+            "notes": "Petco Foundation / Petco Love grants and shelter partnerships."
+        },
+        {
+            "id": "org3", "name": "Maddie's Fund", "website": "https://www.maddiesfund.org",
+            "category": "foundation", "donation_potential_score": 98,
+            "address": "P.O. Box 29901, San Francisco, CA 94129", "city": "San Francisco", "state": "CA",
+            "email": "info@maddiesfund.org", "phone": "(925) 310-5450",
+            "notes": "Major funder of shelter and rescue innovation."
+        },
+    ],
+    "org_contacts": [
+        {"id": "c-org-1", "org_id": "org1", "full_name": "Partnerships Team", "title": "Corporate Giving", "email": "giving@petsmartcharities.org", "phone": "(800) 738-1385", "confidence": "high", "do_not_contact": False, "justification": "Public giving contact"},
+        {"id": "c-org-2", "org_id": "org2", "full_name": "Grant Programs", "title": "Grant Support", "email": "grants@petcolove.org", "phone": "(858) 453-7845", "confidence": "medium", "do_not_contact": False, "justification": "Foundation grant contact"},
+        {"id": "c-org-3", "org_id": "org3", "full_name": "Programs Office", "title": "Program Officer", "email": "programs@maddiesfund.org", "phone": "(925) 310-5450", "confidence": "medium", "do_not_contact": False, "justification": "Program inquiry contact"},
+    ],
     "donors": [
         {"id": "1", "name": "Sarah Miller", "email": "sarah.miller@email.com", "phone": "(555) 123-4567", "tier": "hero", "status": "active", "total_donated": 12500, "first_donation_date": "2024-02-23", "last_donation_date": "2026-02-23", "donation_type": "monthly", "engagement_score": 95, "notes": "Long-time supporter", "tags": ["Monthly", "2 year anniversary"]},
         {"id": "2", "name": "John Doe", "email": "john.doe@company.com", "phone": "(555) 222-3344", "tier": "champion", "status": "active", "total_donated": 6000, "first_donation_date": "2025-01-10", "last_donation_date": "2026-02-21", "donation_type": "monthly", "engagement_score": 82, "notes": "Corporate match eligible", "tags": ["Monthly", "Loves Dogs"]},
@@ -161,6 +189,56 @@ MOCK = {
 }
 
 
+def _map_org_potential(raw_score):
+    try:
+        score = int(raw_score)
+    except Exception:
+        score = 0
+    # Outreach table historically stores 1-10; UI expects 0-100 style.
+    return score * 10 if score <= 10 else score
+
+
+def _normalize_org(row):
+    if not row:
+        return None
+    return {
+        "id": row.get("id"),
+        "name": row.get("name") or "Unknown Organization",
+        "website": row.get("website"),
+        "category": row.get("category") or "other",
+        "donation_potential_score": _map_org_potential(row.get("donation_potential_score")),
+        "address": row.get("address"),
+        "city": row.get("city"),
+        "state": row.get("state"),
+        "postal_code": row.get("postal_code"),
+        "latitude": row.get("latitude"),
+        "longitude": row.get("longitude"),
+        "email": row.get("email"),
+        "phone": row.get("phone"),
+        "notes": row.get("notes"),
+        "created_at": row.get("created_at"),
+        "updated_at": row.get("updated_at"),
+    }
+
+
+def _normalize_org_contact(row):
+    if not row:
+        return None
+    return {
+        "id": row.get("id"),
+        "org_id": row.get("org_id"),
+        "full_name": row.get("full_name"),
+        "title": row.get("title"),
+        "email": row.get("email"),
+        "phone": row.get("phone"),
+        "confidence": row.get("confidence"),
+        "do_not_contact": bool(row.get("do_not_contact")),
+        "justification": row.get("justification"),
+        "created_at": row.get("created_at"),
+        "updated_at": row.get("updated_at"),
+    }
+
+
 def get_fundraising_trends():
     if not _client():
         return {"labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"], "values": [12000, 18500, 22000, 19500, 25000, 24350], "goal": [23000] * 6, "donations": [45, 67, 82, 71, 95, 89]}
@@ -183,6 +261,69 @@ def get_fundraising_trends():
         "goal": [round(sum(values) / len(values), 2)] * len(values) if values else [],
         "donations": [buckets[k]["count"] for k in keys],
     }
+
+
+def get_explorer_organizations(location=None, radius_miles=None, limit=100, min_score=0):
+    limit = max(1, min(int(limit or 100), 1000))
+    min_score = int(min_score or 0)
+    location = (location or "").strip()
+
+    if not _client():
+        orgs = [_normalize_org(o) for o in MOCK.get("organizations", [])]
+        rows = [o for o in orgs if o]
+    else:
+        rows = [_normalize_org(o) for o in _fetch("organizations", select="*", order_by="donation_potential_score", desc=True, limit=2000)]
+        rows = [o for o in rows if o]
+
+    if min_score > 0:
+        rows = [o for o in rows if int(o.get("donation_potential_score") or 0) >= min_score]
+
+    # Best-effort location matching (city/address text). Radius is accepted but only
+    # truly meaningful if org coordinates are available and geocoding is added later.
+    if location:
+        needle = location.lower()
+        rows = [
+            o for o in rows
+            if needle in str(o.get("city") or "").lower()
+            or needle in str(o.get("state") or "").lower()
+            or needle in str(o.get("address") or "").lower()
+        ]
+
+    rows = rows[:limit]
+    return {
+        "organizations": rows,
+        "total": len(rows),
+        "filters_applied": {
+            "location": location or None,
+            "radius_miles": int(radius_miles) if str(radius_miles or "").isdigit() else None,
+            "limit": limit,
+            "min_score": min_score,
+        },
+    }
+
+
+def get_explorer_organization_detail(org_id, include_contacts=True):
+    if not _client():
+        org_rows = [o for o in MOCK.get("organizations", []) if str(o.get("id")) == str(org_id)]
+        if not org_rows:
+            return None
+        org = _normalize_org(org_rows[0])
+        contacts = [_normalize_org_contact(c) for c in MOCK.get("org_contacts", []) if str(c.get("org_id")) == str(org_id)]
+        org["contacts"] = [c for c in contacts if c] if include_contacts else []
+        org["contact_count"] = len(org["contacts"])
+        return org
+
+    org_rows = _fetch("organizations", select="*", filters=[{"col": "id", "val": org_id}], limit=1)
+    if not org_rows:
+        return None
+    org = _normalize_org(org_rows[0])
+    contacts = []
+    if include_contacts:
+        contacts = [_normalize_org_contact(c) for c in _fetch("contacts", select="*", filters=[{"col": "org_id", "val": org_id}], limit=500)]
+        contacts = [c for c in contacts if c]
+    org["contacts"] = contacts
+    org["contact_count"] = len(contacts)
+    return org
 
 
 def get_fundraising_total():

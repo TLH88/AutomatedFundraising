@@ -187,6 +187,29 @@ def reports():
     return _json_ok(crm.get_reports(limit=limit))
 
 
+@app.route("/api/explorer/organizations", methods=["GET"])
+def explorer_organizations():
+    location = request.args.get("location", "").strip()
+    radius_miles = request.args.get("radius_miles")
+    limit = int(request.args.get("limit", 100))
+    min_score = int(request.args.get("min_score", 0))
+    return _json_ok(crm.get_explorer_organizations(
+        location=location,
+        radius_miles=radius_miles,
+        limit=limit,
+        min_score=min_score,
+    ))
+
+
+@app.route("/api/explorer/organizations/<org_id>", methods=["GET"])
+def explorer_organization_detail(org_id: str):
+    include_contacts = str(request.args.get("include_contacts", "true")).lower() != "false"
+    org = crm.get_explorer_organization_detail(org_id, include_contacts=include_contacts)
+    if not org:
+        return _json_error("Organization not found", 404)
+    return _json_ok({"organization": org})
+
+
 @app.route("/api/reports/generate", methods=["POST"])
 def generate_report():
     payload = request.get_json(silent=True) or {}
