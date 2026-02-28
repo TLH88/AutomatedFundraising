@@ -109,11 +109,13 @@ create table if not exists public.donors (
   external_ref text,
   first_name text not null,
   last_name text,
+  full_name text,
   display_name text generated always as (
-    btrim(first_name || ' ' || coalesce(last_name, ''))
+    coalesce(nullif(btrim(full_name), ''), btrim(first_name || ' ' || coalesce(last_name, '')))
   ) stored,
   email text unique,
   phone text,
+  avatar_url text,
   donor_tier text not null default 'friend' check (donor_tier in ('hero','champion','supporter','friend')),
   donor_status text not null default 'active' check (donor_status in ('active','lapsed','prospect','inactive')),
   donation_type_preference text check (donation_type_preference in ('monthly','one-time','quarterly','annual')),
@@ -484,7 +486,8 @@ for each row execute function public.update_updated_at();
 -- Derived metrics views (used by dashboard API)
 -- ============================================================================
 
-create or replace view public.v_fundraising_totals as
+create or replace view public.v_fundraising_totals
+with (security_invoker = true) as
 select
   coalesce(sum(case when payment_status = 'completed' then amount else 0 end), 0)::numeric(12,2) as total_raised,
   coalesce(sum(case
@@ -495,7 +498,8 @@ select
   count(distinct donor_id) filter (where payment_status = 'completed') as unique_donors
 from public.donations;
 
-create or replace view public.v_animals_impact as
+create or replace view public.v_animals_impact
+with (security_invoker = true) as
 select
   count(*) filter (where status = 'adopted') as adopted_total,
   count(*) filter (where rescue_date >= date_trunc('month', now())::date) as rescued_this_month,
@@ -530,8 +534,8 @@ alter table public.activity_log enable row level security;
 alter table public.automation_runs enable row level security;
 alter table public.automation_run_events enable row level security;
 
--- For internal dashboard development with publishable key + explicit anon policies.
--- Replace with authenticated role policies before production launch.
+-- Production-safe default: no blanket anon write access.
+-- Backend writes should run through server-side endpoints using service-role credentials.
 do $$
 declare
   t text;
@@ -545,17 +549,22 @@ begin
   ]
   loop
     execute format('drop policy if exists %I on public.%I', t || '_anon_rw', t);
-    execute format(
-      'create policy %I on public.%I for all to anon using (true) with check (true)',
-      t || '_anon_rw', t
-    );
   end loop;
 end $$;
+
+drop policy if exists help_articles_anon_ro on public.help_articles;
+create policy help_articles_anon_ro on public.help_articles
+  for select to anon
+  using (true);
+
+drop policy if exists success_stories_anon_ro on public.success_stories;
+create policy success_stories_anon_ro on public.success_stories
+  for select to anon
+  using (coalesce(status, '') = 'published');
 
 -- ============================================================================
 -- Notes
 -- ============================================================================
 -- 1) This schema intentionally preserves the original outreach tables while
 --    adding the fundraising CRM entities used by the dashboard UI.
--- 2) For production: replace permissive anon RLS policies with authenticated
---    role-based policies and move writes to server-side endpoints.
+-- 2) Use authenticated role-based policies for additional read/write paths as needed.

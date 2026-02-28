@@ -7,8 +7,8 @@ This document provides a quick reference for the **Funds 4 Furry Friends** desig
 
 ## Visual Style
 - **Theme:** Dark mode with skeuomorphic design + glassmorphism
-- **Primary Accent:** Emerald green (#10B981) - symbolizing growth and hope
-- **Mission:** Animal welfare fundraising dashboard
+- **Primary Accent:** Global brand color (#10B981) - symbolizing growth and hope
+- **Mission:** Animal welfare fundraising and organization management
 - **Feeling:** Warm, trustworthy, compassionate, professional
 
 ---

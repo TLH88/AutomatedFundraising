@@ -6,6 +6,33 @@
 
 ---
 
+## 2026-02-28 Remediation Update (Current Session)
+
+### Completed
+- Removed legacy default-admin fallback behavior and added first-admin bootstrap flow:
+  - `GET /api/auth/bootstrap/status`
+  - `POST /api/auth/bootstrap/admin`
+- Restricted sensitive APIs to authenticated members:
+  - donors, contacts, explorer routes
+- Preserved intentionally public page data routes:
+  - `/api/animals`, `/api/events`, `/api/campaigns`, `/api/stories`
+- Hardened account password policy (8+ chars, uppercase, lowercase, number) across:
+  - bootstrap
+  - account password change
+  - team member create/update auth sync
+- Removed weak default password fallback (`Member`) from account provisioning paths.
+- Added bootstrap-aware login UX messaging when no admin exists.
+- Fixed team disable workflow to use `inactive` status consistently with DB constraints.
+- Cleaned runtime auth store of stale demo/legacy accounts; validated real admin login.
+
+### Validation
+- `python fundraising_app/scripts/smoke_test_server.py` passing
+- `python fundraising_app/scripts/pre_deploy_check.py` passing
+- Frontend syntax checks passing (`main.js`, `team.js`, `settings.js`)
+
+### Notes
+- Public pages remain intentionally accessible as requested.
+- This update is the authoritative state for security remediation work completed on 2026-02-28.
 ## Status Legend
 
 | Symbol | Meaning |
@@ -235,9 +262,49 @@
 - [ ] Implement 24-hour gap enforcement between sends to same org
 - [ ] Add GitHub Actions summary artifact to `discover-and-scrape.yml`
 
-**Low Priority — Optional Enhancements:**
+**Low Priority – Optional Enhancements:**
 - [ ] Create `scraper/playwright_helper.py` as a separate module (per original plan)
 - [ ] Investigate Charity Navigator API or GuideStar alternative for discovery
+
+---
+
+## 2026-02-26 Implementation Update (Codex Session)
+
+### Completed in this session
+
+- [x] Backend auth/session foundation added (`/api/auth/login`, `/api/auth/logout`, `/api/auth/session`, `/api/auth/password`)
+- [x] Server-side bearer token enforcement added to key protected APIs (team/progress/import/create/update flows)
+- [x] Frontend auth integration now sends bearer token automatically on same-origin `/api/*` requests
+- [x] Lead Generation -> Communications handoff workflow implemented (selected leads -> prefilled outreach campaign flow)
+- [x] Donor profile backend edit + note creation workflows added (`PUT /api/donors/:id`, `GET/POST /api/donors/:id/notes`)
+- [x] Animal backend detail/edit/delete + note workflows added (`GET/PUT/DELETE /api/animals/:id`, `GET/POST /api/animals/:id/notes`)
+- [x] Funds Explorer review/import UX refinement (result-type review filters, contact validation summary, low-quality contact import gating)
+- [x] Smoke tests updated for backend auth and protected endpoints
+
+### Open / Unfinished / TODO (current)
+
+- [ ] Analytics custom date range UX remains TODO (`frontend/js/analytics-charts.js`)
+  - [ ] Show custom date picker modal
+  - [ ] Reload analytics data for selected custom range
+- [ ] Backend auth is implemented, but frontend account/role store is still localStorage-based (not a full production auth stack)
+  - [ ] Migrate local account records/roles to backend persistence
+  - [ ] Add secure password hashing + persistent session storage
+  - [ ] Enforce backend role authorization on all remaining APIs (audit pass still needed)
+- [ ] Donor/Animal workflows are improved but still need deeper backend-backed profile experiences
+  - [ ] Animal profile page (full-page profile parity with donor/member profiles)
+  - [ ] Persist richer notes/history/attachments where applicable
+- [ ] Funds Explorer import/contact review needs further refinement
+  - [ ] Bulk classification/review actions for contact rows
+  - [ ] Conflict handling UI when import collides with existing records
+  - [ ] Stronger contact validation heuristics and reviewer override flow
+- [ ] Page-by-page interactive audit still needs periodic reruns after new feature additions
+
+### Verification notes (this session)
+
+- [x] Python compile checks passed for core backend/scraper modules
+- [x] Frontend JS syntax checks passed for edited scripts (`main`, `team`, `settings`, `funds-explorer`, `communications`, `animals`, `donor-profile`, `lead-generation`)
+- [x] Backend smoke test passed with auth-enabled flow (`fundraising_app/scripts/smoke_test_server.py`)
+- [x] Route checks passed (`200`) for all primary pages except `help.html` (intentionally excluded from action audit scope)
 
 ---
 

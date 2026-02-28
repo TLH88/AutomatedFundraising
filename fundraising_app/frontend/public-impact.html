@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () { try { var theme = localStorage.getItem('funds_theme'); if (theme) document.documentElement.setAttribute('data-theme', theme); } catch (e) {} })();
+  </script>
+  <title>Campaigns & Success Stories - Funds 4 Furry Friends</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/public-pages.css">
+</head>
+<body data-public-page="impact">
+  <nav class="topbar landing-topbar">
+    <div class="topbar-left">
+      <a href="/" class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></a>
+      <div class="landing-nav-links">
+        <a href="public-animals.html" class="nav-link">Animals</a>
+        <a href="public-events.html" class="nav-link">Events</a>
+        <a href="public-impact.html" class="nav-link">Campaigns & Stories</a>
+        <a href="public-help.html" class="nav-link">Help</a>
+      </div>
+    </div>
+    <div class="topbar-right"></div>
+  </nav>
+
+  <main class="public-main">
+    <div class="public-shell">
+      <section id="donate" class="public-header">
+        <div>
+          <h1 class="page-title">Active Campaigns & Success Stories</h1>
+          <p class="page-subtitle">See what we are funding now, review completed campaigns, and discover impact stories.</p>
+        </div>
+      </section>
+
+      <section class="card" style="margin-bottom:var(--spacing-lg);">
+        <div class="card-body">
+          <h2 style="margin:0 0 8px;">How You Can Help</h2>
+          <p id="how-you-can-help" style="margin:0;">Donate directly, sponsor an event, contribute supplies, or partner with us for in-kind support.</p>
+        </div>
+      </section>
+
+      <h2 style="margin:0 0 12px;">Active Campaigns</h2>
+      <div id="publicActiveCampaigns" class="public-grid campaigns"></div>
+
+      <h2 style="margin:24px 0 12px;">Completed Campaigns</h2>
+      <div id="publicCompletedCampaigns" class="public-grid campaigns"></div>
+
+      <h2 style="margin:24px 0 12px;">Success Stories</h2>
+      <div id="publicStories" class="public-list"></div>
+    </div>
+  </main>
+  <script src="js/main.js"></script>
+  <script src="js/public-pages.js"></script>
+</body>
+</html>
+

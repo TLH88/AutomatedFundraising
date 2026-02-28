@@ -1,15 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-    <script>
+  <script>
     (function () {
       try {
         var theme = localStorage.getItem('funds_theme');
         if (theme) document.documentElement.setAttribute('data-theme', theme);
       } catch (e) {}
     })();
-  </script>  <title>Communications - Funds 4 Furry Friends</title>
+  </script>
+  <title>Communications - Funds 4 Furry Friends</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -64,93 +65,14 @@
       </div>
 
       <div class="comms-stats-grid">
-        <div class="stat-card">
-          <div class="stat-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">📧</div>
-          <div class="stat-card-content"><p class="stat-card-label">Total Sent</p><h3 class="stat-card-value">12,450</h3><p class="stat-card-change">This month</p></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">📊</div>
-          <div class="stat-card-content"><p class="stat-card-label">Open Rate</p><h3 class="stat-card-value">42.8%</h3><p class="stat-card-change positive">+3.2% vs avg</p></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">👆</div>
-          <div class="stat-card-content"><p class="stat-card-label">Click Rate</p><h3 class="stat-card-value">18.5%</h3><p class="stat-card-change positive">+1.8% vs avg</p></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">💰</div>
-          <div class="stat-card-content"><p class="stat-card-label">Revenue</p><h3 class="stat-card-value">$18,250</h3><p class="stat-card-change positive">From campaigns</p></div>
-        </div>
+        <div class="stat-card"><div class="stat-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">📧</div><div class="stat-card-content"><p class="stat-card-label">Total Campaigns</p><h3 class="stat-card-value">0</h3><p class="stat-card-change">Loaded from backend</p></div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">📊</div><div class="stat-card-content"><p class="stat-card-label">Sent Ratio</p><h3 class="stat-card-value">0%</h3><p class="stat-card-change">Loaded from backend</p></div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">📝</div><div class="stat-card-content"><p class="stat-card-label">Draft</p><h3 class="stat-card-value">0</h3><p class="stat-card-change">Loaded from backend</p></div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">⏱️</div><div class="stat-card-content"><p class="stat-card-label">Scheduled</p><h3 class="stat-card-value">0</h3><p class="stat-card-change">Loaded from backend</p></div></div>
       </div>
 
       <div class="campaigns-list">
-        <div class="campaign-card">
-          <div class="campaign-card-header">
-            <h3 class="campaign-title">Monthly Newsletter - February 2026</h3>
-            <div class="campaign-status-badge sent">Sent</div>
-          </div>
-          <p class="campaign-description">Monthly update featuring rescue stories, upcoming events, and fundraising progress.</p>
-          <div class="campaign-stats">
-            <div class="campaign-stat"><span class="stat-label">Recipients</span><span class="stat-value">1,847</span></div>
-            <div class="campaign-stat"><span class="stat-label">Opens</span><span class="stat-value">792 (42.9%)</span></div>
-            <div class="campaign-stat"><span class="stat-label">Clicks</span><span class="stat-value">341 (18.5%)</span></div>
-            <div class="campaign-stat"><span class="stat-label">Sent</span><span class="stat-value">Feb 1, 2026</span></div>
-          </div>
-          <div class="campaign-actions">
-            <button class="btn btn-sm btn-secondary">View Report</button>
-            <button class="btn btn-sm btn-secondary">Duplicate</button>
-          </div>
-        </div>
-
-        <div class="campaign-card">
-          <div class="campaign-card-header">
-            <h3 class="campaign-title">Spring Adoption Event Invitation</h3>
-            <div class="campaign-status-badge scheduled">Scheduled</div>
-          </div>
-          <p class="campaign-description">Invitation to our annual spring adoption fair with RSVP tracking and event details.</p>
-          <div class="campaign-stats">
-            <div class="campaign-stat"><span class="stat-label">Recipients</span><span class="stat-value">1,247</span></div>
-            <div class="campaign-stat"><span class="stat-label">Send Date</span><span class="stat-value">Mar 1, 2026</span></div>
-            <div class="campaign-stat"><span class="stat-label">Time</span><span class="stat-value">9:00 AM</span></div>
-          </div>
-          <div class="campaign-actions">
-            <button class="btn btn-sm btn-secondary">Edit</button>
-            <button class="btn btn-sm btn-primary">Send Now</button>
-          </div>
-        </div>
-
-        <div class="campaign-card">
-          <div class="campaign-card-header">
-            <h3 class="campaign-title">Donor Thank You - Q4 2025</h3>
-            <div class="campaign-status-badge sent">Sent</div>
-          </div>
-          <p class="campaign-description">Personalized thank you message to donors with year-end impact report and tax receipt information.</p>
-          <div class="campaign-stats">
-            <div class="campaign-stat"><span class="stat-label">Recipients</span><span class="stat-value">892</span></div>
-            <div class="campaign-stat"><span class="stat-label">Opens</span><span class="stat-value">512 (57.4%)</span></div>
-            <div class="campaign-stat"><span class="stat-label">Clicks</span><span class="stat-value">234 (26.2%)</span></div>
-            <div class="campaign-stat"><span class="stat-label">Sent</span><span class="stat-value">Jan 15, 2026</span></div>
-          </div>
-          <div class="campaign-actions">
-            <button class="btn btn-sm btn-secondary">View Report</button>
-            <button class="btn btn-sm btn-secondary">Duplicate</button>
-          </div>
-        </div>
-
-        <div class="campaign-card">
-          <div class="campaign-card-header">
-            <h3 class="campaign-title">Emergency Surgery Fund Appeal</h3>
-            <div class="campaign-status-badge draft">Draft</div>
-          </div>
-          <p class="campaign-description">Urgent appeal for Max's emergency surgery featuring story, progress updates, and donation CTA.</p>
-          <div class="campaign-stats">
-            <div class="campaign-stat"><span class="stat-label">Target</span><span class="stat-value">All active donors</span></div>
-            <div class="campaign-stat"><span class="stat-label">Status</span><span class="stat-value">Needs review</span></div>
-          </div>
-          <div class="campaign-actions">
-            <button class="btn btn-sm btn-secondary">Edit</button>
-            <button class="btn btn-sm btn-primary">Review & Send</button>
-          </div>
-        </div>
+        <div class="campaign-card"><div class="campaign-card-header"><h3 class="campaign-title">Loading campaigns...</h3></div></div>
       </div>
     </div>
   </main>
@@ -161,11 +83,12 @@
       <div class="modal-header"><h2 class="modal-title">Create Email Campaign</h2><button class="modal-close" onclick="closeModal('newCampaignModal')">×</button></div>
       <div class="modal-body">
         <form id="newCampaignForm" class="form">
-          <div class="input-group"><label class="label">Campaign Name *</label><input type="text" class="input" required></div>
-          <div class="input-group"><label class="label">Subject Line *</label><input type="text" class="input" required></div>
-          <div class="input-group"><label class="label">Recipients *</label><select class="input" required><option value="">Select audience</option><option value="all">All Donors</option><option value="active">Active Donors</option><option value="lapsed">Lapsed Donors</option><option value="subscribers">Newsletter Subscribers</option></select></div>
-          <div class="input-group"><label class="label">Template</label><select class="input"><option value="">Blank</option><option value="newsletter">Monthly Newsletter</option><option value="appeal">Fundraising Appeal</option><option value="thankyou">Thank You</option></select></div>
-          <div class="input-group"><label class="label">Message *</label><textarea class="input" rows="6" required></textarea></div>
+          <div class="input-group"><label class="label">Campaign Name *</label><input type="text" class="input" name="name" id="commCampaignName" required></div>
+          <div class="input-group"><label class="label">Subject Line *</label><input type="text" class="input" name="subject" id="commCampaignSubject" required></div>
+          <div class="input-group"><label class="label">Recipients *</label><select class="input" name="audience_segment" id="commCampaignRecipients" required><option value="">Select audience</option><option value="all">All Donors</option><option value="active">Active Donors</option><option value="lapsed">Lapsed Donors</option><option value="subscribers">Newsletter Subscribers</option><option value="lead_generation_handoff">Lead Generation Selection</option></select></div>
+          <div class="input-group"><label class="label">Template</label><select class="input" name="template" id="commCampaignTemplate"><option value="">Blank</option><option value="newsletter">Monthly Newsletter</option><option value="appeal">Fundraising Appeal</option><option value="thankyou">Thank You</option></select></div>
+          <div class="input-group" id="commLeadHandoffSummary" style="display:none;"><label class="label">Lead Selection Handoff</label><div class="input" style="min-height:68px; white-space:normal;" id="commLeadHandoffSummaryText"></div></div>
+          <div class="input-group"><label class="label">Message *</label><textarea class="input" rows="6" name="message" id="commCampaignMessage" required></textarea></div>
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="closeModal('newCampaignModal')">Cancel</button>
             <button type="submit" class="btn btn-primary">Create Campaign</button>
@@ -179,4 +102,3 @@
   <script src="js/communications.js"></script>
 </body>
 </html>
-

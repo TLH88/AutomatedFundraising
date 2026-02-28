@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import time
+from uuid import uuid4
 
 try:
     from db.client import get_client  # script-style imports
@@ -16,10 +18,46 @@ except ModuleNotFoundError:  # pragma: no cover - package import fallback
 
 _CRM_SCHEMA_CHECKED = False
 _CRM_SCHEMA_AVAILABLE = False
+_DONOR_AVATAR_SUPPORTED: bool | None = None
+_DONOR_FULL_NAME_SUPPORTED: bool | None = None
+_SHORT_CACHE: dict[str, tuple[float, dict]] = {}
+_SHORT_CACHE_TTL_SECONDS = 30
+
+
+class PersistenceError(Exception):
+    def __init__(self, message: str, *, code: str | None = None, details: str | None = None, hint: str | None = None):
+        super().__init__(message)
+        self.code = code
+        self.details = details
+        self.hint = hint
+
+
+def _cache_get(key: str):
+    item = _SHORT_CACHE.get(key)
+    if not item:
+        return None
+    expires_at, payload = item
+    if time.time() >= expires_at:
+        _SHORT_CACHE.pop(key, None)
+        return None
+    return payload
+
+
+def _cache_set(key: str, payload: dict):
+    _SHORT_CACHE[key] = (time.time() + _SHORT_CACHE_TTL_SECONDS, payload)
+    return payload
+
+
+def _cache_clear():
+    _SHORT_CACHE.clear()
 
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def uuid4_short() -> str:
+    return uuid4().hex[:10]
 
 
 def _parse_dt(value):
@@ -28,13 +66,65 @@ def _parse_dt(value):
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
     try:
-        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     except Exception:
         return None
 
 
+def _normalize_age_group(value):
+    text = str(value or "").strip().lower()
+    if not text:
+        return None
+    allowed = {"baby", "young", "adult", "senior"}
+    if text in allowed:
+        return text
+    # Heuristic mapping from free-text age input.
+    if "kitten" in text or "puppy" in text or "month" in text:
+        return "baby"
+    if "young" in text:
+        return "young"
+    if "adult" in text:
+        return "adult"
+    if "senior" in text:
+        return "senior"
+    try:
+        age_num = int(float(text.split()[0]))
+        if age_num <= 1:
+            return "baby"
+        if age_num <= 3:
+            return "young"
+        if age_num <= 7:
+            return "adult"
+        return "senior"
+    except Exception:
+        return None
+
+
+def _normalize_sex(value):
+    text = str(value or "").strip().lower()
+    if text in {"male", "female", "unknown"}:
+        return text
+    return "unknown"
+
+
 def supabase_configured() -> bool:
     return bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_PUBLISHABLE_KEY"))
+
+
+def _write_fallback_allowed() -> bool:
+    # In local/no-db mode, mock fallback remains useful.
+    # When Supabase is configured, default is strict DB confirmation.
+    raw = str(os.environ.get("ALLOW_WRITE_MOCK_FALLBACK", "false")).strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def _error_text(exc) -> tuple[str, str | None, str | None, str | None]:
+    msg = str(getattr(exc, "message", None) or str(exc) or "Database operation failed").strip()
+    code = getattr(exc, "code", None)
+    details = getattr(exc, "details", None) or getattr(exc, "detail", None)
+    hint = getattr(exc, "hint", None)
+    return msg, (str(code) if code else None), (str(details) if details else None), (str(hint) if hint else None)
 
 
 def _client():
@@ -50,9 +140,58 @@ def _client():
             except Exception:
                 _CRM_SCHEMA_AVAILABLE = False
             _CRM_SCHEMA_CHECKED = True
-        return client if _CRM_SCHEMA_AVAILABLE else None
+        # Return initialized client when configured; table-specific queries
+        # still handle exceptions and can degrade gracefully per endpoint.
+        return client
     except Exception:
         return None
+
+
+def _donor_avatar_supported() -> bool:
+    _refresh_donor_optional_support()
+    global _DONOR_AVATAR_SUPPORTED
+    if _DONOR_AVATAR_SUPPORTED is not None:
+        return _DONOR_AVATAR_SUPPORTED
+    _DONOR_AVATAR_SUPPORTED = False
+    return _DONOR_AVATAR_SUPPORTED
+
+
+def _donor_full_name_supported() -> bool:
+    _refresh_donor_optional_support()
+    global _DONOR_FULL_NAME_SUPPORTED
+    if _DONOR_FULL_NAME_SUPPORTED is not None:
+        return _DONOR_FULL_NAME_SUPPORTED
+    _DONOR_FULL_NAME_SUPPORTED = False
+    return _DONOR_FULL_NAME_SUPPORTED
+
+
+def _refresh_donor_optional_support() -> None:
+    global _DONOR_AVATAR_SUPPORTED, _DONOR_FULL_NAME_SUPPORTED
+    if _DONOR_AVATAR_SUPPORTED is not None and _DONOR_FULL_NAME_SUPPORTED is not None:
+        return
+    client = _client()
+    if not client:
+        _DONOR_AVATAR_SUPPORTED = True
+        _DONOR_FULL_NAME_SUPPORTED = True
+        return
+    try:
+        sample_rows = client.table("donors").select("*").limit(1).execute().data or []
+        if sample_rows:
+            sample = sample_rows[0] or {}
+            sample_keys = {str(k) for k in sample.keys()}
+            _DONOR_AVATAR_SUPPORTED = "avatar_url" in sample_keys
+            _DONOR_FULL_NAME_SUPPORTED = "full_name" in sample_keys
+            return
+    except Exception:
+        pass
+    # Fallback: a single capability probe avoids repeated noisy per-column 400 checks.
+    try:
+        client.table("donors").select("avatar_url,full_name").limit(1).execute()
+        _DONOR_AVATAR_SUPPORTED = True
+        _DONOR_FULL_NAME_SUPPORTED = True
+    except Exception:
+        _DONOR_AVATAR_SUPPORTED = False
+        _DONOR_FULL_NAME_SUPPORTED = False
 
 
 def data_source():
@@ -140,36 +279,84 @@ def _fetch(table, select="*", filters=None, order_by=None, desc=False, limit=Non
         return []
 
 
-def _insert(table, payload):
+def _insert(table, payload, *, strict=False):
+    _cache_clear()
     client = _client()
+    enforce_strict = bool(strict or (supabase_configured() and not _write_fallback_allowed()))
     if not client:
+        if enforce_strict:
+            raise PersistenceError(
+                f"Unable to write to {table}: database client unavailable.",
+                code="db_client_unavailable",
+                hint="Confirm SUPABASE_URL/key are configured and backend can reach Supabase.",
+            )
         return {"id": f"mock-{table}-{int(_now().timestamp())}", "mock": True, **payload}
     try:
         result = client.table(table).insert(payload).execute()
         return (result.data or [{}])[0]
-    except Exception:
+    except Exception as exc:
+        if enforce_strict:
+            msg, code, details, hint = _error_text(exc)
+            raise PersistenceError(
+                f"Insert failed for {table}: {msg}",
+                code=code or "db_insert_failed",
+                details=details,
+                hint=hint,
+            ) from exc
         return {"id": f"mock-{table}-{int(_now().timestamp())}", "mock": True, **payload}
 
 
 def _update(table, row_id, payload):
+    _cache_clear()
     client = _client()
+    enforce_strict = bool(supabase_configured() and not _write_fallback_allowed())
     if not client:
+        if enforce_strict:
+            raise PersistenceError(
+                f"Unable to update {table}: database client unavailable.",
+                code="db_client_unavailable",
+                hint="Confirm SUPABASE_URL/key are configured and backend can reach Supabase.",
+            )
         return {"id": row_id, "mock": True, **payload}
     try:
         result = client.table(table).update(payload).eq("id", row_id).execute()
         return (result.data or [{"id": row_id, **payload}])[0]
-    except Exception:
+    except Exception as exc:
+        if enforce_strict:
+            msg, code, details, hint = _error_text(exc)
+            raise PersistenceError(
+                f"Update failed for {table}: {msg}",
+                code=code or "db_update_failed",
+                details=details,
+                hint=hint,
+            ) from exc
         return {"id": row_id, "mock": True, **payload}
 
 
 def _delete(table, row_id):
+    _cache_clear()
     client = _client()
+    enforce_strict = bool(supabase_configured() and not _write_fallback_allowed())
     if not client:
+        if enforce_strict:
+            raise PersistenceError(
+                f"Unable to delete from {table}: database client unavailable.",
+                code="db_client_unavailable",
+                hint="Confirm SUPABASE_URL/key are configured and backend can reach Supabase.",
+            )
         return True
     try:
         client.table(table).delete().eq("id", row_id).execute()
         return True
-    except Exception:
+    except Exception as exc:
+        if enforce_strict:
+            msg, code, details, hint = _error_text(exc)
+            raise PersistenceError(
+                f"Delete failed for {table}: {msg}",
+                code=code or "db_delete_failed",
+                details=details,
+                hint=hint,
+            ) from exc
         return False
 
 
@@ -181,67 +368,40 @@ MOCK = {
             "address": "19601 N 27th Ave, Phoenix, AZ 85027", "city": "Phoenix", "state": "AZ",
             "email": "info@petsmartcharities.org", "phone": "(800) 738-1385",
             "notes": "National grant-making leader for animal welfare."
-        },
-        {
-            "id": "org2", "name": "Petco Love", "website": "https://petcolove.org",
-            "category": "pet_industry", "donation_potential_score": 94,
-            "address": "10850 Via Frontera, San Diego, CA 92127", "city": "San Diego", "state": "CA",
-            "email": "hello@petcolove.org", "phone": "(858) 453-7845",
-            "notes": "Petco Foundation / Petco Love grants and shelter partnerships."
-        },
-        {
-            "id": "org3", "name": "Maddie's Fund", "website": "https://www.maddiesfund.org",
-            "category": "foundation", "donation_potential_score": 98,
-            "address": "P.O. Box 29901, San Francisco, CA 94129", "city": "San Francisco", "state": "CA",
-            "email": "info@maddiesfund.org", "phone": "(925) 310-5450",
-            "notes": "Major funder of shelter and rescue innovation."
-        },
+        }
     ],
     "org_contacts": [
         {"id": "c-org-1", "org_id": "org1", "full_name": "Partnerships Team", "title": "Corporate Giving", "email": "giving@petsmartcharities.org", "phone": "(800) 738-1385", "confidence": "high", "do_not_contact": False, "justification": "Public giving contact"},
-        {"id": "c-org-2", "org_id": "org2", "full_name": "Grant Programs", "title": "Grant Support", "email": "grants@petcolove.org", "phone": "(858) 453-7845", "confidence": "medium", "do_not_contact": False, "justification": "Foundation grant contact"},
-        {"id": "c-org-3", "org_id": "org3", "full_name": "Programs Office", "title": "Program Officer", "email": "programs@maddiesfund.org", "phone": "(925) 310-5450", "confidence": "medium", "do_not_contact": False, "justification": "Program inquiry contact"},
     ],
     "donors": [
-        {"id": "1", "name": "Sarah Miller", "email": "sarah.miller@email.com", "phone": "(555) 123-4567", "tier": "hero", "status": "active", "total_donated": 12500, "first_donation_date": "2024-02-23", "last_donation_date": "2026-02-23", "donation_type": "monthly", "engagement_score": 95, "notes": "Long-time supporter", "tags": ["Monthly", "2 year anniversary"]},
-        {"id": "2", "name": "John Doe", "email": "john.doe@company.com", "phone": "(555) 222-3344", "tier": "champion", "status": "active", "total_donated": 6000, "first_donation_date": "2025-01-10", "last_donation_date": "2026-02-21", "donation_type": "monthly", "engagement_score": 82, "notes": "Corporate match eligible", "tags": ["Monthly", "Loves Dogs"]},
-        {"id": "3", "name": "Anna Johnson", "email": "anna.j@email.com", "phone": "(555) 333-7788", "tier": "supporter", "status": "active", "total_donated": 1750, "first_donation_date": "2025-08-12", "last_donation_date": "2026-02-16", "donation_type": "one-time", "engagement_score": 68, "notes": "Responds to stories", "tags": ["One-time", "Cat Lover"]},
+        {"id": "1", "name": "Sarah Miller", "email": "sarah.miller@email.com", "phone": "(555) 123-4567", "tier": "hero", "status": "active", "total_donated": 12500, "first_donation_date": "2024-02-23", "last_donation_date": "2026-02-23", "donation_type": "monthly", "engagement_score": 95, "notes": "Long-time supporter", "tags": ["Monthly", "2 year anniversary"], "avatar_url": None},
     ],
     "campaigns": [
         {"id": "c1", "name": "Medical Fund", "category": "dogs", "status": "active", "description": "Emergency care for rescues", "goal": 50000, "raised": 38500, "donors": 142, "start_date": "2026-01-01", "end_date": "2026-03-31"},
-        {"id": "c2", "name": "Shelter Support", "category": "shelter", "status": "active", "description": "Operations and supplies", "goal": 30000, "raised": 27800, "donors": 98, "start_date": "2026-01-15", "end_date": "2026-04-15"},
-        {"id": "c3", "name": "Kitten Foster Network", "category": "cats", "status": "draft", "description": "Expand foster capacity", "goal": 18000, "raised": 0, "donors": 0, "start_date": "2026-03-01", "end_date": "2026-06-01"},
     ],
     "donations": [
-        {"id": "d1", "donor": "John Doe", "amount": 500.0, "campaign": "Medical Fund", "category": "dogs", "date": "2026-02-22T14:30:00+00:00", "type": "Monthly", "recurring": True},
-        {"id": "d2", "donor": "Sarah Miller", "amount": 1200.0, "campaign": "Shelter Support", "category": "shelter", "date": "2026-02-22T11:15:00+00:00", "type": "One-time", "recurring": False, "major_gift": True},
-        {"id": "d3", "donor": "Anna Johnson", "amount": 750.0, "campaign": "Medical Fund", "category": "dogs", "date": "2026-02-20T10:20:00+00:00", "type": "One-time", "recurring": False},
+        {"id": "d1", "donor": "Sarah Miller", "amount": 1200.0, "campaign": "Medical Fund", "category": "dogs", "date": "2026-02-22T11:15:00+00:00", "type": "One-time", "recurring": False, "major_gift": True},
     ],
     "animals": [
         {"id": "a1", "name": "Max", "species": "dog", "status": "adopted", "breed": "Labrador Mix", "age_group": "adult"},
-        {"id": "a2", "name": "Luna", "species": "cat", "status": "in_care", "breed": "Domestic Shorthair", "age_group": "young"},
-        {"id": "a3", "name": "Buddy", "species": "dog", "status": "foster", "breed": "Terrier Mix", "age_group": "senior"},
     ],
     "events": [
         {"id": "e1", "name": "Adoption Day", "event_type": "adoption", "status": "published", "starts_at": "2026-02-24T18:00:00+00:00", "location_name": "Downtown Park", "rsvp_count": 124, "funds_raised": 0},
-        {"id": "e2", "name": "Spring Gala", "event_type": "fundraiser", "status": "planned", "starts_at": "2026-03-15T02:00:00+00:00", "location_name": "Riverside Hall", "rsvp_count": 62, "funds_raised": 8500},
     ],
     "stories": [
         {"id": "s1", "title": "Max finds forever home!", "status": "published", "views_count": 842, "likes_count": 117, "published_at": "2026-02-22T19:00:00+00:00"},
-        {"id": "s2", "title": "Rescue transport saves 12 puppies", "status": "draft", "views_count": 0, "likes_count": 0, "published_at": None},
     ],
     "communications": [
         {"id": "m1", "name": "February Thank You Email", "channel": "email", "status": "sent", "open_rate": 46.2, "click_rate": 12.7, "attributed_revenue": 5400},
-        {"id": "m2", "name": "Spring Gala Invite", "channel": "email", "status": "scheduled", "open_rate": None, "click_rate": None, "attributed_revenue": 0},
     ],
     "reports": [
         {"id": "r1", "title": "January Impact Report", "report_type": "monthly", "status": "published", "period_start": "2026-01-01", "period_end": "2026-01-31"},
-        {"id": "r2", "title": "Q1 Board Snapshot", "report_type": "quarterly", "status": "draft", "period_start": "2026-01-01", "period_end": "2026-03-31"},
     ],
     "team": [
         {"id": "t1", "full_name": "Tony H", "email": "tony@example.org", "role": "administrator", "status": "active"},
-        {"id": "t2", "full_name": "Hope", "email": "hope@furryfriendswa.org", "role": "editor", "status": "invited"},
     ],
+    "donor_notes": defaultdict(list),
+    "animal_notes": defaultdict(list),
 }
 
 
@@ -295,31 +455,73 @@ def _normalize_org_contact(row):
     }
 
 
-def get_fundraising_trends():
+def get_fundraising_trends(range_days: int | None = None, start_date: str | None = None, end_date: str | None = None):
     if not _client():
         return {"labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"], "values": [12000, 18500, 22000, 19500, 25000, 24350], "goal": [23000] * 6, "donations": [45, 67, 82, 71, 95, 89]}
-    rows = _fetch("donations", select="amount,donation_date,payment_status", filters=[{"col": "payment_status", "val": "completed"}], order_by="donation_date", limit=5000)
+    rows = _fetch("donations", select="amount,donation_date,payment_status", filters=[{"col": "payment_status", "val": "completed"}], order_by="donation_date", limit=2000)
     if not rows:
         return {"labels": [], "values": [], "goal": [], "donations": []}
-    buckets = defaultdict(lambda: {"amount": 0.0, "count": 0})
+    explicit_start = _parse_dt(start_date)
+    explicit_end = _parse_dt(end_date)
+    if explicit_start and not explicit_end:
+        explicit_end = _now()
+    if explicit_end and not explicit_start:
+        explicit_start = explicit_end
+    if explicit_start and explicit_end and explicit_end < explicit_start:
+        explicit_start, explicit_end = explicit_end, explicit_start
+    if (not explicit_start or not explicit_end) and range_days:
+        days = max(1, int(range_days))
+        explicit_end = _now()
+        explicit_start = explicit_end.replace(hour=0, minute=0, second=0, microsecond=0)
+        explicit_start = explicit_start - timedelta(days=days - 1)
+
+    bucket_mode = "monthly"
+    if explicit_start and explicit_end:
+        day_span = max(1, int((explicit_end - explicit_start).total_seconds() // 86400) + 1)
+        bucket_mode = "daily" if day_span <= 45 else "weekly"
+
+    buckets = defaultdict(lambda: {"amount": 0.0, "count": 0, "stamp": None})
     for r in rows:
         dt = _parse_dt(r.get("donation_date"))
         if not dt:
             continue
-        key = dt.strftime("%Y-%m")
+        if explicit_start and dt < explicit_start:
+            continue
+        if explicit_end and dt > explicit_end:
+            continue
+        if bucket_mode == "daily":
+            key = dt.strftime("%Y-%m-%d")
+            stamp = dt.strftime("%Y-%m-%d")
+        elif bucket_mode == "weekly":
+            iso_year, iso_week, _ = dt.isocalendar()
+            key = f"{iso_year}-W{iso_week:02d}"
+            stamp = f"{iso_year}-W{iso_week:02d}"
+        else:
+            key = dt.strftime("%Y-%m")
+            stamp = dt.strftime("%Y-%m")
         buckets[key]["amount"] += float(r.get("amount") or 0)
         buckets[key]["count"] += 1
-    keys = sorted(buckets.keys())[-6:]
+        buckets[key]["stamp"] = stamp
+    if explicit_start and explicit_end:
+        keys = sorted(buckets.keys())
+    else:
+        keys = sorted(buckets.keys())[-6:]
     values = [round(buckets[k]["amount"], 2) for k in keys]
+    if bucket_mode == "daily":
+        labels = [datetime.strptime(k, "%Y-%m-%d").strftime("%b %d") for k in keys]
+    elif bucket_mode == "weekly":
+        labels = [f"Week {k.split('-W')[-1]}" for k in keys]
+    else:
+        labels = [datetime.strptime(k + "-01", "%Y-%m-%d").strftime("%b") for k in keys]
     return {
-        "labels": [datetime.strptime(k + "-01", "%Y-%m-%d").strftime("%b") for k in keys],
+        "labels": labels,
         "values": values,
         "goal": [round(sum(values) / len(values), 2)] * len(values) if values else [],
         "donations": [buckets[k]["count"] for k in keys],
     }
 
 
-def get_explorer_organizations(location=None, radius_miles=None, limit=100, min_score=0):
+def get_explorer_organizations(location=None, radius_miles=None, limit=50, min_score=0):
     limit = max(1, min(int(limit or 100), 1000))
     min_score = int(min_score or 0)
     location = (location or "").strip()
@@ -328,7 +530,7 @@ def get_explorer_organizations(location=None, radius_miles=None, limit=100, min_
         orgs = [_normalize_org(o) for o in MOCK.get("organizations", [])]
         rows = [o for o in orgs if o]
     else:
-        rows = [_normalize_org(o) for o in _fetch("organizations", select="*", order_by="donation_potential_score", desc=True, limit=2000)]
+        rows = [_normalize_org(o) for o in _fetch("organizations", select="*", order_by="donation_potential_score", desc=True, limit=1000)]
         rows = [o for o in rows if o]
 
     if min_score > 0:
@@ -382,19 +584,63 @@ def get_explorer_organization_detail(org_id, include_contacts=True):
     return org
 
 
-def get_fundraising_total():
+def get_contacts(limit=500):
+    limit = max(1, min(int(limit or 500), 2000))
     if not _client():
-        return {"total": 127450, "monthly": 24350, "animals_helped": 342, "change_percentage": 23}
+        contacts = [_normalize_org_contact(c) for c in MOCK.get("org_contacts", [])]
+        contacts = [c for c in contacts if c]
+        org_map = {str(o.get("id")): _normalize_org(o) for o in MOCK.get("organizations", [])}
+    else:
+        contacts = [_normalize_org_contact(c) for c in _fetch("contacts", select="*", order_by="updated_at", desc=True, limit=limit)]
+        contacts = [c for c in contacts if c]
+        org_ids = [c.get("org_id") for c in contacts if c.get("org_id")]
+        org_rows = _fetch("organizations", select="*", filters=([{"col": "id", "op": "in", "val": org_ids}] if org_ids else None), limit=5000)
+        org_map = {str(o.get("id")): _normalize_org(o) for o in org_rows if o}
+
+    out = []
+    for c in contacts[:limit]:
+        org = org_map.get(str(c.get("org_id")))
+        role_category = "General Contact"
+        title = str(c.get("title") or "").lower()
+        if any(k in title for k in ["owner", "founder", "principal"]):
+            role_category = "Business Owner"
+        elif any(k in title for k in ["giving", "philanthropy", "development", "grant", "foundation"]):
+            role_category = "Giving Manager"
+        elif any(k in title for k in ["community", "outreach", "partner", "marketing"]):
+            role_category = "Community / Outreach Lead"
+        elif any(k in title for k in ["ceo", "president", "executive", "director"]):
+            role_category = "Executive Leader"
+
+        out.append({
+            **c,
+            "record_type": "contact",
+            "category": role_category,
+            "organization_name": (org or {}).get("name"),
+            "organization_category": (org or {}).get("category"),
+            "organization_city": (org or {}).get("city"),
+            "organization_state": (org or {}).get("state"),
+            "donation_potential_score": (org or {}).get("donation_potential_score"),
+        })
+
+    return {"contacts": out, "total": len(out)}
+
+
+def get_fundraising_total():
+    cached = _cache_get("fundraising_total")
+    if cached:
+        return cached
+    if not _client():
+        return _cache_set("fundraising_total", {"total": 127450, "monthly": 24350, "animals_helped": 342, "change_percentage": 23})
     totals = _fetch("v_fundraising_totals")
     animals = _fetch("v_animals_impact")
     t = totals[0] if totals else {}
     a = animals[0] if animals else {}
-    return {
+    return _cache_set("fundraising_total", {
         "total": float(t.get("total_raised") or 0),
         "monthly": float(t.get("month_raised") or 0),
         "animals_helped": int(a.get("adopted_total") or 0),
         "change_percentage": 0,
-    }
+    })
 
 
 def get_recent_donations(limit=10):
@@ -509,7 +755,7 @@ def create_donation(payload):
     }
 
 
-def get_campaigns(limit=100):
+def get_campaigns(limit=50):
     if not _client():
         return {"campaigns": MOCK["campaigns"][:limit], "total": len(MOCK["campaigns"])}
     rows = _fetch("campaigns", select="*", order_by="updated_at", desc=True, limit=limit)
@@ -526,7 +772,7 @@ def get_campaigns(limit=100):
             "start_date": r.get("start_date"),
             "end_date": r.get("end_date"),
         })
-    return {"campaigns": out, "total": len(_fetch("campaigns", select="id", limit=5000))}
+    return {"campaigns": out, "total": len(_fetch("campaigns", select="id", limit=1000))}
 
 
 def get_active_campaigns():
@@ -547,21 +793,106 @@ def create_campaign(payload):
     })
 
 
-def get_donors(limit=100, donor_id=None):
+def get_campaign_detail(campaign_id):
+    if not campaign_id:
+        return None
     if not _client():
+        for c in MOCK["campaigns"]:
+            if str(c.get("id")) == str(campaign_id):
+                return c
+        return None
+    rows = _fetch("campaigns", select="*", filters=[{"col": "id", "val": campaign_id}], limit=1)
+    if not rows:
+        return None
+    r = rows[0]
+    return {
+        "id": r["id"],
+        "name": r.get("name"),
+        "category": r.get("category"),
+        "status": r.get("status"),
+        "description": r.get("description"),
+        "goal": float(r.get("goal_amount") or 0),
+        "raised": float(r.get("raised_amount") or 0),
+        "start_date": r.get("start_date"),
+        "end_date": r.get("end_date"),
+        "image_url": r.get("image_url"),
+    }
+
+
+def update_campaign(campaign_id, payload):
+    if not campaign_id:
+        return None
+    update_payload = {
+        "name": payload.get("name") or payload.get("title"),
+        "category": payload.get("category"),
+        "status": payload.get("status"),
+        "description": payload.get("description"),
+        "goal_amount": float(payload.get("goal") or payload.get("goal_amount") or 0) if (payload.get("goal") is not None or payload.get("goal_amount") is not None) else None,
+        "raised_amount": float(payload.get("raised") or payload.get("raised_amount") or 0) if (payload.get("raised") is not None or payload.get("raised_amount") is not None) else None,
+        "start_date": payload.get("start_date"),
+        "end_date": payload.get("end_date"),
+        "image_url": payload.get("image_url"),
+    }
+    update_payload = {k: v for k, v in update_payload.items() if v is not None}
+    if not update_payload:
+        return get_campaign_detail(campaign_id)
+
+    if not _client():
+        for idx, c in enumerate(MOCK["campaigns"]):
+            if str(c.get("id")) == str(campaign_id):
+                merged = {**c, **{
+                    "name": update_payload.get("name", c.get("name")),
+                    "category": update_payload.get("category", c.get("category")),
+                    "status": update_payload.get("status", c.get("status")),
+                    "description": update_payload.get("description", c.get("description")),
+                    "goal": float(update_payload.get("goal_amount", c.get("goal") or 0)),
+                    "raised": float(update_payload.get("raised_amount", c.get("raised") or 0)),
+                    "start_date": update_payload.get("start_date", c.get("start_date")),
+                    "end_date": update_payload.get("end_date", c.get("end_date")),
+                    "image_url": update_payload.get("image_url", c.get("image_url")),
+                }}
+                MOCK["campaigns"][idx] = merged
+                return merged
+        return None
+
+    _update("campaigns", campaign_id, update_payload)
+    return get_campaign_detail(campaign_id)
+
+
+def delete_campaign(campaign_id):
+    if not campaign_id:
+        return False
+    if not _client():
+        before = len(MOCK["campaigns"])
+        MOCK["campaigns"] = [c for c in MOCK["campaigns"] if str(c.get("id")) != str(campaign_id)]
+        return len(MOCK["campaigns"]) < before
+    return _delete("campaigns", campaign_id)
+
+
+def get_donors(limit=50, donor_id=None):
+    client = _client()
+    if not client:
+        if supabase_configured():
+            # Avoid showing stale mock donors when backend is configured but unavailable.
+            return {"donors": [], "total": 0}
         rows = MOCK["donors"]
         if donor_id is not None:
             rows = [d for d in rows if str(d["id"]) == str(donor_id)]
         return {"donors": rows[:limit], "total": len(MOCK["donors"])}
-    rows = _fetch("donors", select="id,display_name,email,phone,donor_tier,donor_status,total_donated,first_donation_date,last_donation_date,donation_type_preference,engagement_score,notes", order_by="updated_at", desc=True, limit=(1 if donor_id else limit), filters=([{"col": "id", "val": donor_id}] if donor_id else None))
+    donor_select = "id,display_name,email,phone,donor_tier,donor_status,total_donated,first_donation_date,last_donation_date,donation_type_preference,engagement_score,notes"
+    if _donor_avatar_supported():
+        donor_select = f"{donor_select},avatar_url"
+    if _donor_full_name_supported():
+        donor_select = f"{donor_select},full_name"
+    rows = _fetch("donors", select=donor_select, order_by="updated_at", desc=True, limit=(1 if donor_id else limit), filters=([{"col": "id", "val": donor_id}] if donor_id else None))
     ids = [r["id"] for r in rows]
-    tag_rows = _fetch("donor_tag_assignments", select="donor_id,donor_tags(name)", filters=([{"col": "donor_id", "op": "in", "val": ids}] if ids else None), limit=5000)
+    tag_rows = _fetch("donor_tag_assignments", select="donor_id,donor_tags(name)", filters=([{"col": "donor_id", "op": "in", "val": ids}] if ids else None), limit=2000)
     tags = defaultdict(list)
     for r in tag_rows:
         tag = r.get("donor_tags") or {}
         if r.get("donor_id") and tag.get("name"):
             tags[r["donor_id"]].append(tag["name"])
-    hist_rows = _fetch("donations", select="donor_id,amount,donation_date,campaigns(name)", filters=([{"col": "donor_id", "op": "in", "val": ids}] if ids else None), order_by="donation_date", desc=True, limit=5000)
+    hist_rows = _fetch("donations", select="donor_id,amount,donation_date,campaigns(name)", filters=([{"col": "donor_id", "op": "in", "val": ids}] if ids else None), order_by="donation_date", desc=True, limit=2000)
     history = defaultdict(list)
     for r in hist_rows:
         did = r.get("donor_id")
@@ -571,9 +902,11 @@ def get_donors(limit=100, donor_id=None):
     for r in rows:
         donors.append({
             "id": r["id"],
-            "name": r.get("display_name") or "Unknown",
+            "name": r.get("full_name") or r.get("display_name") or "Unknown",
+            "full_name": r.get("full_name") or r.get("display_name") or "Unknown",
             "email": r.get("email"),
             "phone": r.get("phone"),
+            "avatar_url": r.get("avatar_url"),
             "tier": r.get("donor_tier", "friend"),
             "status": r.get("donor_status", "active"),
             "total_donated": float(r.get("total_donated") or 0),
@@ -586,11 +919,11 @@ def get_donors(limit=100, donor_id=None):
             "donation_history": history.get(r["id"], []),
             "donation_count": len(history.get(r["id"], [])),
         })
-    return {"donors": donors, "total": len(_fetch("donors", select="id", limit=5000))}
+    return {"donors": donors, "total": len(_fetch("donors", select="id", limit=1000))}
 
 
 def get_donor_stats():
-    donors = get_donors(limit=5000)["donors"]
+    donors = get_donors(limit=2000)["donors"]
     recurring = [d for d in donors if str(d.get("donation_type") or "").lower() in {"monthly", "quarterly", "annual"}]
     major = [d for d in donors if str(d.get("tier") or "").lower() in {"hero", "champion"}]
     avg = int(round(sum(float(d.get("total_donated") or 0) for d in donors) / len(donors))) if donors else 0
@@ -599,7 +932,115 @@ def get_donor_stats():
 
 def get_donor_detail(donor_id):
     rows = get_donors(limit=1, donor_id=donor_id)["donors"]
-    return rows[0] if rows else None
+    if not rows:
+        return None
+    donor = rows[0]
+    donor["notes_history"] = get_donor_notes(donor_id).get("notes", [])
+    return donor
+
+
+def update_donor(donor_id, payload):
+    if not donor_id:
+        return None
+    if not _client():
+        for idx, donor in enumerate(MOCK["donors"]):
+            if str(donor.get("id")) == str(donor_id):
+                updated = {
+                    **donor,
+                    "name": payload.get("name", donor.get("name")),
+                    "email": payload.get("email", donor.get("email")),
+                    "phone": payload.get("phone", donor.get("phone")),
+                    "tier": payload.get("tier", donor.get("tier")),
+                    "status": payload.get("status", donor.get("status")),
+                    "donation_type": payload.get("donation_type", donor.get("donation_type")),
+                    "engagement_score": int(payload.get("engagement_score", donor.get("engagement_score") or 0) or 0),
+                    "avatar_url": payload.get("avatar_url", donor.get("avatar_url")),
+                    "notes": payload.get("notes", donor.get("notes")),
+                    "total_donated": float(payload.get("total_donated", donor.get("total_donated") or 0) or 0),
+                }
+                MOCK["donors"][idx] = updated
+                updated["notes_history"] = get_donor_notes(donor_id).get("notes", [])
+                return updated
+        return None
+    current = _fetch("donors", filters=[{"col": "id", "val": donor_id}], limit=1)
+    if not current:
+        return None
+    row = current[0]
+    update_payload = {}
+    if "name" in payload or "full_name" in payload:
+        full = str(payload.get("name") or payload.get("full_name") or "").strip()
+        if full:
+            parts = full.split()
+            update_payload["first_name"] = parts[0]
+            update_payload["last_name"] = " ".join(parts[1:]) if len(parts) > 1 else None
+            if _donor_full_name_supported():
+                update_payload["full_name"] = full
+    if "email" in payload:
+        update_payload["email"] = payload.get("email")
+    if "phone" in payload:
+        update_payload["phone"] = payload.get("phone")
+    if "tier" in payload or "donor_tier" in payload:
+        update_payload["donor_tier"] = payload.get("tier") or payload.get("donor_tier")
+    if "status" in payload:
+        update_payload["donor_status"] = payload.get("status")
+    if "donation_type" in payload:
+        update_payload["donation_type_preference"] = payload.get("donation_type")
+    if "engagement_score" in payload:
+        update_payload["engagement_score"] = int(payload.get("engagement_score") or 0)
+    if "avatar_url" in payload and _donor_avatar_supported():
+        update_payload["avatar_url"] = payload.get("avatar_url")
+    if "notes" in payload:
+        update_payload["notes"] = payload.get("notes")
+    if "total_donated" in payload:
+        update_payload["total_donated"] = float(payload.get("total_donated") or 0)
+    if update_payload:
+        _update("donors", donor_id, update_payload)
+    return get_donor_detail(donor_id)
+
+
+def get_donor_notes(donor_id):
+    if not donor_id:
+        return {"notes": []}
+    if not _client():
+        return {"notes": list(MOCK["donor_notes"].get(str(donor_id), []))}
+    # No dedicated notes table in current schema; persist latest summary in donors.notes and keep a synthetic history entry.
+    rows = _fetch("donors", filters=[{"col": "id", "val": donor_id}], limit=1)
+    donor = rows[0] if rows else None
+    notes = []
+    if donor and donor.get("notes"):
+        notes.append({
+            "id": f"donor-note-{donor_id}-summary",
+            "donor_id": donor_id,
+            "author": "System",
+            "content": donor.get("notes"),
+            "created_at": donor.get("updated_at") or donor.get("last_donation_date") or _now().isoformat(),
+            "synthetic": True,
+        })
+    return {"notes": notes}
+
+
+def create_donor_note(donor_id, payload):
+    content = str(payload.get("content") or "").strip()
+    if not content:
+        return None
+    note = {
+        "id": f"donor-note-{uuid4_short()}",
+        "donor_id": str(donor_id),
+        "author": payload.get("author") or "Team Member",
+        "content": content,
+        "created_at": _now().isoformat(),
+        "synthetic": not bool(_client()),
+    }
+    if not _client():
+        MOCK["donor_notes"][str(donor_id)].insert(0, note)
+        # also maintain donor summary notes field
+        for idx, donor in enumerate(MOCK["donors"]):
+            if str(donor.get("id")) == str(donor_id):
+                MOCK["donors"][idx] = {**donor, "notes": content}
+                break
+        return note
+    _update("donors", donor_id, {"notes": content})
+    return note
 
 
 def create_donor(payload):
@@ -614,7 +1055,7 @@ def create_donor(payload):
 
     initial_amount = float(payload.get("initial_donation") or payload.get("total_donated") or 0)
     today = _now().date().isoformat()
-    created = _insert("donors", {
+    donor_payload = {
         "first_name": first_name,
         "last_name": last_name,
         "email": payload.get("email"),
@@ -627,10 +1068,15 @@ def create_donor(payload):
         "first_donation_date": (today if initial_amount > 0 else None),
         "last_donation_date": (today if initial_amount > 0 else None),
         "notes": payload.get("notes"),
-    })
+    }
+    if _donor_full_name_supported():
+        donor_payload["full_name"] = full_name or f"{first_name} {last_name or ''}".strip()
+    if _donor_avatar_supported():
+        donor_payload["avatar_url"] = payload.get("avatar_url")
+    created = _insert("donors", donor_payload, strict=True)
 
     # Normalize response shape for frontend regardless of data source.
-    donor_name = created.get("display_name") or " ".join(
+    donor_name = created.get("full_name") or created.get("display_name") or " ".join(
         p for p in [created.get("first_name"), created.get("last_name")] if p
     ).strip() or full_name or "New Donor"
     return {
@@ -638,6 +1084,7 @@ def create_donor(payload):
         "name": donor_name,
         "email": created.get("email"),
         "phone": created.get("phone"),
+        "avatar_url": created.get("avatar_url"),
         "tier": created.get("donor_tier") or payload.get("tier") or "friend",
         "status": created.get("donor_status") or "active",
         "total_donated": float(created.get("total_donated") or initial_amount or 0),
@@ -651,29 +1098,164 @@ def create_donor(payload):
     }
 
 
-def get_animals(limit=100):
+def get_animals(limit=50):
     if not _client():
         return {"animals": MOCK["animals"][:limit], "total": len(MOCK["animals"])}
-    return {"animals": _fetch("animals", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("animals", select="id", limit=5000))}
+    return {"animals": _fetch("animals", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("animals", select="id", limit=1000))}
+
+
+def get_animal_detail(animal_id):
+    if not _client():
+        rows = [a for a in MOCK["animals"] if str(a.get("id")) == str(animal_id)]
+        if not rows:
+            return None
+        animal = {**rows[0]}
+        animal["notes_history"] = get_animal_notes(animal_id).get("notes", [])
+        return animal
+    rows = _fetch("animals", filters=[{"col": "id", "val": animal_id}], limit=1)
+    if not rows:
+        return None
+    animal = rows[0]
+    animal["notes_history"] = get_animal_notes(animal_id).get("notes", [])
+    return animal
 
 
 def create_animal(payload):
-    return _insert("animals", {
+    age_group = _normalize_age_group(payload.get("age_group") or payload.get("age"))
+    data = {
         "name": payload.get("name", "Unnamed"),
         "species": payload.get("species", "dog"),
         "breed": payload.get("breed"),
-        "age_group": payload.get("age_group") or payload.get("age"),
+        "age_group": age_group,
+        "sex": _normalize_sex(payload.get("sex") or payload.get("gender")),
         "status": payload.get("status", "in_care"),
         "rescue_date": payload.get("rescue_date"),
         "photo_url": payload.get("photo_url"),
         "notes": payload.get("notes"),
-    })
+    }
+    client = _client()
+    if not client:
+        return _insert("animals", data)
+    try:
+        result = client.table("animals").insert(data).execute()
+        return (result.data or [{}])[0]
+    except Exception as exc:
+        # Older schemas may still use image_url instead of photo_url.
+        if "photo_url" in str(exc).lower():
+            fallback = {k: v for k, v in data.items() if k != "photo_url"}
+            fallback["image_url"] = data.get("photo_url")
+            result = client.table("animals").insert(fallback).execute()
+            return (result.data or [{}])[0]
+        raise
 
 
-def get_events(limit=100):
+def update_animal(animal_id, payload):
+    if not animal_id:
+        return None
+    if not _client():
+        for idx, animal in enumerate(MOCK["animals"]):
+            if str(animal.get("id")) == str(animal_id):
+                updated = {
+                    **animal,
+                    "name": payload.get("name", animal.get("name")),
+                    "species": payload.get("species", animal.get("species")),
+                    "breed": payload.get("breed", animal.get("breed")),
+                    "age_group": _normalize_age_group(payload.get("age_group") or payload.get("age")) or animal.get("age_group"),
+                    "sex": _normalize_sex(payload.get("sex") or payload.get("gender") or animal.get("sex")),
+                    "status": payload.get("status", animal.get("status")),
+                    "photo_url": payload.get("photo_url", animal.get("photo_url")),
+                    "notes": payload.get("notes", animal.get("notes")),
+                }
+                MOCK["animals"][idx] = updated
+                return updated
+        return None
+    current = _fetch("animals", filters=[{"col": "id", "val": animal_id}], limit=1)
+    if not current:
+        return None
+    update_payload = {}
+    for field in ["name", "species", "breed", "status", "photo_url", "notes", "rescue_date"]:
+        if field in payload:
+            update_payload[field] = payload.get(field)
+    if "age_group" in payload or "age" in payload:
+        normalized_age_group = _normalize_age_group(payload.get("age_group") or payload.get("age"))
+        if normalized_age_group:
+            update_payload["age_group"] = normalized_age_group
+    if "sex" in payload or "gender" in payload:
+        update_payload["sex"] = _normalize_sex(payload.get("sex") or payload.get("gender"))
+    if update_payload:
+        client = _client()
+        if not client:
+            _update("animals", animal_id, update_payload)
+        else:
+            try:
+                client.table("animals").update(update_payload).eq("id", animal_id).execute()
+            except Exception as exc:
+                if "photo_url" in str(exc).lower():
+                    fallback = {k: v for k, v in update_payload.items() if k != "photo_url"}
+                    fallback["image_url"] = update_payload.get("photo_url")
+                    client.table("animals").update(fallback).eq("id", animal_id).execute()
+                else:
+                    raise
+    return get_animal_detail(animal_id)
+
+
+def delete_animal(animal_id):
+    if not animal_id:
+        return False
+    if not _client():
+        before = len(MOCK["animals"])
+        MOCK["animals"] = [a for a in MOCK["animals"] if str(a.get("id")) != str(animal_id)]
+        return len(MOCK["animals"]) < before
+    return _delete("animals", animal_id)
+
+
+def get_animal_notes(animal_id):
+    if not animal_id:
+        return {"notes": []}
+    if not _client():
+        return {"notes": list(MOCK["animal_notes"].get(str(animal_id), []))}
+    rows = _fetch("animals", filters=[{"col": "id", "val": animal_id}], limit=1)
+    animal = rows[0] if rows else None
+    notes = []
+    if animal and animal.get("notes"):
+        notes.append({
+            "id": f"animal-note-{animal_id}-summary",
+            "animal_id": animal_id,
+            "author": "System",
+            "content": animal.get("notes"),
+            "created_at": animal.get("updated_at") or _now().isoformat(),
+            "synthetic": True,
+        })
+    return {"notes": notes}
+
+
+def create_animal_note(animal_id, payload):
+    content = str(payload.get("content") or "").strip()
+    if not content:
+        return None
+    note = {
+        "id": f"animal-note-{uuid4_short()}",
+        "animal_id": str(animal_id),
+        "author": payload.get("author") or "Team Member",
+        "content": content,
+        "created_at": _now().isoformat(),
+        "synthetic": not bool(_client()),
+    }
+    if not _client():
+        MOCK["animal_notes"][str(animal_id)].insert(0, note)
+        for idx, animal in enumerate(MOCK["animals"]):
+            if str(animal.get("id")) == str(animal_id):
+                MOCK["animals"][idx] = {**animal, "notes": content}
+                break
+        return note
+    _update("animals", animal_id, {"notes": content})
+    return note
+
+
+def get_events(limit=50):
     if not _client():
         return {"events": MOCK["events"][:limit], "total": len(MOCK["events"])}
-    return {"events": _fetch("events", order_by="starts_at", desc=False, limit=limit), "total": len(_fetch("events", select="id", limit=5000))}
+    return {"events": _fetch("events", order_by="starts_at", desc=False, limit=limit), "total": len(_fetch("events", select="id", limit=1000))}
 
 
 def create_event(payload):
@@ -689,10 +1271,18 @@ def create_event(payload):
     })
 
 
-def get_stories(limit=100):
+def get_stories(limit=50):
     if not _client():
         return {"stories": MOCK["stories"][:limit], "total": len(MOCK["stories"])}
-    return {"stories": _fetch("success_stories", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("success_stories", select="id", limit=5000))}
+    return {"stories": _fetch("success_stories", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("success_stories", select="id", limit=1000))}
+
+
+def get_story(story_id):
+    if not _client():
+        rows = [s for s in MOCK["stories"] if str(s.get("id")) == str(story_id)]
+        return rows[0] if rows else None
+    rows = _fetch("success_stories", filters=[{"col": "id", "val": story_id}], limit=1)
+    return rows[0] if rows else None
 
 
 def create_story(payload):
@@ -705,10 +1295,47 @@ def create_story(payload):
     })
 
 
-def get_communications(limit=100):
+def update_story(story_id, payload):
+    if not _client():
+        for idx, story in enumerate(MOCK["stories"]):
+            if str(story.get("id")) == str(story_id):
+                updated = {
+                    **story,
+                    "title": payload.get("title", story.get("title")),
+                    "status": payload.get("status", story.get("status", "draft")),
+                    "excerpt": payload.get("excerpt", story.get("excerpt") or story.get("summary")),
+                    "body": payload.get("body", story.get("body") or story.get("content")),
+                    "cover_image_url": payload.get("cover_image_url", story.get("cover_image_url")),
+                }
+                MOCK["stories"][idx] = updated
+                return updated
+        return None
+    existing = _fetch("success_stories", filters=[{"col": "id", "val": story_id}], limit=1)
+    if not existing:
+        return None
+    current = existing[0]
+    update_payload = {}
+    for field in ["title", "status", "excerpt", "body", "cover_image_url"]:
+        if field in payload:
+            update_payload[field] = payload.get(field)
+    if not update_payload:
+        return current
+    updated = _update("success_stories", story_id, update_payload)
+    return {**current, **updated}
+
+
+def get_communications(limit=50):
     if not _client():
         return {"campaigns": MOCK["communications"][:limit], "total": len(MOCK["communications"])}
-    return {"campaigns": _fetch("communication_campaigns", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("communication_campaigns", select="id", limit=5000))}
+    return {"campaigns": _fetch("communication_campaigns", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("communication_campaigns", select="id", limit=1000))}
+
+
+def get_communication_campaign(campaign_id):
+    if not _client():
+        rows = [c for c in MOCK["communications"] if str(c.get("id")) == str(campaign_id)]
+        return rows[0] if rows else None
+    rows = _fetch("communication_campaigns", filters=[{"col": "id", "val": campaign_id}], limit=1)
+    return rows[0] if rows else None
 
 
 def create_communication_campaign(payload):
@@ -722,10 +1349,50 @@ def create_communication_campaign(payload):
     })
 
 
-def get_reports(limit=100):
+def update_communication_campaign(campaign_id, payload):
+    if not _client():
+        for idx, campaign in enumerate(MOCK["communications"]):
+            if str(campaign.get("id")) == str(campaign_id):
+                updated = {
+                    **campaign,
+                    "name": payload.get("name", campaign.get("name")),
+                    "channel": payload.get("channel", campaign.get("channel", "email")),
+                    "status": payload.get("status", campaign.get("status", "draft")),
+                    "audience_segment": payload.get("audience_segment", campaign.get("audience_segment")),
+                    "scheduled_for": payload.get("scheduled_for", campaign.get("scheduled_for")),
+                    "notes": payload.get("notes", campaign.get("notes")),
+                }
+                MOCK["communications"][idx] = updated
+                return updated
+        return None
+    existing = _fetch("communication_campaigns", filters=[{"col": "id", "val": campaign_id}], limit=1)
+    if not existing:
+        return None
+    current = existing[0]
+    update_payload = {}
+    for field in ["name", "channel", "status", "audience_segment", "scheduled_for", "notes"]:
+        if field in payload:
+            update_payload[field] = payload.get(field)
+    if "metadata" in payload:
+        update_payload["metadata"] = payload.get("metadata")
+    if not update_payload:
+        return current
+    updated = _update("communication_campaigns", campaign_id, update_payload)
+    return {**current, **updated}
+
+
+def get_reports(limit=50):
     if not _client():
         return {"reports": MOCK["reports"][:limit], "total": len(MOCK["reports"])}
-    return {"reports": _fetch("impact_reports", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("impact_reports", select="id", limit=5000))}
+    return {"reports": _fetch("impact_reports", order_by="updated_at", desc=True, limit=limit), "total": len(_fetch("impact_reports", select="id", limit=1000))}
+
+
+def get_report(report_id):
+    if not _client():
+        rows = [r for r in MOCK["reports"] if str(r.get("id")) == str(report_id)]
+        return rows[0] if rows else None
+    rows = _fetch("impact_reports", filters=[{"col": "id", "val": report_id}], limit=1)
+    return rows[0] if rows else None
 
 
 def create_report(payload):
@@ -740,14 +1407,47 @@ def create_report(payload):
     })
 
 
-def get_team(limit=100):
+def update_report(report_id, payload):
+    if not _client():
+        for idx, report in enumerate(MOCK["reports"]):
+            if str(report.get("id")) == str(report_id):
+                updated = {
+                    **report,
+                    "title": payload.get("title", report.get("title")),
+                    "report_type": payload.get("report_type", payload.get("type", report.get("report_type", "custom"))),
+                    "status": payload.get("status", report.get("status", "draft")),
+                    "period_start": payload.get("period_start", report.get("period_start")),
+                    "period_end": payload.get("period_end", report.get("period_end")),
+                    "summary": payload.get("summary", report.get("summary")),
+                    "data_snapshot": payload.get("data_snapshot", report.get("data_snapshot") or {}),
+                }
+                MOCK["reports"][idx] = updated
+                return updated
+        return None
+    existing = _fetch("impact_reports", filters=[{"col": "id", "val": report_id}], limit=1)
+    if not existing:
+        return None
+    current = existing[0]
+    update_payload = {}
+    for field in ["title", "status", "period_start", "period_end", "summary", "data_snapshot"]:
+        if field in payload:
+            update_payload[field] = payload.get(field)
+    if "report_type" in payload or "type" in payload:
+        update_payload["report_type"] = payload.get("report_type") or payload.get("type")
+    if not update_payload:
+        return current
+    updated = _update("impact_reports", report_id, update_payload)
+    return {**current, **updated}
+
+
+def get_team(limit=50):
     if not _client():
         return {"team": MOCK["team"][:limit], "total": len(MOCK["team"])}
     rows = _fetch("team_members", order_by="updated_at", desc=True, limit=limit)
     out = []
     for r in rows:
         out.append(_normalize_team_member(r))
-    return {"team": out, "total": len(_fetch("team_members", select="id", limit=5000))}
+    return {"team": out, "total": len(_fetch("team_members", select="id", limit=1000))}
 
 
 def get_team_member(member_id):
@@ -826,14 +1526,10 @@ def delete_team_member(member_id):
     if not _client():
         for idx, member in enumerate(MOCK["team"]):
             if str(member.get("id")) == str(member_id):
-                updated = {**member, "status": "disabled"}
+                updated = {**member, "status": "inactive"}
                 MOCK["team"][idx] = updated
                 return True
         return False
-    _update("team_members", member_id, {"status": "disabled"})
-    verify = _fetch("team_members", select="id,status", filters=[{"col": "id", "val": member_id}], limit=1)
-    if verify and str((verify[0] or {}).get("status") or "").lower() == "disabled":
-      return True
     _update("team_members", member_id, {"status": "inactive"})
     verify = _fetch("team_members", select="id,status", filters=[{"col": "id", "val": member_id}], limit=1)
     return bool(verify and str((verify[0] or {}).get("status") or "").lower() == "inactive")
@@ -917,6 +1613,9 @@ def get_monthly_impact():
 
 
 def get_stats_overview():
+    cached = _cache_get("stats_overview")
+    if cached:
+        return cached
     campaigns = get_active_campaigns()["campaigns"]
     donors = get_donors(limit=500)["donors"]
     events = get_events(limit=50)["events"]
@@ -927,18 +1626,18 @@ def get_stats_overview():
         dt = _parse_dt(e.get("starts_at"))
         if dt and dt >= now and (next_event is None or dt < _parse_dt(next_event.get("starts_at"))):
             next_event = e
-    return {
+    return _cache_set("stats_overview", {
         "active_campaigns": len(campaigns),
         "donor_retention": int(round((recurring / len(donors)) * 100)) if donors else 0,
         "upcoming_events": sum(1 for e in events if (_parse_dt(e.get("starts_at")) or now) >= now),
         "next_event": {"name": next_event.get("name"), "date": str(next_event.get("starts_at", ""))[:10], "rsvps": next_event.get("rsvp_count", 0)} if next_event else None,
-    }
+    })
 
 
 def get_automation_runs(limit=50):
     if not _client():
         return {"runs": [], "total": 0}
-    return {"runs": _fetch("automation_runs", order_by="created_at", desc=True, limit=limit), "total": len(_fetch("automation_runs", select="id", limit=5000))}
+    return {"runs": _fetch("automation_runs", order_by="created_at", desc=True, limit=limit), "total": len(_fetch("automation_runs", select="id", limit=1000))}
 
 
 def create_automation_run(payload):

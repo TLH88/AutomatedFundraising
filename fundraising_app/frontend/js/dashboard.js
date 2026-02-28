@@ -17,6 +17,7 @@ const DashboardPage = (() => {
   }
 
   async function apiJson(url, options) {
+    if (window.FundsApp?.apiJson) return window.FundsApp.apiJson(url, options);
     const res = await fetch(url, options);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
@@ -24,9 +25,19 @@ const DashboardPage = (() => {
 
   async function init() {
     if (!isDashboardPage()) return;
+    const pageDataGuard = window.FundsApp?.createDataLoadGuard?.({
+      target: '.main-content .container',
+      message: 'Loading dashboard data...',
+    });
+    pageDataGuard?.start();
     bindStaticActions();
     hydrateWelcomeGreeting();
-    await loadDashboardData();
+    try {
+      await loadDashboardData();
+      pageDataGuard?.success();
+    } catch {
+      pageDataGuard?.fail({ restoreFallback: false });
+    }
   }
 
   function bindStaticActions() {
@@ -51,10 +62,10 @@ const DashboardPage = (() => {
   async function loadDashboardData() {
     try {
       const [donationsRes, updatesRes, donorsRes, campaignsRes, totalRes, impactRes, statsRes, activeRes] = await Promise.all([
-        apiJson('/api/donations/recent?limit=20'),
+        apiJson('/api/donations/recent?limit=12'),
         apiJson('/api/updates/recent'),
-        apiJson('/api/donors?limit=200'),
-        apiJson('/api/campaigns?limit=200'),
+        apiJson('/api/donors?limit=50'),
+        apiJson('/api/campaigns?limit=50'),
         apiJson('/api/fundraising/total'),
         apiJson('/api/impact/monthly'),
         apiJson('/api/stats/overview'),
@@ -72,6 +83,7 @@ const DashboardPage = (() => {
     } catch (error) {
       console.error('Dashboard load error', error);
       window.FundsApp?.showToast?.('Some dashboard data failed to load');
+      throw error;
     }
   }
 
@@ -566,6 +578,12 @@ const DashboardPage = (() => {
     e.preventDefault();
     const form = e.target;
     const payload = Object.fromEntries(new FormData(form));
+    if (!payload.avatar_url) {
+      payload.avatar_url = await window.FundsApp.generateAnimalAvatar?.(
+        `${payload.email || ''}|${payload.full_name || ''}|donor`,
+        { email: payload.email || '', name: payload.full_name || '', role: 'donor' },
+      ) || '';
+    }
     try {
       const res = await apiJson('/api/donors', {
         method: 'POST',
@@ -589,7 +607,11 @@ const DashboardPage = (() => {
       updateDonorMatchStatus(`Linked to donor record: ${created?.name || payload.full_name}`, false);
     } catch (error) {
       console.error('Failed to add donor from donation flow', error);
-      window.FundsApp.showToast('Unable to add donor');
+      const parts = [error?.message || 'Unable to add donor'];
+      if (error?.details) parts.push(error.details);
+      if (error?.hint) parts.push(`Hint: ${error.hint}`);
+      if (error?.code) parts.push(`Code: ${error.code}`);
+      window.FundsApp.showToast(parts.join(' | '));
     }
   }
 

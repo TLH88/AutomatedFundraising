@@ -17,7 +17,9 @@ def get_client() -> Client:
     recommended key format. Access is governed by RLS policies on each table.
     """
     url = os.environ["SUPABASE_URL"]
-    key = os.environ["SUPABASE_PUBLISHABLE_KEY"]
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_PUBLISHABLE_KEY")
+    if not key:
+        raise KeyError("Missing SUPABASE_SERVICE_ROLE_KEY / SUPABASE_PUBLISHABLE_KEY")
     return create_client(url, key)
 
 

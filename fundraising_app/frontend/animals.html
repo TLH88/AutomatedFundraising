@@ -563,7 +563,7 @@
     <div class="modal-content modal-large">
       <div class="modal-header">
         <h2 class="modal-title">Add New Animal</h2>
-        <button class="modal-close" onclick="closeModal('addAnimalModal')">×</button>
+        <button class="modal-close" type="button" onclick="closeModal('addAnimalModal')">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -575,12 +575,12 @@
             <div class="form-row">
               <div class="input-group">
                 <label class="label">Name *</label>
-                <input type="text" class="input" placeholder="Animal name" required>
+                <input type="text" class="input" name="name" id="animalNameInput" placeholder="Animal name" required>
               </div>
 
               <div class="input-group">
                 <label class="label">Species *</label>
-                <select class="input" required>
+                <select class="input" name="species" id="animalSpeciesInput" required>
                   <option value="">Select species</option>
                   <option value="dog">Dog</option>
                   <option value="cat">Cat</option>
@@ -592,19 +592,19 @@
             <div class="form-row">
               <div class="input-group">
                 <label class="label">Breed</label>
-                <input type="text" class="input" placeholder="Breed">
+                <input type="text" class="input" name="breed" id="animalBreedInput" placeholder="Breed">
               </div>
 
               <div class="input-group">
                 <label class="label">Age</label>
-                <input type="text" class="input" placeholder="e.g., 3 years">
+                <input type="text" class="input" name="age" id="animalAgeInput" placeholder="e.g., 3 years">
               </div>
             </div>
 
             <div class="form-row">
               <div class="input-group">
                 <label class="label">Gender *</label>
-                <select class="input" required>
+                <select class="input" name="gender" id="animalGenderInput" required>
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -613,7 +613,7 @@
 
               <div class="input-group">
                 <label class="label">Status *</label>
-                <select class="input" required>
+                <select class="input" name="status" id="animalStatusInput" required>
                   <option value="">Select status</option>
                   <option value="available">Available for Adoption</option>
                   <option value="in-care">In Care</option>
@@ -625,30 +625,34 @@
 
             <div class="input-group">
               <label class="label">Description</label>
-              <textarea class="input" rows="4" placeholder="Tell us about this animal..."></textarea>
+              <textarea class="input" rows="4" name="description" id="animalDescriptionInput" placeholder="Tell us about this animal..."></textarea>
             </div>
 
             <div class="input-group">
-              <label class="label">Photo URL</label>
-              <input type="url" class="input" placeholder="https://example.com/photo.jpg">
+              <label class="label">Photo Upload</label>
+              <input type="file" class="input" name="image_file" id="animalImageFileInput" accept="image/*">
+              <p class="text-muted text-caption" style="margin-top:6px;">Upload a photo (JPG, PNG, WEBP).</p>
+              <div id="animalImagePreviewWrap" style="display:none; margin-top:10px;">
+                <img id="animalImagePreview" alt="Animal image preview" style="width:100%; max-height:180px; object-fit:cover; border-radius:10px; border:1px solid var(--border-primary);">
+              </div>
             </div>
 
             <div class="input-group">
               <label class="label">Rescue Date *</label>
-              <input type="date" class="input" required>
+              <input type="date" class="input" name="rescue_date" id="animalRescueDateInput" required>
             </div>
           </div>
 
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="closeModal('addAnimalModal')">Cancel</button>
-            <button type="submit" class="btn btn-primary">Add Animal</button>
+            <button type="submit" class="btn btn-primary" id="animalSubmitBtn">Save</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
+<!-- Scripts -->
   <script src="js/main.js"></script>
   <script src="js/animals.js"></script>
 </body>

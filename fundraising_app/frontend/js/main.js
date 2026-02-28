@@ -12,12 +12,16 @@ const APP_KEYS = {
   brandLogo: 'funds_brand_logo',
   brandName: 'funds_brand_name',
   explorerDiscoveryJob: 'funds_explorer_discovery_job',
+  pagePermissions: 'funds_page_permissions_v1',
+  backendAuthToken: 'funds_backend_auth_token',
 };
 
 const DEFAULT_NOTIFICATIONS = [
   { id: 'n1', title: 'Welcome to Funds 4 Furry Friends', body: 'Dashboard is ready for review.', createdAt: new Date().toISOString(), read: false, audiences: ['all'] },
   { id: 'n2', title: 'CRM Mode Enabled', body: 'Supabase-backed dashboard APIs are active.', createdAt: new Date().toISOString(), read: false, audiences: ['administrator', 'member'] },
 ];
+let backendAuthTokenMemory = '';
+let authBootstrapStatusCache = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initAppShell();
@@ -32,17 +36,201 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initAppShell() {
+  initBackendAuthTransport();
   applySavedPrimaryThemeColor();
   applySavedBrandLogo();
   applySavedBrandName();
   ensureTheme();
   ensureAccounts();
   ensureSession();
+  ensurePagePermissionSchema();
   removeMessagesControl();
   normalizeSidebarNavigation();
   injectHeaderControls();
   applyRoleAccessRestrictions();
   enforceReadOnlyMode();
+}
+
+let backendAuthTransportInitialized = false;
+const apiResponseCache = new Map();
+function initBackendAuthTransport() {
+  if (backendAuthTransportInitialized || typeof window.fetch !== 'function') return;
+  backendAuthTransportInitialized = true;
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (input, init = {}) => {
+    try {
+      const url = typeof input === 'string' ? input : String(input?.url || '');
+      const isApi = url.startsWith('/api/') || /^https?:\/\/[^/]+\/api\//i.test(url);
+      if (isApi) {
+        const token = getBackendAuthToken();
+        if (token) {
+          const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined) || {});
+          if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
+          init = { ...init, headers };
+        }
+      }
+    } catch {}
+    const response = await nativeFetch(input, init);
+    if (response.status === 401) {
+      const session = getSession();
+      if (session.loggedIn) {
+        clearBackendAuthToken();
+      }
+    }
+    return response;
+  };
+}
+
+function buildApiCacheKey(url, init = {}) {
+  const method = String(init?.method || 'GET').toUpperCase();
+  const headers = new Headers(init?.headers || {});
+  const auth = headers.get('Authorization') || '';
+  return `${method}|${url}|${auth}`;
+}
+
+function shouldUseApiCache(url, init = {}) {
+  const method = String(init?.method || 'GET').toUpperCase();
+  if (method !== 'GET') return false;
+  return String(url || '').startsWith('/api/');
+}
+
+function pruneApiResponseCache() {
+  const now = Date.now();
+  for (const [k, v] of apiResponseCache.entries()) {
+    if (!v || Number(v.expiresAt || 0) <= now) apiResponseCache.delete(k);
+  }
+  if (apiResponseCache.size > 120) {
+    const keys = Array.from(apiResponseCache.keys()).slice(0, apiResponseCache.size - 120);
+    keys.forEach((k) => apiResponseCache.delete(k));
+  }
+}
+
+function clearApiResponseCache() {
+  apiResponseCache.clear();
+}
+
+async function apiJson(url, options = {}) {
+  const init = { ...(options || {}) };
+  const useCache = init.useCache !== false;
+  const cacheTtlMs = Math.max(1000, Number(init.cacheTtlMs || 30000));
+  delete init.useCache;
+  delete init.cacheTtlMs;
+
+  const cacheable = useCache && shouldUseApiCache(url, init);
+  const cacheKey = cacheable ? buildApiCacheKey(url, init) : '';
+  if (cacheable) {
+    pruneApiResponseCache();
+    const cached = apiResponseCache.get(cacheKey);
+    if (cached && Number(cached.expiresAt || 0) > Date.now()) {
+      return JSON.parse(JSON.stringify(cached.payload));
+    }
+  }
+
+  const response = await fetch(url, init);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const msg = String(payload?.error || `HTTP ${response.status}`).trim();
+    const err = new Error(msg);
+    err.status = response.status;
+    err.code = payload?.code || null;
+    err.details = payload?.details || null;
+    err.hint = payload?.hint || null;
+    throw err;
+  }
+
+  if (cacheable) {
+    apiResponseCache.set(cacheKey, {
+      expiresAt: Date.now() + cacheTtlMs,
+      payload,
+    });
+  } else {
+    const method = String(init?.method || 'GET').toUpperCase();
+    if (method !== 'GET') clearApiResponseCache();
+  }
+  return payload;
+}
+
+function getBackendAuthToken() {
+  if (backendAuthTokenMemory) return backendAuthTokenMemory;
+  const sessionToken = sessionStorage.getItem(APP_KEYS.backendAuthToken) || '';
+  if (sessionToken) backendAuthTokenMemory = sessionToken;
+  const legacyToken = localStorage.getItem(APP_KEYS.backendAuthToken) || '';
+  if (legacyToken) {
+    localStorage.removeItem(APP_KEYS.backendAuthToken);
+    sessionStorage.setItem(APP_KEYS.backendAuthToken, legacyToken);
+    backendAuthTokenMemory = legacyToken;
+    return legacyToken;
+  }
+  return sessionToken;
+}
+
+function setBackendAuthToken(token) {
+  if (!token) {
+    clearBackendAuthToken();
+    return;
+  }
+  backendAuthTokenMemory = String(token);
+  sessionStorage.setItem(APP_KEYS.backendAuthToken, backendAuthTokenMemory);
+  localStorage.removeItem(APP_KEYS.backendAuthToken);
+}
+
+function clearBackendAuthToken() {
+  backendAuthTokenMemory = '';
+  sessionStorage.removeItem(APP_KEYS.backendAuthToken);
+  localStorage.removeItem(APP_KEYS.backendAuthToken);
+}
+
+async function backendAuthLogin(email, password) {
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { ok: false, error: payload?.error || `HTTP ${res.status}` };
+  }
+  clearBackendAuthToken();
+  return { ok: true, token: '', session: payload?.session || null };
+}
+
+async function backendAuthLogout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch {}
+  clearBackendAuthToken();
+}
+
+async function backendChangePassword(payload) {
+  const res = await fetch('/api/auth/password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return { ok: false, error: data?.error || `HTTP ${res.status}` };
+  return { ok: true, data };
+}
+
+async function fetchAuthBootstrapStatus(force = false) {
+  if (!force && authBootstrapStatusCache) return authBootstrapStatusCache;
+  try {
+    const payload = await apiJson('/api/auth/bootstrap/status', { useCache: false });
+    authBootstrapStatusCache = {
+      needs_bootstrap: !!payload?.needs_bootstrap,
+      bootstrap_token_configured: !!payload?.bootstrap_token_configured,
+      checked_at: Date.now(),
+      error: null,
+    };
+  } catch (err) {
+    authBootstrapStatusCache = {
+      needs_bootstrap: false,
+      bootstrap_token_configured: false,
+      checked_at: Date.now(),
+      error: String(err?.message || err || ''),
+    };
+  }
+  return authBootstrapStatusCache;
 }
 
 function ensureTheme() {
@@ -255,14 +443,21 @@ function emitPrimaryColorChange() {
 
 function getSession() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(APP_KEYS.session) || 'null');
+    const sessionRaw = sessionStorage.getItem(APP_KEYS.session);
+    const legacyRaw = localStorage.getItem(APP_KEYS.session);
+    if (!sessionRaw && legacyRaw) {
+      sessionStorage.setItem(APP_KEYS.session, legacyRaw);
+      localStorage.removeItem(APP_KEYS.session);
+    }
+    const parsed = JSON.parse(sessionStorage.getItem(APP_KEYS.session) || 'null');
     if (parsed && typeof parsed === 'object') return parsed;
   } catch {}
   return { role: 'visitor', loggedIn: false, name: 'Visitor', email: null };
 }
 
 function setSession(session) {
-  localStorage.setItem(APP_KEYS.session, JSON.stringify(session));
+  sessionStorage.setItem(APP_KEYS.session, JSON.stringify(session));
+  localStorage.removeItem(APP_KEYS.session);
 }
 
 function ensureSession() {
@@ -271,40 +466,23 @@ function ensureSession() {
     setSession({ role: 'visitor', loggedIn: false, name: 'Visitor', email: null });
     return;
   }
-  if (current.loggedIn) {
-    const account = findAccountByEmail(current.email);
-    if (!account) {
-      setSession({ role: 'visitor', loggedIn: false, name: 'Visitor', email: null });
-    }
-  }
-}
-
-function defaultAdminAccount() {
-  return {
-    id: 'local-admin-default',
-    full_name: 'Default Administrator',
-    email: 'admin@funds4furry.local',
-    password: 'Admin',
-    role: 'administrator',
-    status: 'active',
-    title: 'System Administrator',
-    avatar_url: '',
-    team_member_id: null,
-    is_default_admin: true,
-  };
 }
 
 function normalizeAccount(account) {
   const a = account && typeof account === 'object' ? account : {};
+  const normalizedRole = normalizeRole(a.role || 'visitor');
+  const normalizedName = String(a.full_name || a.name || 'Member');
+  const normalizedEmail = String(a.email || '').trim().toLowerCase();
+  const avatarUrl = String(a.avatar_url || '').trim()
+    || (normalizedRole !== 'visitor' ? generateAnimalAvatarDataUrl(`${normalizedEmail}|${normalizedName}|${a.id || ''}`) : '');
   return {
     id: String(a.id || `acct-${Date.now()}`),
-    full_name: String(a.full_name || a.name || 'Member'),
-    email: String(a.email || '').trim().toLowerCase(),
-    password: String(a.password || ''),
-    role: normalizeRole(a.role || 'visitor'),
+    full_name: normalizedName,
+    email: normalizedEmail,
+    role: normalizedRole,
     status: String(a.status || 'active').toLowerCase(),
     title: a.title || null,
-    avatar_url: a.avatar_url || '',
+    avatar_url: avatarUrl,
     team_member_id: a.team_member_id || null,
     is_default_admin: !!a.is_default_admin,
   };
@@ -312,7 +490,13 @@ function normalizeAccount(account) {
 
 function getAccounts() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(APP_KEYS.accounts) || 'null');
+    const accountsRaw = sessionStorage.getItem(APP_KEYS.accounts);
+    const legacyRaw = localStorage.getItem(APP_KEYS.accounts);
+    if (!accountsRaw && legacyRaw) {
+      sessionStorage.setItem(APP_KEYS.accounts, legacyRaw);
+      localStorage.removeItem(APP_KEYS.accounts);
+    }
+    const parsed = JSON.parse(sessionStorage.getItem(APP_KEYS.accounts) || 'null');
     if (Array.isArray(parsed)) return parsed.map(normalizeAccount);
   } catch {}
   return [];
@@ -320,23 +504,12 @@ function getAccounts() {
 
 function setAccounts(accounts) {
   const normalized = accounts.map(normalizeAccount);
-  localStorage.setItem(APP_KEYS.accounts, JSON.stringify(normalized));
+  sessionStorage.setItem(APP_KEYS.accounts, JSON.stringify(normalized));
+  localStorage.removeItem(APP_KEYS.accounts);
 }
 
 function ensureAccounts() {
-  let accounts = getAccounts();
-  const existingDefault = accounts.find((a) => a.is_default_admin || a.email === 'admin@funds4furry.local');
-  if (!existingDefault) {
-    accounts = [defaultAdminAccount(), ...accounts];
-  } else {
-    // Ensure default admin remains administrator and active.
-    accounts = accounts.map((a) => {
-      if (a.is_default_admin || a.email === 'admin@funds4furry.local') {
-        return { ...a, is_default_admin: true, role: 'administrator', status: 'active' };
-      }
-      return a;
-    });
-  }
+  const accounts = getAccounts();
   setAccounts(accounts);
 }
 
@@ -351,27 +524,18 @@ function upsertLocalAccount(accountLike) {
   let accounts = getAccounts();
   const idx = accounts.findIndex((a) => a.id === incoming.id || (incoming.email && a.email === incoming.email));
   if (idx >= 0) {
-    const preservedPassword = incoming.password || accounts[idx].password;
-    accounts[idx] = normalizeAccount({ ...accounts[idx], ...incoming, password: preservedPassword });
+    accounts[idx] = normalizeAccount({ ...accounts[idx], ...incoming });
   } else {
     accounts.unshift(incoming);
   }
-  ensureDefaultAdminStillPresent(accounts);
   setAccounts(accounts);
   return findAccountByEmail(incoming.email) || incoming;
-}
-
-function ensureDefaultAdminStillPresent(accounts) {
-  if (!accounts.some((a) => a.is_default_admin || a.email === 'admin@funds4furry.local')) {
-    accounts.unshift(defaultAdminAccount());
-  }
 }
 
 function removeLocalAccountByEmail(email) {
   let accounts = getAccounts();
   const target = String(email || '').trim().toLowerCase();
-  accounts = accounts.filter((a) => !(a.email === target && !a.is_default_admin));
-  ensureDefaultAdminStillPresent(accounts);
+  accounts = accounts.filter((a) => a.email !== target);
   setAccounts(accounts);
 }
 
@@ -390,27 +554,38 @@ function accountToSession(account) {
   };
 }
 
-function signInWithCredentials(email, password) {
-  const account = findAccountByEmail(email);
-  if (!account) return { ok: false, error: 'No account found for that email.' };
-  if (String(account.status || 'active').toLowerCase() !== 'active') return { ok: false, error: 'This account is not active.' };
-  if (account.password !== String(password || '')) return { ok: false, error: 'Incorrect password.' };
-  const session = accountToSession(account);
+async function signInWithCredentials(email, password) {
+  const backend = await backendAuthLogin(email, password);
+  if (!backend.ok) return { ok: false, error: backend.error || 'Unable to sign in to backend session.' };
+  const backendUser = backend?.session?.user || {};
+  const account = findAccountByEmail(backendUser.email || email);
+  const mergedAccount = upsertLocalAccount({
+    ...(account || {}),
+    email: String(backendUser.email || email || '').trim().toLowerCase(),
+    full_name: backendUser.full_name || account?.full_name || 'Member',
+    role: backendUser.role || account?.role || 'member',
+    team_member_id: backendUser.team_member_id ?? account?.team_member_id ?? null,
+    is_default_admin: !!backendUser.is_default_admin || !!account?.is_default_admin,
+    status: 'active',
+  });
+  const session = accountToSession(mergedAccount);
   setSession(session);
-  return { ok: true, session, account };
+  return { ok: true, session, account: mergedAccount };
 }
 
-function changeAccountPassword(email, currentPassword, nextPassword) {
-  const account = findAccountByEmail(email);
-  if (!account) return { ok: false, error: 'Account not found.' };
-  if (account.password !== String(currentPassword || '')) return { ok: false, error: 'Current password is incorrect.' };
-  if (!nextPassword || String(nextPassword).length < 3) return { ok: false, error: 'New password must be at least 3 characters.' };
-  upsertLocalAccount({ ...account, password: String(nextPassword) });
+async function changeAccountPassword(email, currentPassword, nextPassword) {
+  const pwd = String(nextPassword || '');
+  if (pwd.length < 8) return { ok: false, error: 'New password must be at least 8 characters.' };
+  if (!/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/\d/.test(pwd)) {
+    return { ok: false, error: 'New password must include uppercase, lowercase, and a number.' };
+  }
+  const backendResult = await backendChangePassword({ email, current_password: currentPassword, new_password: nextPassword });
+  if (!backendResult.ok) return backendResult;
   return { ok: true };
 }
 
 function getDefaultAdminAccount() {
-  return getAccounts().find((a) => a.is_default_admin) || defaultAdminAccount();
+  return getAccounts().find((a) => normalizeRole(a.role) === 'administrator') || null;
 }
 
 function normalizeSignupRequest(request) {
@@ -419,7 +594,6 @@ function normalizeSignupRequest(request) {
     id: String(r.id || `signup-${Date.now()}`),
     full_name: String(r.full_name || r.name || '').trim(),
     email: String(r.email || '').trim().toLowerCase(),
-    password: String(r.password || ''),
     requested_role: normalizeRole(r.requested_role || r.role || 'member'),
     title: r.title ? String(r.title) : '',
     reason: r.reason ? String(r.reason) : '',
@@ -433,28 +607,33 @@ function normalizeSignupRequest(request) {
 
 function getSignupRequests() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(APP_KEYS.signupRequests) || 'null');
+    const requestsRaw = sessionStorage.getItem(APP_KEYS.signupRequests);
+    const legacyRaw = localStorage.getItem(APP_KEYS.signupRequests);
+    if (!requestsRaw && legacyRaw) {
+      sessionStorage.setItem(APP_KEYS.signupRequests, legacyRaw);
+      localStorage.removeItem(APP_KEYS.signupRequests);
+    }
+    const parsed = JSON.parse(sessionStorage.getItem(APP_KEYS.signupRequests) || 'null');
     if (Array.isArray(parsed)) return parsed.map(normalizeSignupRequest);
   } catch {}
   return [];
 }
 
 function setSignupRequests(requests) {
-  localStorage.setItem(APP_KEYS.signupRequests, JSON.stringify(requests.map(normalizeSignupRequest)));
+  sessionStorage.setItem(APP_KEYS.signupRequests, JSON.stringify(requests.map(normalizeSignupRequest)));
+  localStorage.removeItem(APP_KEYS.signupRequests);
 }
 
 function validateSignupRequestInput(payload) {
   const full_name = String(payload?.full_name || '').trim();
   const email = String(payload?.email || '').trim().toLowerCase();
-  const password = String(payload?.password || '');
   const requested_role = normalizeRole(payload?.requested_role || 'member');
   if (!full_name) return { ok: false, error: 'Full name is required.' };
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'A valid email is required.' };
-  if (!password || password.length < 3) return { ok: false, error: 'Password must be at least 3 characters.' };
   if (findAccountByEmail(email)) return { ok: false, error: 'An account already exists for that email.' };
   const pending = getSignupRequests().find((r) => r.email === email && r.status === 'pending');
   if (pending) return { ok: false, error: 'A signup request for this email is already pending approval.' };
-  return { ok: true, value: { full_name, email, password, requested_role, title: String(payload?.title || '').trim(), reason: String(payload?.reason || '').trim() } };
+  return { ok: true, value: { full_name, email, requested_role, title: String(payload?.title || '').trim(), reason: String(payload?.reason || '').trim() } };
 }
 
 function submitSignupRequest(payload) {
@@ -510,13 +689,15 @@ function normalizeSidebarNavigation() {
     if (child === donorsLink) return;
     if (child.tagName !== 'A') return;
     const href = child.getAttribute('href') || '';
-    if (/(^|\/)funds-explorer\.html$/i.test(href)) {
+    if (/(^|\/)(funds-explorer|lead-generation)\.html$/i.test(href)) {
       child.remove();
     }
   });
 
   let subnav = sidebarNav.querySelector('.sidebar-subnav[data-global-subnav="donors"]')
-    || Array.from(sidebarNav.querySelectorAll('.sidebar-subnav')).find((el) => el.querySelector('a[href$="funds-explorer.html"]'));
+    || Array.from(sidebarNav.querySelectorAll('.sidebar-subnav')).find((el) => (
+      el.querySelector('a[href$="funds-explorer.html"]') || el.querySelector('a[href$="lead-generation.html"]')
+    ));
   if (!subnav) {
     subnav = document.createElement('div');
     subnav.className = 'sidebar-subnav';
@@ -533,6 +714,15 @@ function normalizeSidebarNavigation() {
     subnav.appendChild(explorerLink);
   }
 
+  let leadGenLink = subnav.querySelector('a[href$="lead-generation.html"]');
+  if (!leadGenLink) {
+    leadGenLink = document.createElement('a');
+    leadGenLink.href = 'lead-generation.html';
+    leadGenLink.className = 'nav-item';
+    leadGenLink.innerHTML = '<span class="nav-icon">&rsaquo;</span><span class="nav-label">Lead Generation</span>';
+    subnav.appendChild(leadGenLink);
+  }
+
   if (donorsLink.nextElementSibling !== subnav) {
     donorsLink.insertAdjacentElement('afterend', subnav);
   }
@@ -540,8 +730,21 @@ function normalizeSidebarNavigation() {
   const page = String(location.pathname || '').split('/').pop().toLowerCase() || 'index.html';
   const onDonorsPage = page === 'donors.html';
   const onExplorerPage = page === 'funds-explorer.html';
-  donorsLink.classList.toggle('active', onDonorsPage || onExplorerPage);
+  const onLeadGenPage = page === 'lead-generation.html';
+  donorsLink.classList.toggle('active', onDonorsPage || onExplorerPage || onLeadGenPage);
   explorerLink.classList.toggle('active', onExplorerPage);
+  leadGenLink.classList.toggle('active', onLeadGenPage);
+
+  const storiesLink = Array.from(sidebarNav.querySelectorAll('a[href]')).find((a) => /(^|\/)stories\.html$/i.test(a.getAttribute('href') || ''));
+  setSidebarNavIcon(donorsLink, '💲');
+  setSidebarNavIcon(storiesLink, '❤️');
+}
+
+function setSidebarNavIcon(link, iconText) {
+  if (!link) return;
+  const iconEl = link.querySelector('.nav-icon');
+  if (!iconEl) return;
+  iconEl.textContent = String(iconText || '');
 }
 
 function injectHeaderControls() {
@@ -604,7 +807,8 @@ function injectHeaderControls() {
       <button type="button" class="btn btn-secondary btn-pill" data-app-control="signout">Sign Out</button>
     `;
     const signoutBtn = userMenu.querySelector('[data-app-control="signout"]');
-    signoutBtn?.addEventListener('click', () => {
+    signoutBtn?.addEventListener('click', async () => {
+      await backendAuthLogout();
       setSession({ role: 'visitor', loggedIn: false, name: 'Visitor', email: null });
       notify('Signed out', 'You are now browsing as a Visitor.', ['all']);
       location.reload();
@@ -638,15 +842,16 @@ function openSignInModal() {
         </div>
         <div class="modal-body">
           <form id="authForm" class="form">
-            <div class="input-group">
-              <label class="input-label">Email</label>
-              <input class="input" name="email" type="email" placeholder="admin@funds4furry.local" required>
-            </div>
-            <div class="input-group">
-              <label class="input-label">Password</label>
-              <input class="input" name="password" type="password" placeholder="Password" required>
-            </div>
-            <p class="text-muted text-caption">Default admin login: <code>admin@funds4furry.local</code> / <code>Admin</code></p>
+              <div class="input-group">
+                <label class="input-label">Email</label>
+                <input class="input" name="email" type="email" placeholder="name@organization.org" required>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Password</label>
+                <input class="input" name="password" type="password" placeholder="Password" required>
+              </div>
+            <p class="text-muted text-caption">Sign in with an approved team account. If no admin exists yet, use the backend bootstrap flow.</p>
+            <div id="authBootstrapNotice" class="text-caption" style="display:none; margin:8px 0; padding:10px 12px; border-radius:8px; border:1px solid rgba(245, 158, 11, 0.35); background:rgba(245, 158, 11, 0.12); color:#f59e0b;"></div>
             <p class="text-urgent text-caption" id="authErrorMessage" style="display:none;margin:0;"></p>
             <div id="authSignupCta" style="display:none; margin-top: 8px;">
               <button type="button" class="btn btn-secondary btn-pill" data-auth-signup>Request Sign Up</button>
@@ -664,6 +869,7 @@ function openSignInModal() {
     modal.querySelector('.modal-backdrop')?.addEventListener('click', () => closeModal('authModal'));
     modal.querySelector('.modal-close')?.addEventListener('click', () => closeModal('authModal'));
     modal.querySelector('[data-auth-visitor]')?.addEventListener('click', () => {
+      clearBackendAuthToken();
       setSession({ role: 'visitor', loggedIn: false, name: 'Visitor', email: null });
       closeModal('authModal');
       location.reload();
@@ -674,17 +880,21 @@ function openSignInModal() {
       closeModal('authModal');
       openSignUpRequestModal({ email });
     });
-    modal.querySelector('#authForm')?.addEventListener('submit', (e) => {
+    modal.querySelector('#authForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target));
       const errorEl = modal.querySelector('#authErrorMessage');
-      const result = signInWithCredentials(data.email, data.password);
+      const result = await signInWithCredentials(data.email, data.password);
       if (!result.ok) {
+        const bootstrapStatus = await fetchAuthBootstrapStatus(true);
+        renderAuthBootstrapNotice(bootstrapStatus);
         if (errorEl) {
           errorEl.style.display = 'block';
-          errorEl.textContent = result.error;
+          errorEl.textContent = bootstrapStatus?.needs_bootstrap
+            ? 'Initial administrator setup is required before sign in.'
+            : result.error;
         }
-        toggleAuthSignupCta(result.error, data.email);
+        toggleAuthSignupCta(result.error, data.email, bootstrapStatus);
         return;
       }
       if (errorEl) {
@@ -698,13 +908,41 @@ function openSignInModal() {
     });
   }
   modal.querySelector('#authErrorMessage')?.setAttribute('style', 'display:none;margin:0;');
-  toggleAuthSignupCta('', '');
+  renderAuthBootstrapNotice({ needs_bootstrap: false, bootstrap_token_configured: false });
+  toggleAuthSignupCta('', '', { needs_bootstrap: false, bootstrap_token_configured: false });
   modal.classList.add('active');
+  refreshAuthBootstrapNotice();
 }
 
-function toggleAuthSignupCta(errorMessage, email = '') {
+function renderAuthBootstrapNotice(status) {
+  const notice = document.getElementById('authBootstrapNotice');
+  if (!notice) return;
+  if (!status?.needs_bootstrap) {
+    notice.style.display = 'none';
+    notice.textContent = '';
+    return;
+  }
+  notice.style.display = 'block';
+  if (status.bootstrap_token_configured) {
+    notice.textContent = 'Setup required: no active administrator account exists. Use the bootstrap API to create the first admin account.';
+  } else {
+    notice.textContent = 'Setup required: no active administrator exists and AUTH_BOOTSTRAP_TOKEN is not configured on the server.';
+  }
+}
+
+async function refreshAuthBootstrapNotice() {
+  const status = await fetchAuthBootstrapStatus(true);
+  renderAuthBootstrapNotice(status);
+}
+
+function toggleAuthSignupCta(errorMessage, email = '', bootstrapStatus = null) {
   const cta = document.getElementById('authSignupCta');
   if (!cta) return;
+  if (bootstrapStatus?.needs_bootstrap) {
+    cta.style.display = 'none';
+    delete cta.dataset.prefillEmail;
+    return;
+  }
   const show = /no account found/i.test(String(errorMessage || ''));
   cta.style.display = show ? 'block' : 'none';
   if (show) {
@@ -754,12 +992,12 @@ function openSignUpRequestModal(prefill = {}) {
             </div>
             <div class="form-row">
               <div class="input-group">
-                <label class="input-label">Requested Password</label>
-                <input class="input" name="password" type="password" required placeholder="At least 3 characters">
+                <label class="input-label">Account Setup</label>
+                <input class="input" value="Administrator will set a temporary password after approval." disabled>
               </div>
               <div class="input-group">
-                <label class="input-label">Confirm Password</label>
-                <input class="input" name="confirm_password" type="password" required placeholder="Re-enter password">
+                <label class="input-label">Approval Notice</label>
+                <input class="input" value="You will receive credentials after request review." disabled>
               </div>
             </div>
             <div class="input-group">
@@ -784,13 +1022,6 @@ function openSignUpRequestModal(prefill = {}) {
       const form = e.currentTarget;
       const data = Object.fromEntries(new FormData(form));
       const errEl = modal.querySelector('#signupRequestError');
-      if (String(data.password || '') !== String(data.confirm_password || '')) {
-        if (errEl) {
-          errEl.style.display = 'block';
-          errEl.textContent = 'Password and confirmation must match.';
-        }
-        return;
-      }
       const result = submitSignupRequest(data);
       if (!result.ok) {
         if (errEl) {
@@ -822,27 +1053,47 @@ function openSignUpRequestModal(prefill = {}) {
 }
 
 function applyRoleAccessRestrictions() {
+  ensurePagePermissionSchema();
   const session = getSession();
-  const role = session.role || 'visitor';
-  const isVisitor = role === 'visitor' || !session.loggedIn;
-  const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const role = normalizeRole(session.role || 'visitor');
+  const path = getCurrentPageKey();
 
-  document.querySelectorAll('.sidebar a[href="settings.html"], .sidebar a[href="team.html"]').forEach((link) => {
-    if (isVisitor) {
+  document.querySelectorAll('.sidebar a[href], .sidebar-footer a[href], .topbar a.nav-link[href], .landing-footer-links a[href]').forEach((link) => {
+    const pageKey = normalizePageKey(link.getAttribute('href'));
+    if (!pageKey) return;
+    const allowed = canRoleAccessPage(role, pageKey, session);
+    if (!allowed) {
+      link.hidden = true;
+      link.setAttribute('aria-hidden', 'true');
       link.classList.add('is-disabled');
       link.setAttribute('aria-disabled', 'true');
-      link.title = 'Sign in as Administrator or Member to access this page.';
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        notify('Restricted page', 'Visitors cannot access Settings or Team pages.', ['visitor']);
-        openSignInModal();
-      });
+      link.title = `Access restricted for ${capitalize(role)} accounts.`;
+      if (!link.dataset.permissionBound) {
+        link.addEventListener('click', (e) => {
+          if (canRoleAccessPage(normalizeRole(getSession().role || 'visitor'), pageKey, getSession())) return;
+          e.preventDefault();
+          notify('Restricted page', `Your account does not have access to ${prettyPageLabel(pageKey)}.`, [role]);
+          if (!getSession().loggedIn) openSignInModal();
+        });
+        link.dataset.permissionBound = 'true';
+      }
+    } else {
+      link.hidden = false;
+      link.removeAttribute('aria-hidden');
+      link.classList.remove('is-disabled');
+      link.removeAttribute('aria-disabled');
+      if (link.title && /Access restricted|Sign in/.test(link.title)) link.title = '';
     }
   });
 
-  if (isVisitor && (path === 'settings.html' || path === 'team.html')) {
-    notify('Access restricted', 'Visitors are redirected to the dashboard.', ['visitor']);
-    location.replace('index.html');
+  document.querySelectorAll('.sidebar-subnav').forEach((subnav) => {
+    const visibleLinks = Array.from(subnav.querySelectorAll('a[href]')).filter((a) => !a.hidden);
+    subnav.hidden = visibleLinks.length === 0;
+  });
+
+  if (path && !canRoleAccessPage(role, path, session)) {
+    notify('Access restricted', `You were redirected because ${capitalize(role)} accounts cannot access ${prettyPageLabel(path)}.`, [role]);
+    location.replace('/');
   }
 }
 
@@ -911,12 +1162,14 @@ function notify(title, body = '', audiences = ['all']) {
   updateNotificationBadge();
   if (notificationVisibleToCurrentUser(items[0])) {
     showToast(title);
+    flashNotificationBell(4000);
   }
 }
 
 function initNotifications() {
   const bellBtn = getNotificationBellButton();
   if (!bellBtn) return;
+  ensureNotificationBellFlashStyles();
 
   bellBtn.type = 'button';
   bellBtn.dataset.appControl = 'notifications';
@@ -926,6 +1179,49 @@ function initNotifications() {
   });
 
   updateNotificationBadge();
+}
+
+function flashNotificationBell(durationMs = 4000) {
+  const bell = getNotificationBellButton();
+  if (!bell) return;
+  bell.classList.add('notification-bell-flash');
+  if (bell.__flashTimer) clearTimeout(bell.__flashTimer);
+  bell.__flashTimer = setTimeout(() => {
+    bell.classList.remove('notification-bell-flash');
+    bell.__flashTimer = null;
+  }, Math.max(250, Number(durationMs || 4000)));
+}
+
+function ensureNotificationBellFlashStyles() {
+  if (document.getElementById('fundsNotificationBellFlashStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'fundsNotificationBellFlashStyles';
+  style.textContent = `
+    .icon-btn.notification-bell-flash { animation: fundsBellShake .55s ease-in-out infinite; transform-origin: 50% 10%; }
+    .icon-btn.notification-bell-flash::after {
+      content:'';
+      position:absolute;
+      inset:-4px;
+      border-radius:999px;
+      border:1px solid rgba(var(--accent-green-rgb), .5);
+      animation: fundsBellHalo .9s ease-out infinite;
+      pointer-events:none;
+    }
+    @keyframes fundsBellShake {
+      0%,100% { transform: rotate(0deg) scale(1); filter: brightness(1); }
+      15% { transform: rotate(-14deg) scale(1.03); filter: brightness(1.08); }
+      30% { transform: rotate(12deg) scale(1.02); }
+      45% { transform: rotate(-9deg) scale(1.03); }
+      60% { transform: rotate(7deg) scale(1.01); }
+      75% { transform: rotate(-4deg) scale(1.02); }
+    }
+    @keyframes fundsBellHalo {
+      0% { box-shadow: 0 0 0 0 rgba(var(--accent-green-rgb), .28); opacity:.75; }
+      80% { box-shadow: 0 0 0 10px rgba(var(--accent-green-rgb), 0); opacity:0; }
+      100% { opacity:0; }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 function normalizeHeaderIconButtons(container = document) {
@@ -988,7 +1284,10 @@ function toggleNotificationPanel(anchor) {
   panel.innerHTML = `
     <div class="app-popover-header">
       <strong>Notifications</strong>
-      <button type="button" class="btn btn-secondary btn-pill" data-mark-read>Mark all read</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-secondary btn-pill" data-mark-read>Mark all read</button>
+        <button type="button" class="btn btn-secondary btn-pill" data-clear-read>Clear read</button>
+      </div>
     </div>
     <div class="app-popover-list">
       ${visibleItems.length ? visibleItems.map(renderNotificationItem).join('') : '<p class="text-muted">No notifications for your account.</p>'}
@@ -1000,6 +1299,27 @@ function toggleNotificationPanel(anchor) {
     toggleNotificationPanel(anchor);
     toggleNotificationPanel(anchor);
   });
+  panel.querySelector('[data-clear-read]')?.addEventListener('click', () => {
+    removeReadNotifications();
+    toggleNotificationPanel(anchor);
+    toggleNotificationPanel(anchor);
+  });
+  panel.querySelectorAll('[data-notification-id]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('[data-remove-notification-id]');
+      const id = String(el.getAttribute('data-notification-id') || '');
+      if (!id) return;
+      if (removeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        removeNotificationById(id);
+      } else {
+        markNotificationRead(id);
+      }
+      toggleNotificationPanel(anchor);
+      toggleNotificationPanel(anchor);
+    });
+  });
 
   const rect = anchor.getBoundingClientRect();
   panel.style.top = `${rect.bottom + 8 + window.scrollY}px`;
@@ -1009,12 +1329,31 @@ function toggleNotificationPanel(anchor) {
 
 function renderNotificationItem(item) {
   return `
-    <div class="app-popover-item ${item.read ? '' : 'is-unread'}">
-      <div class="app-popover-item-title">${escapeHtml(item.title)}</div>
+    <div class="app-popover-item ${item.read ? '' : 'is-unread'}" data-notification-id="${escapeHtml(item.id)}" role="button" tabindex="0">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div class="app-popover-item-title">${escapeHtml(item.title)}</div>
+        <button type="button" class="btn btn-secondary btn-pill" data-remove-notification-id="${escapeHtml(item.id)}" style="padding:2px 8px; min-height:auto;">×</button>
+      </div>
       ${item.body ? `<div class="app-popover-item-body">${escapeHtml(item.body)}</div>` : ''}
       <div class="app-popover-item-time">${escapeHtml(formatRelativeTime(item.createdAt))}</div>
     </div>
   `;
+}
+
+function markNotificationRead(id) {
+  const target = String(id || '');
+  if (!target) return;
+  setNotifications(getNotifications().map((n) => (n.id === target ? { ...n, read: true } : n)));
+}
+
+function removeNotificationById(id) {
+  const target = String(id || '');
+  if (!target) return;
+  setNotifications(getNotifications().filter((n) => n.id !== target));
+}
+
+function removeReadNotifications() {
+  setNotifications(getNotifications().filter((n) => !n.read));
 }
 
 function getVisibleNotifications() {
@@ -1036,6 +1375,197 @@ function normalizeRole(role) {
   const r = String(role || 'visitor').toLowerCase();
   if (r === 'editor') return 'member';
   return r;
+}
+
+function getCurrentPageKey() {
+  return normalizePageKey(location.pathname.split('/').pop() || 'index.html');
+}
+
+function normalizePageKey(href) {
+  const raw = String(href || '').trim();
+  if (!raw) return '';
+  if (/^(https?:|mailto:|tel:|javascript:)/i.test(raw)) return '';
+  const path = raw.split('#')[0].split('?')[0];
+  const page = path.split('/').pop() || '';
+  if (!page || !/\.html?$/i.test(page)) return '';
+  return page.toLowerCase();
+}
+
+function prettyPageLabel(pageKey) {
+  const key = normalizePageKey(pageKey);
+  if (!key) return 'this page';
+  const schema = getPagePermissionSchema();
+  return schema.pages?.[key]?.label || key.replace(/\.html?$/i, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function defaultPagePermissionRoles(pageKey) {
+  const key = normalizePageKey(pageKey);
+  const base = { administrator: true, member: true, visitor: true };
+  if (!key) return base;
+  const visitorPublicPages = new Set([
+    'landing.html',
+    'public-animals.html',
+    'public-events.html',
+    'public-impact.html',
+    'public-help.html',
+  ]);
+  const internalNavPages = new Set([
+    'index.html',
+    'campaigns.html',
+    'donors.html',
+    'funds-explorer.html',
+    'lead-generation.html',
+    'analytics.html',
+    'impact-reports.html',
+    'animals.html',
+    'events.html',
+    'communications.html',
+    'stories.html',
+    'team.html',
+    'settings.html',
+    'member-profile.html',
+    'donor-profile.html',
+    'help.html',
+  ]);
+  if (['settings.html', 'team.html'].includes(key)) {
+    return { administrator: true, member: false, visitor: false };
+  }
+  if (internalNavPages.has(key) && !visitorPublicPages.has(key)) {
+    return { administrator: true, member: true, visitor: false };
+  }
+  return base;
+}
+
+function inferPageLabel(pageKey, fallbackText = '') {
+  const key = normalizePageKey(pageKey);
+  const fromNav = Array.from(document.querySelectorAll(`a[href$="${key}"] .nav-label`)).map((n) => (n.textContent || '').trim()).find(Boolean);
+  if (fromNav) return fromNav;
+  const fromTitle = String(document.querySelector('.page-title')?.textContent || '').trim();
+  if (fromTitle && key === getCurrentPageKey()) return fromTitle;
+  if (fallbackText) return String(fallbackText).trim();
+  return prettyPageLabel(key);
+}
+
+function discoverPagesFromDom() {
+  const pages = new Map();
+  document.querySelectorAll('a[href]').forEach((a) => {
+    const key = normalizePageKey(a.getAttribute('href'));
+    if (!key) return;
+    const labelEl = a.querySelector('.nav-label');
+    const label = (labelEl?.textContent || a.textContent || '').trim();
+    if (!pages.has(key)) pages.set(key, { key, label: inferPageLabel(key, label) });
+  });
+  const current = getCurrentPageKey();
+  if (current) {
+    pages.set(current, { key: current, label: inferPageLabel(current) });
+  }
+  return Array.from(pages.values());
+}
+
+function normalizePermissionSchema(raw) {
+  const out = { pages: {}, updated_at: new Date().toISOString() };
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const pages = src.pages && typeof src.pages === 'object' ? src.pages : {};
+  Object.entries(pages).forEach(([page, entry]) => {
+    const key = normalizePageKey(page);
+    if (!key) return;
+    const e = entry && typeof entry === 'object' ? entry : {};
+    const defaults = defaultPagePermissionRoles(key);
+    out.pages[key] = {
+      key,
+      label: String(e.label || inferPageLabel(key)),
+      roles: {
+        administrator: typeof e.roles?.administrator === 'boolean' ? e.roles.administrator : defaults.administrator,
+        member: typeof e.roles?.member === 'boolean' ? e.roles.member : defaults.member,
+        visitor: typeof e.roles?.visitor === 'boolean' ? e.roles.visitor : defaults.visitor,
+      },
+      discovered_at: e.discovered_at || new Date().toISOString(),
+      updated_at: e.updated_at || new Date().toISOString(),
+    };
+  });
+  out.updated_at = src.updated_at || new Date().toISOString();
+  return out;
+}
+
+function getPagePermissionSchema() {
+  try {
+    return normalizePermissionSchema(JSON.parse(localStorage.getItem(APP_KEYS.pagePermissions) || 'null'));
+  } catch {
+    return normalizePermissionSchema(null);
+  }
+}
+
+function setPagePermissionSchema(schema) {
+  localStorage.setItem(APP_KEYS.pagePermissions, JSON.stringify(normalizePermissionSchema(schema)));
+}
+
+function ensurePagePermissionSchema() {
+  const schema = getPagePermissionSchema();
+  let changed = false;
+  for (const page of discoverPagesFromDom()) {
+    const key = page.key;
+    if (!key) continue;
+    if (!schema.pages[key]) {
+      schema.pages[key] = {
+        key,
+        label: page.label || inferPageLabel(key),
+        roles: defaultPagePermissionRoles(key),
+        discovered_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      changed = true;
+      continue;
+    }
+    const newLabel = page.label || inferPageLabel(key);
+    if (newLabel && schema.pages[key].label !== newLabel) {
+      schema.pages[key].label = newLabel;
+      schema.pages[key].updated_at = new Date().toISOString();
+      changed = true;
+    }
+  }
+  if (changed) {
+    schema.updated_at = new Date().toISOString();
+    setPagePermissionSchema(schema);
+  }
+  return schema;
+}
+
+function canRoleAccessPage(role, pageKey, sessionLike = null) {
+  const session = sessionLike || getSession();
+  const normalizedRole = normalizeRole(role || session.role || 'visitor');
+  const key = normalizePageKey(pageKey);
+  if (!key) return true;
+  const schema = getPagePermissionSchema();
+  const entry = schema.pages?.[key];
+  const defaults = defaultPagePermissionRoles(key);
+  const roles = entry?.roles || defaults;
+  const isLoggedIn = !!session.loggedIn;
+  // Administrator and Member accounts require login; visitors do not.
+  if ((normalizedRole === 'administrator' || normalizedRole === 'member') && !isLoggedIn) return false;
+  return !!roles[normalizedRole];
+}
+
+function setPageRolePermission(pageKey, role, allowed) {
+  const key = normalizePageKey(pageKey);
+  const normalizedRole = normalizeRole(role);
+  if (!key || !['administrator', 'member', 'visitor'].includes(normalizedRole)) {
+    return { ok: false, error: 'Invalid page or role.' };
+  }
+  const schema = ensurePagePermissionSchema();
+  if (!schema.pages[key]) {
+    schema.pages[key] = {
+      key,
+      label: inferPageLabel(key),
+      roles: defaultPagePermissionRoles(key),
+      discovered_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+  schema.pages[key].roles[normalizedRole] = !!allowed;
+  schema.pages[key].updated_at = new Date().toISOString();
+  schema.updated_at = new Date().toISOString();
+  setPagePermissionSchema(schema);
+  return { ok: true, schema };
 }
 
 function normalizeNotification(item) {
@@ -1356,6 +1886,246 @@ function showToast(message, duration = 3000) {
   }, duration);
 }
 
+function ensureDataLoadGuardStyles() {
+  let styleEl = document.getElementById('fundsDataLoadGuardStyle');
+  if (styleEl) return;
+  styleEl = document.createElement('style');
+  styleEl.id = 'fundsDataLoadGuardStyle';
+  styleEl.textContent = `
+    .funds-data-guard-host { position: relative; }
+    .funds-data-guard-host[data-funds-loading="true"] > * { visibility: hidden; }
+    .funds-data-guard-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.06));
+      backdrop-filter: blur(2px);
+      z-index: 2;
+    }
+    [data-theme="light"] .funds-data-guard-overlay {
+      background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,255,255,0.65));
+    }
+    .funds-data-guard-card {
+      min-width: 260px;
+      max-width: 420px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(var(--accent-green-rgb, 16, 185, 129), 0.25);
+      background: rgba(10, 14, 20, 0.88);
+      box-shadow: 0 14px 26px rgba(0, 0, 0, 0.28);
+      color: var(--text-primary);
+      text-align: center;
+    }
+    [data-theme="light"] .funds-data-guard-card {
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 12px 22px rgba(20, 28, 45, 0.12);
+    }
+    .funds-data-guard-title {
+      font-size: var(--text-small);
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .funds-data-guard-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .funds-data-guard-track {
+      background: rgba(20, 28, 45, 0.05);
+      border-color: rgba(20, 28, 45, 0.08);
+    }
+    .funds-data-guard-track::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      width: 42%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(var(--accent-green-rgb,16,185,129),0.95), transparent);
+      animation: fundsDataGuardSweep 1.3s linear infinite;
+    }
+    @keyframes fundsDataGuardSweep {
+      from { transform: translateX(-120%); }
+      to { transform: translateX(260%); }
+    }
+  `;
+  document.head.appendChild(styleEl);
+}
+
+function createDataLoadGuard(options = {}) {
+  ensureDataLoadGuardStyles();
+  const target = typeof options.target === 'string' ? document.querySelector(options.target) : options.target;
+  if (!target) return null;
+  const title = String(options.message || 'Loading live data...');
+  let originalHtml = null;
+  let overlay = null;
+  let active = false;
+  const bodyPreloadManaged = document.body?.dataset?.apiPage === 'true';
+
+  function start() {
+    if (active) return;
+    active = true;
+    if (bodyPreloadManaged) {
+      document.body.dataset.apiPageState = 'loading';
+    }
+    if (originalHtml == null) originalHtml = target.innerHTML;
+    if (bodyPreloadManaged) return;
+    target.classList.add('funds-data-guard-host');
+    target.dataset.fundsLoading = 'true';
+    target.setAttribute('aria-busy', 'true');
+    overlay = document.createElement('div');
+    overlay.className = 'funds-data-guard-overlay';
+    overlay.innerHTML = `
+      <div class="funds-data-guard-card">
+        <div class="funds-data-guard-title">${escapeHtml(title)}</div>
+        <div class="funds-data-guard-track"></div>
+      </div>
+    `;
+    target.appendChild(overlay);
+  }
+
+  function success() {
+    if (!active) return;
+    active = false;
+    if (bodyPreloadManaged) {
+      document.body.dataset.apiPageState = 'ready';
+      return;
+    }
+    target.dataset.fundsLoading = 'false';
+    target.removeAttribute('aria-busy');
+    overlay?.remove();
+    overlay = null;
+  }
+
+  function fail(opts = {}) {
+    if (!active) return;
+    if (bodyPreloadManaged) {
+      document.body.dataset.apiPageState = 'error';
+      active = false;
+      return;
+    }
+    if (opts.restoreFallback !== false && originalHtml != null && !target.dataset.fundsGuardPreserveCurrent) {
+      target.innerHTML = originalHtml;
+    }
+    success();
+  }
+
+  return { start, success, fail, target };
+}
+
+let activeGlobalConfirmResolver = null;
+
+function ensureGlobalConfirmModal() {
+  let modal = document.getElementById('globalConfirmModal');
+  if (modal) return modal;
+  const host = document.createElement('div');
+  host.innerHTML = `
+    <div class="modal" id="globalConfirmModal" aria-hidden="true">
+      <div class="modal-backdrop" data-confirm-cancel></div>
+      <div class="modal-content" style="max-width:560px;">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title" id="globalConfirmTitle">Confirm Action</h2>
+            <p id="globalConfirmSubtitle" style="margin:6px 0 0;color:var(--text-secondary);font-size:var(--text-small);"></p>
+          </div>
+          <button type="button" class="modal-close" data-confirm-cancel aria-label="Close confirmation dialog">×</button>
+        </div>
+        <div class="modal-body">
+          <p id="globalConfirmMessage" style="margin:0;color:var(--text-secondary);line-height:1.6;"></p>
+          <div class="modal-actions" style="margin-top:var(--spacing-lg);">
+            <button type="button" class="btn btn-secondary" data-confirm-cancel id="globalConfirmCancelBtn">Cancel</button>
+            <button type="button" class="btn btn-primary" id="globalConfirmOkBtn">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(host.firstElementChild);
+  modal = document.getElementById('globalConfirmModal');
+
+  modal.querySelectorAll('[data-confirm-cancel]').forEach((el) => {
+    el.addEventListener('click', () => resolveGlobalConfirm(false));
+  });
+  modal.querySelector('#globalConfirmOkBtn')?.addEventListener('click', () => resolveGlobalConfirm(true));
+  document.addEventListener('keydown', (event) => {
+    if (!modal.classList.contains('active')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      resolveGlobalConfirm(false);
+    }
+    if (event.key === 'Enter') {
+      const targetTag = String(event.target?.tagName || '').toLowerCase();
+      if (['input', 'textarea', 'select'].includes(targetTag)) return;
+      event.preventDefault();
+      resolveGlobalConfirm(true);
+    }
+  });
+  return modal;
+}
+
+function resolveGlobalConfirm(confirmed) {
+  const modal = document.getElementById('globalConfirmModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  const resolver = activeGlobalConfirmResolver;
+  activeGlobalConfirmResolver = null;
+  if (typeof resolver === 'function') resolver(!!confirmed);
+}
+
+function confirmDialog(options = {}) {
+  const modal = ensureGlobalConfirmModal();
+  if (activeGlobalConfirmResolver) {
+    // Resolve any prior pending dialog as cancelled before opening a new one.
+    resolveGlobalConfirm(false);
+  }
+  const title = String(options.title || 'Confirm Action');
+  const message = String(options.message || 'Are you sure you want to continue?');
+  const subtitle = String(options.subtitle || '');
+  const confirmLabel = String(options.confirmLabel || 'Confirm');
+  const cancelLabel = String(options.cancelLabel || 'Cancel');
+  const confirmVariant = String(options.confirmVariant || 'primary');
+
+  modal.querySelector('#globalConfirmTitle').textContent = title;
+  modal.querySelector('#globalConfirmMessage').textContent = message;
+  const subtitleEl = modal.querySelector('#globalConfirmSubtitle');
+  subtitleEl.textContent = subtitle;
+  subtitleEl.style.display = subtitle ? '' : 'none';
+
+  const okBtn = modal.querySelector('#globalConfirmOkBtn');
+  const cancelBtn = modal.querySelector('#globalConfirmCancelBtn');
+  okBtn.textContent = confirmLabel;
+  cancelBtn.textContent = cancelLabel;
+  okBtn.classList.remove('btn-primary', 'btn-secondary');
+  okBtn.classList.add(confirmVariant === 'danger' ? 'btn-secondary' : 'btn-primary');
+  if (confirmVariant === 'danger') {
+    okBtn.style.borderColor = 'rgba(239, 68, 68, 0.45)';
+    okBtn.style.background = 'linear-gradient(135deg, rgba(239,68,68,0.24), rgba(185,28,28,0.30))';
+    okBtn.style.color = '#FEE2E2';
+    okBtn.style.boxShadow = '0 8px 18px rgba(239, 68, 68, 0.18)';
+  } else {
+    okBtn.style.borderColor = '';
+    okBtn.style.background = '';
+    okBtn.style.color = '';
+    okBtn.style.boxShadow = '';
+  }
+
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+  window.setTimeout(() => okBtn?.focus(), 0);
+
+  return new Promise((resolve) => {
+    activeGlobalConfirmResolver = resolve;
+  });
+}
+
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amount || 0));
 }
@@ -1427,6 +2197,96 @@ function clamp(n) {
   return Math.max(0, Math.min(255, Number(n || 0)));
 }
 
+function hashString(value) {
+  let h = 2166136261 >>> 0;
+  const s = String(value || '');
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function seededRandom(seed) {
+  let t = seed >>> 0;
+  return function rand() {
+    t += 0x6D2B79F5;
+    let x = t;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function generateAnimalAvatarDataUrl(seed = '') {
+  const animals = ['🐶', '🐱', '🐰', '🦊', '🐼', '🐨', '🦝', '🐹', '🦉', '🐢'];
+  const palettes = [
+    ['#10B981', '#059669'],
+    ['#3B82F6', '#1D4ED8'],
+    ['#F59E0B', '#D97706'],
+    ['#EC4899', '#BE185D'],
+    ['#8B5CF6', '#6D28D9'],
+    ['#14B8A6', '#0F766E'],
+  ];
+  const rng = seededRandom(hashString(seed || `${Date.now()}-${Math.random()}`));
+  const animal = animals[Math.floor(rng() * animals.length)] || '🐾';
+  const [c1, c2] = palettes[Math.floor(rng() * palettes.length)] || palettes[0];
+  const dotColor = palettes[Math.floor(rng() * palettes.length)]?.[0] || '#FFFFFF';
+  const dots = Array.from({ length: 6 }, () => ({
+    x: Math.round(10 + rng() * 108),
+    y: Math.round(10 + rng() * 108),
+    r: Math.round(2 + rng() * 5),
+    o: (0.12 + rng() * 0.24).toFixed(2),
+  }));
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${c1}"/>
+      <stop offset="100%" stop-color="${c2}"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)"/>
+  <circle cx="104" cy="22" r="18" fill="rgba(255,255,255,0.12)"/>
+  ${dots.map((d) => `<circle cx="${d.x}" cy="${d.y}" r="${d.r}" fill="${dotColor}" opacity="${d.o}"/>`).join('')}
+  <circle cx="64" cy="64" r="34" fill="rgba(255,255,255,0.14)"/>
+  <text x="64" y="75" text-anchor="middle" font-size="40">${animal}</text>
+</svg>`.trim();
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+const avatarFetchCache = new Map();
+async function generateAnimalAvatar(seed = '', options = {}) {
+  const normalizedSeed = String(seed || '').trim();
+  if (!normalizedSeed) return generateAnimalAvatarDataUrl(`${Date.now()}-${Math.random()}`);
+  if (avatarFetchCache.has(normalizedSeed)) return avatarFetchCache.get(normalizedSeed);
+  const role = String(options.role || 'profile').trim().toLowerCase();
+  const payload = {
+    seed: normalizedSeed,
+    email: options.email || '',
+    name: options.name || options.full_name || '',
+    role,
+    record_id: options.record_id || '',
+  };
+  try {
+    const res = await fetch('/api/avatars/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json().catch(() => ({}));
+    const avatarUrl = String(data?.avatar_url || '').trim();
+    if (avatarUrl) {
+      avatarFetchCache.set(normalizedSeed, avatarUrl);
+      return avatarUrl;
+    }
+  } catch {}
+  const fallback = generateAnimalAvatarDataUrl(normalizedSeed);
+  avatarFetchCache.set(normalizedSeed, fallback);
+  return fallback;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -1457,6 +2317,10 @@ window.FundsApp = {
   reviewSignupRequest,
   signInWithCredentials,
   changeAccountPassword,
+  getBackendAuthToken,
+  backendAuthLogout,
+  apiJson,
+  clearApiResponseCache,
   getDefaultAdminAccount,
   normalizeRole,
   getSavedPrimaryThemeColor,
@@ -1468,7 +2332,16 @@ window.FundsApp = {
   getSavedBrandName,
   setBrandName,
   clearBrandName,
+  generateAnimalAvatarDataUrl,
+  generateAnimalAvatar,
+  getPagePermissionSchema,
+  ensurePagePermissionSchema,
+  setPageRolePermission,
+  canRoleAccessPage,
+  prettyPageLabel,
   openSignInModal,
   openSignUpRequestModal,
+  confirmDialog,
+  createDataLoadGuard,
   closeModal,
 };

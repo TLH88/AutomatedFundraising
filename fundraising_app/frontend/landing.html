@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('funds_theme');
+        if (theme) document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+  <title>Funds 4 Furry Friends - Rescue More Lives</title>
+  <meta name="description" content="Support no-kill animal rescue through donations, sponsorships, in-kind support, and community partnerships.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+  <nav class="topbar landing-topbar">
+    <div class="topbar-left">
+      <a href="/" class="brand" aria-label="Funds 4 Furry Friends home">
+        <span class="brand-icon">🐾</span>
+        <span class="brand-name">Funds 4 Furry Friends</span>
+      </a>
+      <div class="landing-nav-links" aria-label="Primary">
+        <a href="public-animals.html" class="nav-link">Animals</a>
+        <a href="public-events.html" class="nav-link">Events</a>
+        <a href="public-impact.html" class="nav-link">Campaigns &amp; Stories</a>
+        <a href="public-help.html" class="nav-link">Help</a>
+      </div>
+    </div>
+    <div class="topbar-right">
+    </div>
+  </nav>
+
+  <main class="landing-main">
+    <section class="landing-hero">
+      <div class="landing-hero-bg" aria-hidden="true">
+        <div class="landing-orb orb-a"></div>
+        <div class="landing-orb orb-b"></div>
+        <div class="landing-grid-glow"></div>
+      </div>
+
+      <div class="landing-hero-inner">
+        <div class="landing-hero-copy">
+          <p class="landing-kicker">No-Kill Rescue Fundraising Platform</p>
+          <h1>Help Us Fund Care, Find Homes, and Keep Tails Wagging.</h1>
+          <p class="landing-lead">
+            Funds 4 Furry Friends powers modern fundraising for animal rescue organizations. Support can come as
+            direct gifts, sponsorships, gift cards, services, supplies, or community partnerships.
+          </p>
+          <div class="landing-hero-actions">
+            <a href="#how-to-help" class="btn btn-primary">Ways To Give</a>
+            <a href="public-impact.html" class="btn btn-secondary">See Success Stories</a>
+          </div>
+          <div class="landing-hero-badges">
+            <span class="landing-chip">Cash Donations</span>
+            <span class="landing-chip">Gift Cards & Raffle Items</span>
+            <span class="landing-chip">In-Kind Goods & Services</span>
+            <span class="landing-chip">Corporate Sponsors</span>
+          </div>
+        </div>
+
+        <div class="landing-hero-panel card card-glass">
+          <div class="landing-panel-header">
+            <div>
+              <p class="landing-panel-label">Live Mission Snapshot</p>
+              <h3 class="landing-panel-title">Current Rescue Priorities</h3>
+            </div>
+            <span class="landing-status-dot" aria-label="Live updates enabled"></span>
+          </div>
+
+          <div class="landing-priority-list">
+            <div class="landing-priority-item">
+              <div class="landing-priority-icon">🐶</div>
+              <div>
+                <h4>Emergency Medical Care</h4>
+                <p>Help fund surgeries, diagnostics, and recovery care for urgent rescue cases.</p>
+              </div>
+            </div>
+            <div class="landing-priority-item">
+              <div class="landing-priority-icon">🏠</div>
+              <div>
+                <h4>Shelter & Foster Support</h4>
+                <p>Food, bedding, cleaning supplies, transport, and foster placement resources.</p>
+              </div>
+            </div>
+            <div class="landing-priority-item">
+              <div class="landing-priority-icon">🎟️</div>
+              <div>
+                <h4>Event & Auction Donations</h4>
+                <p>Gift certificates, experiences, and donated services for fundraising events.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="landing-panel-footer">
+            <a href="public-events.html" class="btn btn-secondary btn-pill">Upcoming Events</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section" id="impact">
+      <div class="landing-section-header">
+        <p class="landing-kicker">Community Impact</p>
+        <h2>Rescue outcomes powered by donors, partners, and volunteers.</h2>
+      </div>
+      <div class="landing-impact-grid">
+        <article class="card landing-impact-card">
+          <p class="landing-impact-label">Animals Helped</p>
+          <p class="landing-impact-value numeric">1,248</p>
+          <p class="landing-impact-note">Medical support, foster care, and adoption readiness in the past year.</p>
+        </article>
+        <article class="card landing-impact-card">
+          <p class="landing-impact-label">Partner Businesses</p>
+          <p class="landing-impact-value numeric">86</p>
+          <p class="landing-impact-note">Local sponsors and in-kind supporters contributing goods, services, and outreach.</p>
+        </article>
+        <article class="card landing-impact-card">
+          <p class="landing-impact-label">Community Events</p>
+          <p class="landing-impact-value numeric">34</p>
+          <p class="landing-impact-note">Adoption events, fundraisers, and story-driven campaigns connecting supporters.</p>
+        </article>
+        <article class="card landing-impact-card accent">
+          <p class="landing-impact-label">Immediate Need</p>
+          <p class="landing-impact-value numeric">$18,500</p>
+          <p class="landing-impact-note">Current target for urgent care and shelter operations support this month.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="landing-section" id="how-to-help">
+      <div class="landing-section-header">
+        <p class="landing-kicker">How To Help</p>
+        <h2>There are more ways to support rescue work than writing a check.</h2>
+      </div>
+      <div class="landing-support-grid">
+        <article class="landing-support-card card">
+          <h3>Direct Donations</h3>
+          <p>Fund medical treatment, shelter operations, transport, and rescue response.</p>
+          <ul>
+            <li>One-time gifts</li>
+            <li>Monthly supporters</li>
+            <li>Memorial / honor donations</li>
+          </ul>
+        </article>
+        <article class="landing-support-card card">
+          <h3>Gift Cards & Certificates</h3>
+          <p>Perfect for raffles, auctions, volunteer appreciation, and event fundraising.</p>
+          <ul>
+            <li>Restaurants & coffee shops</li>
+            <li>Salons, spas, and local services</li>
+            <li>Retail and experience gifts</li>
+          </ul>
+        </article>
+        <article class="landing-support-card card">
+          <h3>In-Kind Goods & Services</h3>
+          <p>Supplies and professional services reduce operating costs and expand care capacity.</p>
+          <ul>
+            <li>Pet food, cleaning, bedding, crates</li>
+            <li>Printing, photography, marketing</li>
+            <li>Transport, repairs, storage, legal/accounting</li>
+          </ul>
+        </article>
+        <article class="landing-support-card card">
+          <h3>Corporate & Foundation Support</h3>
+          <p>Partner with us through sponsorships, grants, matching programs, and campaigns.</p>
+          <ul>
+            <li>Community sponsorships</li>
+            <li>Employee giving / matching</li>
+            <li>Grant and foundation opportunities</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="landing-section landing-spotlight" id="partners">
+      <div class="landing-spotlight-card card card-glass">
+        <div class="landing-spotlight-copy">
+          <p class="landing-kicker">Partner Spotlight</p>
+          <h2>Local businesses can create outsized impact with simple, practical support.</h2>
+          <p>
+            A donated printing package, a monthly coffee fundraiser, or gift certificates for an auction can directly
+            fund vet care and adoptions. We welcome creative partnerships that fit your business and community.
+          </p>
+          <div class="landing-spotlight-actions">
+            <a href="public-help.html" class="btn btn-secondary">Contact Our Team</a>
+            <a href="public-events.html" class="btn btn-primary">Sponsor an Event</a>
+          </div>
+        </div>
+        <div class="landing-spotlight-panels">
+          <div class="landing-mini-panel">
+            <p class="label">Best Fit Partners</p>
+            <p>Pet services, clinics, retailers, restaurants, local professionals, and community-centered businesses.</p>
+          </div>
+          <div class="landing-mini-panel">
+            <p class="label">Popular Contributions</p>
+            <p>Raffle items, services, sponsorship dollars, venue support, printing, supplies, and matching campaigns.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section landing-final-cta">
+      <div class="landing-final-shell">
+        <div>
+          <p class="landing-kicker">Ready To Help?</p>
+          <h2>Join a community that funds second chances.</h2>
+          <p class="landing-lead">
+            Whether you are an individual donor, a business owner, or a grantmaking partner, your support helps save lives.
+          </p>
+        </div>
+        <div class="landing-final-actions">
+          <a href="public-impact.html" class="btn btn-secondary">Read Rescue Stories</a>
+          <a href="#" class="btn btn-primary" id="landingFinalSigninBtn">Team Sign In</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <div class="landing-footer-inner">
+      <div class="brand">
+        <span class="brand-icon">🐾</span>
+        <span class="brand-name">Funds 4 Furry Friends</span>
+      </div>
+      <p>Rescue-focused fundraising for no-kill animal care, adoptions, and community support.</p>
+      <div class="landing-footer-links">
+        <a href="public-impact.html">Success Stories</a>
+        <a href="public-events.html">Events</a>
+        <a href="public-help.html">Help</a>
+        <a href="#" id="landingFooterSigninBtn">Dashboard Sign In</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/landing.js"></script>
+</body>
+</html>

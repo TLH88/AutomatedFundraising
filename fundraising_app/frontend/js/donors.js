@@ -4,7 +4,7 @@
  */
 
 const donorApiState = {
-  limit: 6,
+  limit: 50,
   total: null,
   lastLoadedCount: 0,
 };
@@ -13,8 +13,15 @@ const donorProfileState = {
   donor: null,
 };
 
+let donorsPageLoadGuard = null;
+
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Donors Page Initialized');
+  donorsPageLoadGuard = window.FundsApp?.createDataLoadGuard?.({
+    target: '.main-content .container',
+    message: 'Loading donors and sponsor data...',
+  });
+  donorsPageLoadGuard?.start();
 
   initDonorSearch();
   initDonorFilters();
@@ -26,7 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDonorsFromApi();
 });
 
+function describeApiError(error, fallback = 'Request failed') {
+  const parts = [error?.message || fallback];
+  if (error?.details) parts.push(error.details);
+  if (error?.hint) parts.push(`Hint: ${error.hint}`);
+  if (error?.code) parts.push(`Code: ${error.code}`);
+  return parts.join(' | ');
+}
+
 async function apiJson(url, options) {
+  if (window.FundsApp?.apiJson) return window.FundsApp.apiJson(url, options);
   const response = await fetch(url, options);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
@@ -73,9 +89,13 @@ async function loadDonorsFromApi() {
     initDonorCards();
     filterDonors({});
     syncLoadMoreButton();
+    donorsPageLoadGuard?.success();
+    donorsPageLoadGuard = null;
   } catch (error) {
     console.error('Error loading donors:', error);
-    showToast('Unable to load donors from API');
+    showToast(describeApiError(error, 'Unable to load donors from API'));
+    donorsPageLoadGuard?.fail({ restoreFallback: false });
+    donorsPageLoadGuard = null;
   }
 }
 
@@ -96,6 +116,7 @@ function renderDonorCard(donor) {
   const lastDonation = donor.last_donation_date || donor.lastDonationDate || '';
   const tags = Array.isArray(donor.tags) ? donor.tags.slice(0, 3) : [];
   const donationType = donor.donation_type ? String(donor.donation_type) : '';
+  const avatarUrl = donor.avatar_url || window.FundsApp?.generateAnimalAvatarDataUrl?.(`${email}|${name}|donor`) || '';
   if (donationType && !tags.some((t) => String(t).toLowerCase() === donationType.toLowerCase())) {
     tags.unshift(donationType);
   }
@@ -109,10 +130,11 @@ function renderDonorCard(donor) {
       data-donor-total="${escapeHtml(String(totalDonated))}"
       data-donor-last-donation="${escapeHtml(String(lastDonation || ''))}"
       data-donor-donation-type="${escapeHtml(String(donor.donation_type || ''))}"
-      data-donor-phone="${escapeHtml(String(donor.phone || ''))}">
+      data-donor-phone="${escapeHtml(String(donor.phone || ''))}"
+      data-donor-avatar="${escapeHtml(String(avatarUrl || ''))}">
       <div class="donor-card-header">
         <div class="donor-avatar" style="background: ${avatarGradientForTier(tier)};">
-          ${renderInitialsAvatar(name)}
+          ${avatarUrl ? `<img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(name)}">` : renderInitialsAvatar(name)}
         </div>
         <div class="donor-tier-badge ${escapeHtml(tier)}">
           <span>${tierIcon(tier)}</span>
@@ -385,12 +407,24 @@ function handleContactDonor(name, email) {
     const emailLink = document.getElementById('contactEmail');
     const phoneValue = document.getElementById('contactPhone');
     const phoneLink = document.getElementById('contactCall');
+    const smsBtn = document.getElementById('contactSms');
 
     if (modalTitle) modalTitle.textContent = `Contact ${name}`;
     if (emailValue) emailValue.textContent = email || 'No email on file';
     if (emailLink) emailLink.href = email ? `mailto:${email}` : '#';
     if (phoneValue) phoneValue.textContent = '(555) 123-4567';
     if (phoneLink) phoneLink.href = 'tel:+15551234567';
+    if (smsBtn) {
+      smsBtn.onclick = (event) => {
+        event.preventDefault();
+        const messageTarget = name || 'donor';
+        if (window.FundsApp?.notify) {
+          window.FundsApp.notify('SMS workflow', `Open Communications to send an SMS to ${messageTarget}.`, ['administrator', 'member']);
+        } else {
+          showToast(`Open Communications to send an SMS to ${messageTarget}.`);
+        }
+      };
+    }
 
     contactModal.classList.add('active');
   }
@@ -445,7 +479,7 @@ async function loadMoreDonors() {
     return;
   }
 
-  donorApiState.limit += 6;
+  donorApiState.limit += 50;
   showToast('Loading more donors...');
   await loadDonorsFromApi();
 }
@@ -545,6 +579,10 @@ function initDonorModals() {
       e.preventDefault();
       const formData = new FormData(e.target);
       const raw = Object.fromEntries(formData);
+      const generatedAvatar = await window.FundsApp?.generateAnimalAvatar?.(
+        `${raw.email || ''}|${raw.fullName || ''}|donor`,
+        { email: raw.email || '', name: raw.fullName || '', role: 'donor' },
+      );
       const payload = {
         full_name: String(raw.fullName || '').trim(),
         email: String(raw.email || '').trim(),
@@ -552,6 +590,7 @@ function initDonorModals() {
         tier: raw.tier || 'friend',
         initial_donation: Number(raw.initialDonation || 0),
         notes: String(raw.notes || '').trim() || null,
+        avatar_url: generatedAvatar || null,
         tags: String(raw.tags || '')
           .split(',')
           .map((t) => t.trim())
@@ -570,7 +609,7 @@ function initDonorModals() {
         await loadDonorsFromApi();
       } catch (error) {
         console.error('Failed to create donor:', error);
-        showToast('Unable to create donor');
+        showToast(describeApiError(error, 'Unable to create donor'));
       }
     });
   }
@@ -603,6 +642,7 @@ function donorFromCard(card) {
     id: card?.dataset?.donorId || null,
     name,
     email,
+    avatar_url: card?.dataset?.donorAvatar || (window.FundsApp?.generateAnimalAvatarDataUrl?.(`${email}|${name}|donor`) || ''),
     phone: card?.dataset?.donorPhone || '',
     tier,
     status: 'active',
@@ -815,8 +855,9 @@ function renderDonorProfileModal(donor) {
   const avatar = document.getElementById('donorProfileAvatarPreview');
   if (avatar) {
     avatar.style.background = avatarGradientForTier(tier);
-    avatar.innerHTML = d.avatar_url
-      ? `<img src="${escapeHtml(d.avatar_url)}" alt="${escapeHtml(name)}">`
+    const avatarUrl = d.avatar_url || window.FundsApp?.generateAnimalAvatarDataUrl?.(`${d.email || ''}|${name}|donor`) || '';
+    avatar.innerHTML = avatarUrl
+      ? `<img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(name)}">`
       : `<div class="avatar avatar-md avatar-placeholder">${escapeHtml(initials(name))}</div>`;
   }
 

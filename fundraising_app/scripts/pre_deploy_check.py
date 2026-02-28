@@ -14,9 +14,11 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 
 ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(ROOT / ".env")
 
 
 def run(cmd: list[str], label: str, optional: bool = False) -> bool:
@@ -39,6 +41,14 @@ def run(cmd: list[str], label: str, optional: bool = False) -> bool:
 
 def main() -> int:
     all_ok = True
+    write_checks = str(os.environ.get("SMOKE_TEST_ENABLE_WRITE_CHECKS", "")).strip().lower() in {"1", "true", "yes", "on"}
+
+    print("\n== Security rotation reminder ==")
+    rotation_confirmed = str(os.environ.get("KEY_ROTATION_CONFIRMED", "")).strip().lower() in {"1", "true", "yes"}
+    if rotation_confirmed:
+        print("PASS: Key rotation confirmed via KEY_ROTATION_CONFIRMED=true")
+    else:
+        print("WARN: KEY_ROTATION_CONFIRMED is not set. Rotate exposed API keys before production deployment.")
 
     all_ok &= run([sys.executable, "-m", "compileall", "fundraising_app"], "Python compile")
     all_ok &= run(
@@ -47,7 +57,7 @@ def main() -> int:
     )
     all_ok &= run(
         [sys.executable, "fundraising_app/scripts/smoke_test_server.py"],
-        "Flask API smoke tests",
+        f"Flask API smoke tests (write checks {'enabled' if write_checks else 'disabled'})",
     )
 
     if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_PUBLISHABLE_KEY"):

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('funds_theme');
+        if (theme) document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+  <title>Lead Generation | Funds 4 Furry Friends</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/lead-generation.css">
+</head>
+<body data-api-page="true" data-api-page-state="loading">
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></div>
+    </div>
+    <div class="topbar-center">
+      <div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search leads, orgs, contacts..." class="search-input"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" title="Notifications"><span class="notification-badge">3</span>🔔</button>
+      <div class="user-menu"><img src="https://i.pravatar.cc/150?img=12" alt="User" class="user-avatar"><span class="user-name">Admin</span></div>
+    </div>
+  </nav>
+
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a href="campaigns.html" class="nav-item"><span class="nav-icon">🎯</span><span class="nav-label">Active Campaigns</span></a>
+      <a href="donors.html" class="nav-item"><span class="nav-icon">❤️</span><span class="nav-label">Donors & Sponsors</span></a>
+      <a href="funds-explorer.html" class="nav-item"><span class="nav-icon">›</span><span class="nav-label">Funds Explorer</span></a>
+      <a href="lead-generation.html" class="nav-item active"><span class="nav-icon">›</span><span class="nav-label">Lead Generation</span></a>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Analytics & Reports</span></a>
+      <a href="animals.html" class="nav-item"><span class="nav-icon">🐕</span><span class="nav-label">Animals Helped</span></a>
+      <a href="events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Events Calendar</span></a>
+      <a href="communications.html" class="nav-item"><span class="nav-icon">📧</span><span class="nav-label">Communications</span></a>
+      <a href="stories.html" class="nav-item"><span class="nav-icon">✨</span><span class="nav-label">Success Stories</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+      <a href="team.html" class="nav-item"><span class="nav-icon">👥</span><span class="nav-label">Team Management</span></a>
+      <a href="help.html" class="nav-item"><span class="nav-icon">❓</span><span class="nav-label">Help & Resources</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Lead Generation</h1>
+          <p class="page-subtitle">Filter organizations and contacts into outreach-ready lead lists for campaigns, mailings, and donor development.</p>
+        </div>
+        <div class="page-actions">
+          <button type="button" class="btn btn-secondary" id="leadResetFiltersBtn">Reset Filters</button>
+          <button type="button" class="btn btn-primary" id="leadRefreshBtn">Refresh Leads</button>
+        </div>
+      </div>
+
+      <div class="leadgen-layout">
+        <section class="card leadgen-filters-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Filter Builder</h2>
+              <p class="card-subtitle">Narrow organizations and contacts into qualified lead lists.</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="leadgen-filter-grid">
+              <div class="input-group">
+                <label class="input-label">Search</label>
+                <input type="text" class="input" id="leadSearchInput" placeholder="Name, org, title, email, city...">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Record Type</label>
+                <select class="select" id="leadRecordTypeFilter">
+                  <option value="all">All</option>
+                  <option value="organization">Organizations</option>
+                  <option value="contact">Contacts</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Min Donor Score</label>
+                <select class="select" id="leadMinScoreFilter">
+                  <option value="0">All Scores</option>
+                  <option value="60">60+</option>
+                  <option value="70">70+</option>
+                  <option value="80">80+</option>
+                  <option value="90">90+</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Organization Category</label>
+                <select class="select" id="leadOrgCategoryFilter">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Contact Category</label>
+                <select class="select" id="leadContactCategoryFilter">
+                  <option value="all">All Contact Types</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">State</label>
+                <select class="select" id="leadStateFilter">
+                  <option value="all">All States</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="leadgen-filter-actions">
+              <label class="leadgen-checkbox">
+                <input type="checkbox" id="leadHasEmailOnly" checked>
+                <span>Require email for contact records</span>
+              </label>
+              <label class="leadgen-checkbox">
+                <input type="checkbox" id="leadIncludeDoNotContact">
+                <span>Include do-not-contact records</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="card leadgen-results-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Lead Results</h2>
+              <p class="card-subtitle" id="leadResultsSummary">Loading organizations and contacts...</p>
+            </div>
+            <div class="leadgen-results-actions">
+              <label class="leadgen-checkbox compact">
+                <input type="checkbox" id="leadSelectAllVisible">
+                <span>Select All</span>
+              </label>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="leadgen-table-head">
+              <span>Lead</span>
+              <span>Type</span>
+              <span>Category</span>
+              <span>Location</span>
+              <span>Donor Score</span>
+              <span>Actions</span>
+              <span>Select</span>
+            </div>
+            <div id="leadResultsList" class="leadgen-results-list"></div>
+          </div>
+        </section>
+
+        <aside class="card leadgen-builder-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Lead List Builder</h2>
+              <p class="card-subtitle">Collect qualified leads for outreach workflows.</p>
+            </div>
+          </div>
+          <div class="card-body leadgen-builder-body">
+            <div class="leadgen-builder-stats">
+              <div class="leadgen-mini-stat"><span>Selected</span><strong id="leadSelectedCount">0</strong></div>
+              <div class="leadgen-mini-stat"><span>Contacts</span><strong id="leadSelectedContactsCount">0</strong></div>
+              <div class="leadgen-mini-stat"><span>Emails</span><strong id="leadSelectedEmailsCount">0</strong></div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">List Name</label>
+              <input type="text" class="input" id="leadListName" placeholder="Spring sponsorship outreach">
+            </div>
+            <div class="leadgen-builder-actions">
+              <button type="button" class="btn btn-secondary btn-pill" id="leadCopyEmailsBtn">Copy Emails</button>
+              <button type="button" class="btn btn-secondary btn-pill" id="leadExportCsvBtn">Export CSV</button>
+              <button type="button" class="btn btn-secondary btn-pill" id="leadCreateOutreachBtn">Create Outreach Campaign</button>
+              <button type="button" class="btn btn-primary btn-pill" id="leadSaveDraftBtn">Save Draft List</button>
+            </div>
+            <div class="leadgen-selected-list" id="leadSelectedList"></div>
+            <div class="leadgen-saved-lists" id="leadSavedLists"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="leadRecordModal">
+    <div class="modal-backdrop" data-lead-modal-close></div>
+    <div class="modal-content modal-large leadgen-modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="leadModalTitle">Lead Details</h2>
+          <p class="leadgen-modal-subtitle" id="leadModalSubtitle"></p>
+        </div>
+        <button type="button" class="modal-close" data-lead-modal-close>×</button>
+      </div>
+      <div class="modal-body" id="leadModalBody"></div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/lead-generation.js"></script>
+</body>
+</html>

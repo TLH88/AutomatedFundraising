@@ -2,6 +2,10 @@
  * Funds Explorer page: search and review potential donor organizations.
  */
 
+// Easy rollback for the Search Strategy mockup panel:
+// set to false to hide the mockup without removing markup/styles.
+const ENABLE_EXPLORER_STRATEGY_MOCKUP = false;
+
 const explorerState = {
   organizations: [],
   activeOrganization: null,
@@ -17,6 +21,7 @@ const explorerState = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  applyExplorerStrategyMockupToggle();
   initExplorerSearchPanel();
   initExplorerSearch();
   initExplorerActions();
@@ -26,6 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
   hydrateExplorerJobFromGlobalState();
   initExplorerSchemaCheck();
 });
+
+function applyExplorerStrategyMockupToggle() {
+  const mockCard = document.getElementById('explorerStrategyMockCard');
+  if (!mockCard) return;
+  mockCard.setAttribute('data-hidden', ENABLE_EXPLORER_STRATEGY_MOCKUP ? 'false' : 'true');
+}
 
 function initExplorerSearchPanel() {
   const card = document.getElementById('explorerSearchCard');
@@ -73,6 +84,7 @@ function initExplorerActions() {
     else explorerState.selectedPreviewKeys.delete(key);
     syncExplorerSelectionUI();
   });
+  document.getElementById('explorerResultTypeFilter')?.addEventListener('change', () => renderExplorerResults(explorerState.organizations));
 }
 
 async function initExplorerSchemaCheck() {
@@ -122,9 +134,13 @@ function initExplorerImportControls() {
 
   selectAll?.addEventListener('change', () => {
     const checked = !!selectAll.checked;
-    explorerState.selectedPreviewKeys.clear();
+    const visibleRows = getExplorerVisibleResults(explorerState.organizations);
+    const visibleKeys = new Set(visibleRows.map((org) => getExplorerPreviewKey(org)).filter(Boolean));
+    for (const key of Array.from(explorerState.selectedPreviewKeys)) {
+      if (visibleKeys.has(key)) explorerState.selectedPreviewKeys.delete(key);
+    }
     if (checked) {
-      explorerState.organizations.forEach((org) => {
+      visibleRows.forEach((org) => {
         const key = getExplorerPreviewKey(org);
         if (key) explorerState.selectedPreviewKeys.add(key);
       });
@@ -134,6 +150,7 @@ function initExplorerImportControls() {
 
   importSelectedBtn?.addEventListener('click', () => importExplorerResults('selected'));
   importAllBtn?.addEventListener('click', () => importExplorerResults('all'));
+  document.getElementById('explorerIncludeLowQualityContacts')?.addEventListener('change', syncExplorerSelectionUI);
   syncExplorerSelectionUI();
 }
 
@@ -351,6 +368,7 @@ function renderExplorerProgress(jobState) {
 
   const status = String(jobState.status || 'queued').toLowerCase();
   const progress = Math.max(0, Math.min(100, Number(jobState.progress || 0)));
+  const showIndeterminate = ['queued', 'running', 'warning'].includes(status) && progress <= 5;
   const step = formatExplorerStep(jobState.step || status);
   const message = String(jobState.message || '').trim();
   const result = jobState.result || null;
@@ -360,6 +378,7 @@ function renderExplorerProgress(jobState) {
   card.dataset.status = status;
   fill.style.width = `${progress}%`;
   track.setAttribute('aria-valuenow', String(progress));
+  track.dataset.indeterminate = showIndeterminate ? 'true' : 'false';
 
   title.textContent = status === 'completed'
     ? 'Funds Explorer Search Complete'
@@ -381,10 +400,10 @@ function renderExplorerProgress(jobState) {
     line.textContent = message || 'The discovery search encountered an error.';
     meta.textContent = `Step: ${step}`;
   } else {
-    line.textContent = `${step}: ${message || 'Processing...'}`;
+    line.textContent = `${step}: ${message || (showIndeterminate ? 'Initializing discovery sources and planning search strategy...' : 'Processing...')}`;
     const sourceText = formatSourceBreakdown(liveSourceBreakdown);
     meta.textContent = [
-      `Progress ${progress}%`,
+      showIndeterminate ? 'Progress warming up...' : `Progress ${progress}%`,
       sourceText ? `Sources: ${sourceText}` : '',
       'Search continues even if you navigate to another page.',
     ].filter(Boolean).join(' | ');
@@ -441,17 +460,20 @@ function renderExplorerResults(organizations) {
   const list = document.getElementById('explorerResultsList');
   if (!list) return;
   syncExplorerSelectionUI();
+  const visibleResults = getExplorerVisibleResults(organizations);
+  renderExplorerReviewSummary(organizations, visibleResults);
 
-  if (!Array.isArray(organizations) || organizations.length === 0) {
+  if (!Array.isArray(visibleResults) || visibleResults.length === 0) {
     list.innerHTML = '<div class="explorer-empty">No results matched your search. Try a broader location or lower score threshold.</div>';
     syncExplorerSelectionUI();
     return;
   }
 
-  list.innerHTML = organizations.map((record, index) => {
+  list.innerHTML = visibleResults.map((record, index) => {
     const score = Number(record.donation_potential_score || 0);
     const scoreClass = getScoreThemeClass(score);
     const isContact = String(record.record_type || '').toLowerCase() === 'contact';
+    const validation = getExplorerContactValidation(record);
     const locationText = isContact
       ? ([record.organization_city, record.organization_state].filter(Boolean).join(', ') || record.organization_address || record.organization_name || 'Linked organization')
       : ([record.city, record.state].filter(Boolean).join(', ') || record.address || 'Location not available');
@@ -459,11 +481,11 @@ function renderExplorerResults(organizations) {
     const checked = explorerState.selectedPreviewKeys.has(key) ? 'checked' : '';
     const name = isContact ? (record.full_name || record.name || 'Unnamed Contact') : (record.name || 'Unknown Organization');
     const sub = isContact
-      ? [record.title || null, record.email || null, record.organization_name ? `Org: ${record.organization_name}` : null].filter(Boolean).join(' | ')
+      ? [record.title || null, record.email || null, record.organization_name ? `Org: ${record.organization_name}` : null, (validation.ok ? null : validation.label)].filter(Boolean).join(' | ')
       : locationText;
     const typeLabel = isContact ? 'Contact' : 'Organization';
     return `
-      <div class="explorer-result-item" data-org-id="${escapeHtml(String(record.id || ''))}">
+      <div class="explorer-result-item" data-org-id="${escapeHtml(String(record.id || ''))}" data-contact-quality="${escapeHtml(isContact ? (validation.ok ? 'valid' : 'review') : 'n/a')}">
         <div>
           <p class="explorer-result-name">${escapeHtml(name)}</p>
           <p class="explorer-result-sub">${escapeHtml(sub)}</p>
@@ -472,7 +494,7 @@ function renderExplorerResults(organizations) {
         <div>${escapeHtml(formatCategory(record.category))}</div>
         <div><span class="explorer-score-pill ${escapeHtml(scoreClass)}">${escapeHtml(String(score))}</span></div>
         <div>
-          <button type="button" class="btn btn-secondary btn-pill" data-explorer-view-index="${index}">View</button>
+          <button type="button" class="btn btn-secondary btn-pill" data-explorer-view-index="${escapeHtml(String(explorerState.organizations.indexOf(record)))}">View</button>
         </div>
         <div style="display:flex; justify-content:flex-end;">
           <input type="checkbox" data-explorer-select-key="${escapeHtml(key)}" ${checked} aria-label="Select ${escapeHtml(name)}">
@@ -481,6 +503,46 @@ function renderExplorerResults(organizations) {
     `;
   }).join('');
   syncExplorerSelectionUI();
+}
+
+function getExplorerVisibleResults(organizations) {
+  const rows = Array.isArray(organizations) ? organizations : [];
+  const mode = String(document.getElementById('explorerResultTypeFilter')?.value || 'all').toLowerCase();
+  if (mode === 'all') return rows;
+  if (mode === 'organization') return rows.filter((r) => String(r.record_type || '').toLowerCase() !== 'contact');
+  if (mode === 'contact') return rows.filter((r) => String(r.record_type || '').toLowerCase() === 'contact');
+  if (mode === 'contact_valid') return rows.filter((r) => String(r.record_type || '').toLowerCase() === 'contact' && getExplorerContactValidation(r).ok);
+  if (mode === 'contact_review') return rows.filter((r) => String(r.record_type || '').toLowerCase() === 'contact' && !getExplorerContactValidation(r).ok);
+  return rows;
+}
+
+function getExplorerContactValidation(record) {
+  if (String(record?.record_type || '').toLowerCase() !== 'contact') return { ok: true, label: '' };
+  const email = String(record.email || '').trim();
+  const title = String(record.title || '').trim().toLowerCase();
+  const name = String(record.full_name || record.name || '').trim();
+  const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const hasName = name.length >= 2;
+  const suspectTitle = /^(n\/a|na|unknown|contact|team)$/i.test(title);
+  const confidence = String(record.confidence || '').toLowerCase();
+  if (!hasName) return { ok: false, label: 'Needs name review' };
+  if (!hasValidEmail) return { ok: false, label: 'Needs email review' };
+  if (suspectTitle) return { ok: false, label: 'Needs title review' };
+  if (record.do_not_contact) return { ok: false, label: 'Do Not Contact' };
+  if (confidence && confidence === 'low') return { ok: false, label: 'Low confidence' };
+  return { ok: true, label: 'Valid contact' };
+}
+
+function renderExplorerReviewSummary(allRows, visibleRows) {
+  const el = document.getElementById('explorerReviewSummary');
+  if (!el) return;
+  const rows = Array.isArray(allRows) ? allRows : [];
+  const contacts = rows.filter((r) => String(r.record_type || '').toLowerCase() === 'contact');
+  const validContacts = contacts.filter((r) => getExplorerContactValidation(r).ok).length;
+  const reviewContacts = contacts.length - validContacts;
+  const organizations = rows.length - contacts.length;
+  const visible = Array.isArray(visibleRows) ? visibleRows.length : rows.length;
+  el.textContent = `Review Summary: ${rows.length} total preview results (${organizations} org, ${contacts.length} contact). Contact validation: ${validContacts} valid, ${reviewContacts} needs review. Showing ${visible} result(s) with current filter.`;
 }
 
 async function openOrganizationProfile(orgInput) {
@@ -562,7 +624,9 @@ function renderOrganizationProfile(org) {
             ${renderDetailItem('City / State', [org.city, org.state].filter(Boolean).join(', ') || 'Not provided')}
             ${renderDetailItem('Postal Code', org.postal_code || 'Not provided')}
           </div>
-          ${org.notes ? `<div class="explorer-detail-item" style="margin-top:12px;"><p class="explorer-detail-label">Notes</p><p class="explorer-detail-value" style="font-weight:500;">${escapeHtml(org.notes)}</p></div>` : ''}
+          ${org.justification ? `<div class="explorer-detail-item" style="margin-top:12px;"><p class="explorer-detail-label">Evaluation Justification</p><p class="explorer-detail-value" style="font-weight:500;">${escapeHtml(org.justification)}</p></div>` : ''}
+          ${org.additional_info ? `<div class="explorer-detail-item" style="margin-top:12px;"><p class="explorer-detail-label">Additional Information</p><p class="explorer-detail-value" style="font-weight:500;">${escapeHtml(org.additional_info)}</p></div>` : ''}
+          ${org.source_notes ? `<div class="explorer-detail-item" style="margin-top:12px;"><p class="explorer-detail-label">Source Details</p><p class="explorer-detail-value" style="font-weight:500;">${escapeHtml(org.source_notes)}</p></div>` : (org.notes ? `<div class="explorer-detail-item" style="margin-top:12px;"><p class="explorer-detail-label">Source Details</p><p class="explorer-detail-value" style="font-weight:500;">${escapeHtml(org.notes)}</p></div>` : '')}
         </div>
       </div>
 
@@ -707,7 +771,7 @@ function renderExplorerContactProfile(contact) {
             ${renderDetailItem('Organization Website', contact.organization_website ? `<a href="${escapeHtml(contact.organization_website)}" target="_blank" rel="noopener noreferrer">${escapeHtml(safeHostname(contact.organization_website) || contact.organization_website)}</a>` : 'Not provided', true)}
             ${renderDetailItem('Organization Address', contact.organization_address || [contact.organization_city, contact.organization_state, contact.organization_postal_code].filter(Boolean).join(', ') || 'Not provided')}
           </div>
-          ${contact.notes ? `<div class="explorer-detail-item" style="margin-top:12px;"><p class="explorer-detail-label">Justification</p><p class="explorer-detail-value" style="font-weight:500;">${escapeHtml(contact.notes)}</p></div>` : ''}
+          ${contact.notes ? `<div class="explorer-detail-item" style="margin-top:12px;"><p class="explorer-detail-label">Evaluation Justification</p><p class="explorer-detail-value" style="font-weight:500;">${escapeHtml(contact.notes)}</p></div>` : ''}
         </div>
       </div>
     </div>
@@ -747,9 +811,10 @@ function getExplorerCompositeKey(org) {
 }
 
 function getSelectedExplorerOrganizations(mode = 'selected') {
-  if (mode === 'all') return explorerState.organizations.slice();
+  const visibleRows = getExplorerVisibleResults(explorerState.organizations);
+  if (mode === 'all') return visibleRows.slice();
   const selected = [];
-  for (const org of explorerState.organizations) {
+  for (const org of visibleRows) {
     const key = getExplorerPreviewKey(org);
     if (key && explorerState.selectedPreviewKeys.has(key)) selected.push(org);
   }
@@ -761,28 +826,31 @@ function syncExplorerSelectionUI() {
   const importSelectedBtn = document.getElementById('explorerImportSelectedBtn');
   const importAllBtn = document.getElementById('explorerImportAllBtn');
   const countEl = document.getElementById('explorerResultsCount');
+  const visibleRows = getExplorerVisibleResults(explorerState.organizations);
   const total = explorerState.organizations.length;
+  const visibleTotal = visibleRows.length;
   const selected = getSelectedExplorerOrganizations('selected').length;
 
   if (selectAll) {
-    const enabled = total > 0;
+    const enabled = visibleTotal > 0;
     selectAll.disabled = !enabled;
-    selectAll.checked = enabled && selected > 0 && selected === total;
-    selectAll.indeterminate = enabled && selected > 0 && selected < total;
+    selectAll.checked = enabled && selected > 0 && selected === visibleTotal;
+    selectAll.indeterminate = enabled && selected > 0 && selected < visibleTotal;
   }
   if (importSelectedBtn) {
     importSelectedBtn.disabled = explorerState.importing || selected === 0 || !explorerState.schemaReadyForImport;
     importSelectedBtn.textContent = explorerState.importing ? 'Importing...' : `Import Selected${selected ? ` (${selected})` : ''}`;
   }
   if (importAllBtn) {
-    importAllBtn.disabled = explorerState.importing || total === 0 || !explorerState.schemaReadyForImport;
-    importAllBtn.textContent = explorerState.importing ? 'Importing...' : 'Import All';
+    importAllBtn.disabled = explorerState.importing || visibleTotal === 0 || !explorerState.schemaReadyForImport;
+    importAllBtn.textContent = explorerState.importing ? 'Importing...' : `Import All${visibleTotal ? ` (${visibleTotal})` : ''}`;
   }
   if (countEl && total > 0 && !String(countEl.textContent || '').includes('Search')) {
     const orgCount = explorerState.organizations.filter((r) => String(r.record_type || 'organization') !== 'contact').length;
     const contactCount = total - orgCount;
     const base = `${total} preview results (${orgCount} org / ${contactCount} contact)`;
-    countEl.textContent = selected > 0 ? `${base} | ${selected} selected` : base;
+    const visiblePart = visibleTotal !== total ? ` | ${visibleTotal} visible` : '';
+    countEl.textContent = selected > 0 ? `${base}${visiblePart} | ${selected} selected` : `${base}${visiblePart}`;
   }
 }
 
@@ -797,13 +865,23 @@ async function importExplorerResults(mode = 'selected') {
     notifyUser('Select at least one result to import.');
     return;
   }
+  const includeLowQualityContacts = !!document.getElementById('explorerIncludeLowQualityContacts')?.checked;
+  const importableRecords = records.filter((record) => {
+    if (String(record.record_type || '').toLowerCase() !== 'contact') return true;
+    return includeLowQualityContacts || getExplorerContactValidation(record).ok;
+  });
+  const excludedLowQualityContacts = records.length - importableRecords.length;
+  if (!importableRecords.length) {
+    notifyUser('No importable results match the current review settings.');
+    return;
+  }
   const extractContacts = !!document.getElementById('explorerImportContactsToggle')?.checked;
   const scoreRaw = document.getElementById('explorerScoreFilter')?.value || 'all';
   const minScore = scoreRaw === 'all' ? 0 : clampInt(scoreRaw, 0, 100, 0);
-  const orgSelected = records.filter((r) => String(r.record_type || 'organization') !== 'contact').length;
-  const contactSelected = records.length - orgSelected;
-  const confirmMsg = `Import ${records.length} preview result${records.length === 1 ? '' : 's'}?`;
-  const confirmDetail = `${orgSelected} organization${orgSelected === 1 ? '' : 's'}, ${contactSelected} contact${contactSelected === 1 ? '' : 's'}${extractContacts ? ' | Additional contact extraction will run for imported organizations.' : ''}`;
+  const orgSelected = importableRecords.filter((r) => String(r.record_type || 'organization') !== 'contact').length;
+  const contactSelected = importableRecords.length - orgSelected;
+  const confirmMsg = `Import ${importableRecords.length} preview result${importableRecords.length === 1 ? '' : 's'}?`;
+  const confirmDetail = `${orgSelected} organization${orgSelected === 1 ? '' : 's'}, ${contactSelected} contact${contactSelected === 1 ? '' : 's'}${excludedLowQualityContacts ? ` | ${excludedLowQualityContacts} low-quality contact${excludedLowQualityContacts === 1 ? '' : 's'} skipped by review filter.` : ''}${extractContacts ? ' | Additional contact extraction will run for imported organizations.' : ''}`;
   const confirmed = await showExplorerConfirmModal({
     title: 'Confirm Import',
     message: confirmMsg,
@@ -820,14 +898,14 @@ async function importExplorerResults(mode = 'selected') {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        records: records.map(stripPreviewOnlyFields),
+        records: importableRecords.map(stripPreviewOnlyFields),
         extract_contacts: extractContacts,
         min_score: minScore,
       }),
     });
     const saved = Number(response.saved_count || 0);
     const savedContacts = Number(response.saved_contact_count || 0);
-    const requested = Number(response.requested_count || records.length);
+    const requested = Number(response.requested_count || importableRecords.length);
     const savedRows = normalizeExplorerResults([
       ...(Array.isArray(response.organizations) ? response.organizations : []),
       ...(Array.isArray(response.contacts) ? response.contacts : []),
@@ -847,15 +925,15 @@ async function importExplorerResults(mode = 'selected') {
     if (window.FundsApp?.notify) {
       window.FundsApp.notify(
         'Funds Explorer Import Complete',
-        `Imported ${saved} organization${saved === 1 ? '' : 's'} and ${savedContacts} contact${savedContacts === 1 ? '' : 's'} from ${requested} selected result${requested === 1 ? '' : 's'}${extractContacts ? ' (plus contact extraction on imported orgs).' : '.'}`,
+        `Imported ${saved} organization${saved === 1 ? '' : 's'} and ${savedContacts} contact${savedContacts === 1 ? '' : 's'} from ${requested} selected result${requested === 1 ? '' : 's'}${excludedLowQualityContacts ? ` (${excludedLowQualityContacts} review-flagged contact${excludedLowQualityContacts === 1 ? '' : 's'} skipped).` : ''}${extractContacts ? ' (plus contact extraction on imported orgs).' : '.'}`,
         ['all'],
       );
     }
-    notifyUser(`Imported ${saved} organizations and ${savedContacts} contacts.`);
+    notifyUser(`Imported ${saved} organizations and ${savedContacts} contacts.${excludedLowQualityContacts ? ` Skipped ${excludedLowQualityContacts} contact(s) pending review.` : ''}`);
     const metaEl = document.getElementById('explorerSearchMeta');
     if (metaEl) {
       const issues = Array.isArray(response.issues) ? response.issues.filter(Boolean) : [];
-      metaEl.textContent = `Import complete: ${saved} organizations and ${savedContacts} contacts saved from ${requested} selected result(s).${extractContacts ? ` Additional contact extraction ${response.contacts_extracted ? 'completed' : 'skipped/failed'}.` : ''}${issues.length ? ` Issues: ${issues.length}.` : ''}`;
+      metaEl.textContent = `Import complete: ${saved} organizations and ${savedContacts} contacts saved from ${requested} selected result(s).${excludedLowQualityContacts ? ` Skipped ${excludedLowQualityContacts} contact(s) pending review.` : ''}${extractContacts ? ` Additional contact extraction ${response.contacts_extracted ? 'completed' : 'skipped/failed'}.` : ''}${issues.length ? ` Issues: ${issues.length}.` : ''}`;
     }
     explorerState.selectedPreviewKeys.clear();
     syncExplorerSelectionUI();
@@ -890,6 +968,14 @@ function getExplorerSeenStoreKey() {
   return 'funds_explorer_seen_results_v1';
 }
 
+function getExplorerSeenGlobalKey() {
+  return '__global__';
+}
+
+function getExplorerSeenCacheTtlMs() {
+  return 60 * 24 * 60 * 60 * 1000; // 60 days
+}
+
 function getExplorerSeenQueryFingerprint({ location = '', discoveryMode = 'all', minScore = 0 } = {}) {
   return [
     String(location || '').trim().toLowerCase(),
@@ -901,7 +987,8 @@ function getExplorerSeenQueryFingerprint({ location = '', discoveryMode = 'all',
 function loadExplorerSeenStore() {
   try {
     const parsed = JSON.parse(localStorage.getItem(getExplorerSeenStoreKey()) || '{}');
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    const store = parsed && typeof parsed === 'object' ? parsed : {};
+    return pruneExplorerSeenStore(store);
   } catch {
     return {};
   }
@@ -916,23 +1003,99 @@ function saveExplorerSeenStore(store) {
 function getExplorerSeenResultKeysForQuery(queryMeta) {
   const store = loadExplorerSeenStore();
   const fp = getExplorerSeenQueryFingerprint(queryMeta);
-  return Array.isArray(store[fp]) ? store[fp].slice(0, 5000) : [];
+  const queryKeys = getExplorerSeenBucketKeys(store[fp]);
+  const globalKeys = getExplorerSeenBucketKeys(store[getExplorerSeenGlobalKey()]);
+  return Array.from(new Set([...globalKeys, ...queryKeys])).slice(-5000);
 }
 
 function rememberExplorerSeenResultKeys(results, queryMeta) {
   const fp = getExplorerSeenQueryFingerprint(queryMeta);
   const store = loadExplorerSeenStore();
-  const current = new Set(Array.isArray(store[fp]) ? store[fp] : []);
+  const currentMap = getExplorerSeenBucketMap(store[fp]);
+  const globalMap = getExplorerSeenBucketMap(store[getExplorerSeenGlobalKey()]);
+  const now = Date.now();
   for (const row of results || []) {
     const stable = getExplorerStableRecordKey(row);
-    if (stable) current.add(stable);
+    if (stable) {
+      currentMap.set(stable, now);
+      globalMap.set(stable, now);
+    }
   }
-  store[fp] = Array.from(current).slice(-5000);
-  saveExplorerSeenStore(store);
+  store[fp] = serializeExplorerSeenBucket(currentMap, 5000);
+  store[getExplorerSeenGlobalKey()] = serializeExplorerSeenBucket(globalMap, 10000);
+  saveExplorerSeenStore(pruneExplorerSeenStore(store));
+}
+
+function pruneExplorerSeenStore(store) {
+  const ttlMs = getExplorerSeenCacheTtlMs();
+  const cutoff = Date.now() - ttlMs;
+  const next = {};
+  for (const [bucketKey, bucket] of Object.entries(store || {})) {
+    const map = getExplorerSeenBucketMap(bucket);
+    if (!map.size) continue;
+    const filtered = new Map();
+    for (const [key, ts] of map.entries()) {
+      const n = Number(ts || 0);
+      if (Number.isFinite(n) && n >= cutoff) filtered.set(key, n);
+    }
+    if (filtered.size) {
+      next[bucketKey] = serializeExplorerSeenBucket(
+        filtered,
+        bucketKey === getExplorerSeenGlobalKey() ? 10000 : 5000,
+      );
+    }
+  }
+  return next;
+}
+
+function getExplorerSeenBucketKeys(bucket) {
+  return Array.from(getExplorerSeenBucketMap(bucket).keys());
+}
+
+function getExplorerSeenBucketMap(bucket) {
+  const map = new Map();
+  const now = Date.now();
+  const ttlMs = getExplorerSeenCacheTtlMs();
+  const fallbackTs = now - Math.floor(ttlMs / 2); // migrate legacy cache entries without immediately expiring them
+  if (Array.isArray(bucket)) {
+    for (const item of bucket) {
+      if (typeof item === 'string') {
+        const key = item.trim().toLowerCase();
+        if (key) map.set(key, fallbackTs);
+        continue;
+      }
+      if (item && typeof item === 'object') {
+        const key = String(item.k || item.key || '').trim().toLowerCase();
+        const ts = Number(item.t || item.ts || item.seen_at || fallbackTs);
+        if (key) map.set(key, Number.isFinite(ts) ? ts : fallbackTs);
+      }
+    }
+    return map;
+  }
+  if (bucket && typeof bucket === 'object') {
+    // Support object shape {items:[...]} for future flexibility.
+    const items = Array.isArray(bucket.items) ? bucket.items : [];
+    for (const item of items) {
+      if (!item || typeof item !== 'object') continue;
+      const key = String(item.k || item.key || '').trim().toLowerCase();
+      const ts = Number(item.t || item.ts || item.seen_at || fallbackTs);
+      if (key) map.set(key, Number.isFinite(ts) ? ts : fallbackTs);
+    }
+  }
+  return map;
+}
+
+function serializeExplorerSeenBucket(map, maxItems) {
+  return Array.from(map.entries())
+    .sort((a, b) => Number(a[1] || 0) - Number(b[1] || 0))
+    .slice(-Math.max(1, Number(maxItems || 5000)))
+    .map(([k, t]) => ({ k, t: Number(t || Date.now()) }));
 }
 
 function getExplorerStableRecordKey(record) {
   if (!record || typeof record !== 'object') return '';
+  const explicitKey = String(record.record_key || '').trim().toLowerCase();
+  if (explicitKey) return explicitKey;
   const type = String(record.record_type || 'organization').toLowerCase();
   if (type === 'contact') {
     return [
@@ -1039,6 +1202,7 @@ function ensureExplorerConfirmModal() {
 }
 
 async function apiJson(url, options) {
+  if (window.FundsApp?.apiJson) return window.FundsApp.apiJson(url, options);
   const response = await fetch(url, options);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();

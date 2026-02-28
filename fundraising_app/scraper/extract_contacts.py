@@ -15,6 +15,12 @@ import os
 import sys
 import re
 import logging
+import time
+from pathlib import Path
+from urllib.parse import urlparse
+
+import requests
+from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from db.client import get_client, get_organizations, upsert_contact
@@ -25,6 +31,9 @@ from scraper.utils import (
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+# Keep scraper behavior consistent with the server and discovery scripts.
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 # Roles we prioritize when scanning staff/team pages
 PRIORITY_TITLES = [
@@ -40,6 +49,33 @@ CONTACT_PAGE_KEYWORDS = [
     "giving", "donate", "philanthropy", "csr", "foundation",
     "responsibility", "grant", "community",
 ]
+
+APOLLO_API_KEY = os.environ.get("APOLLO_API_KEY", "") or os.environ.get("APPLO_API_KEY", "")
+APOLLO_BASE_URL = os.environ.get("APOLLO_API_BASE", "https://api.apollo.io")
+APOLLO_HTTP_TIMEOUT_SECONDS = float(os.environ.get("APOLLO_HTTP_TIMEOUT_SECONDS", "12"))
+APOLLO_ENABLED = os.environ.get("APOLLO_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+APOLLO_PREVIEW_PER_ORG_LIMIT = int(os.environ.get("APOLLO_PREVIEW_PER_ORG_LIMIT", "3"))
+CONTACT_EXTRACTION_MAX_RUNTIME_SECONDS = float(os.environ.get("CONTACT_EXTRACTION_MAX_RUNTIME_SECONDS", "420"))
+CONTACT_EXTRACTION_STAGE_MAX_SECONDS = float(os.environ.get("CONTACT_EXTRACTION_STAGE_MAX_SECONDS", "180"))
+
+
+def apollo_configured() -> bool:
+    return APOLLO_ENABLED and bool(APOLLO_API_KEY)
+
+
+def _deadline_reached(deadline_ts: float | None) -> bool:
+    return bool(deadline_ts and time.monotonic() >= deadline_ts)
+
+
+def _effective_contact_deadline(deadline_ts: float | None = None, max_runtime_seconds: float | int | None = None) -> float:
+    now = time.monotonic()
+    candidates: list[float] = []
+    if deadline_ts:
+        candidates.append(float(deadline_ts))
+    max_runtime = float(max_runtime_seconds if max_runtime_seconds not in (None, "") else CONTACT_EXTRACTION_MAX_RUNTIME_SECONDS)
+    candidates.append(now + max(5.0, max_runtime))
+    candidates.append(now + max(5.0, CONTACT_EXTRACTION_STAGE_MAX_SECONDS))
+    return min(candidates)
 
 
 def classify_contact_role(title: str | None) -> str:
@@ -89,6 +125,178 @@ def _load_existing_contact_emails() -> set[str]:
         if page >= 50:
             break
     return emails
+
+
+def _apollo_headers() -> dict:
+    return {
+        "Content-Type": "application/json",
+        "X-Api-Key": APOLLO_API_KEY,
+        "accept": "application/json",
+        "Cache-Control": "no-cache",
+    }
+
+
+def _domain_from_website(website: str | None) -> str:
+    raw = str(website or "").strip()
+    if not raw:
+        return ""
+    if not re.match(r"^https?://", raw, re.I):
+        raw = f"https://{raw}"
+    try:
+        host = (urlparse(raw).hostname or "").lower().strip()
+    except Exception:
+        return ""
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+def _apollo_search_people(org: dict, per_org_limit: int = 5) -> list[dict]:
+    """
+    Query Apollo for people associated with an organization name/domain.
+    Returns a normalized list of contact dicts (no DB writes).
+    """
+    if not apollo_configured():
+        return []
+
+    org_name = str(org.get("name") or "").strip()
+    domain = _domain_from_website(org.get("website"))
+    if not (org_name or domain):
+        return []
+
+    per_page = max(1, min(int(per_org_limit or 5), 10))
+    params = {
+        "page": 1,
+        "per_page": per_page,
+        "person_titles[]": [
+            "Owner", "Founder", "President", "CEO", "Executive Director",
+            "Community Relations", "Partnerships", "Development Director",
+            "CSR", "Marketing Director", "Store Manager",
+        ],
+        "q_keywords": org_name,
+    }
+    if domain:
+        params["q_organization_domains_list[]"] = [domain]
+    if org_name:
+        params["q_organization_name"] = org_name
+    city = str(org.get("city") or "").strip()
+    state = str(org.get("state") or "").strip()
+    if city and state:
+        params["organization_locations[]"] = [f"{city}, {state}, US"]
+
+    # Apollo has shifted endpoint shapes over time; try primary then fallback path.
+    endpoints = [
+        "/mixed_people/api_search",
+        "/api/v1/mixed_people/search",
+    ]
+    response_json = None
+    for ep in endpoints:
+        try:
+            resp = requests.post(
+                f"{APOLLO_BASE_URL.rstrip('/')}{ep}",
+                headers=_apollo_headers(),
+                params=params if "api_search" in ep else None,
+                json=params if "api_search" not in ep else None,
+                timeout=(5, APOLLO_HTTP_TIMEOUT_SECONDS),
+            )
+            if resp.status_code in (404, 405):
+                continue
+            resp.raise_for_status()
+            response_json = resp.json() or {}
+            break
+        except Exception as exc:
+            logger.warning("Apollo people search failed for '%s' via %s: %s", org_name or domain, ep, exc)
+            continue
+    if not isinstance(response_json, dict):
+        return []
+
+    people = response_json.get("people") or response_json.get("contacts") or []
+    if not isinstance(people, list):
+        return []
+
+    out: list[dict] = []
+    for p in people[: max(1, min(int(per_org_limit or 5), 10))]:
+        if not isinstance(p, dict):
+            continue
+        enriched = _apollo_maybe_enrich_person(p, domain=domain)
+        title = str(enriched.get("title") or p.get("title") or "General Contact").strip() or "General Contact"
+        full_name = str(enriched.get("name") or p.get("name") or "").strip()
+        if not full_name:
+            first = str(enriched.get("first_name") or p.get("first_name") or "").strip()
+            last = str(enriched.get("last_name") or p.get("last_name") or "").strip()
+            full_name = " ".join([x for x in [first, last] if x]).strip()
+        email = str(enriched.get("email") or p.get("email") or "").strip().lower()
+        phone = (
+            str(enriched.get("phone") or "").strip()
+            or str(enriched.get("mobile_phone") or p.get("mobile_phone") or "").strip()
+            or _apollo_pick_phone(enriched) or _apollo_pick_phone(p)
+        )
+        if not (email or full_name):
+            continue
+        confidence = "high" if email else "medium"
+        out.append({
+            "full_name": full_name or None,
+            "title": title,
+            "email": email or None,
+            "phone": phone or None,
+            "justification": "Discovered via Apollo person search/enrichment for the organization.",
+            "confidence": confidence,
+            "_apollo": True,
+        })
+    return out
+
+
+def _apollo_pick_phone(person: dict | None) -> str | None:
+    if not isinstance(person, dict):
+        return None
+    candidates = []
+    for key in ("phone", "work_phone", "direct_phone", "sanitized_phone"):
+        val = str(person.get(key) or "").strip()
+        if val:
+            candidates.append(val)
+    for key in ("phone_numbers", "phones"):
+        vals = person.get(key)
+        if isinstance(vals, list):
+            for item in vals:
+                if isinstance(item, dict):
+                    val = str(item.get("sanitized_number") or item.get("raw_number") or item.get("number") or "").strip()
+                else:
+                    val = str(item or "").strip()
+                if val:
+                    candidates.append(val)
+    return candidates[0] if candidates else None
+
+
+def _apollo_maybe_enrich_person(person: dict, domain: str = "") -> dict:
+    """
+    Best-effort Apollo person enrichment to improve email/phone reliability.
+    Falls back to original payload if enrichment fails or lacks match inputs.
+    """
+    if not apollo_configured() or not isinstance(person, dict):
+        return person or {}
+    first = str(person.get("first_name") or "").strip()
+    last = str(person.get("last_name") or "").strip()
+    if not (first and last and domain):
+        return person
+    payload = {
+        "first_name": first,
+        "last_name": last,
+        "domain": domain,
+        "reveal_personal_emails": False,
+        "reveal_phone_number": False,
+    }
+    try:
+        resp = requests.post(
+            f"{APOLLO_BASE_URL.rstrip('/')}/api/v1/people/match",
+            headers=_apollo_headers(),
+            json=payload,
+            timeout=(5, APOLLO_HTTP_TIMEOUT_SECONDS),
+        )
+        resp.raise_for_status()
+        data = resp.json() or {}
+        return (data.get("person") or data.get("contact") or person) if isinstance(data, dict) else person
+    except Exception:
+        return person
 
 
 def score_title(title: str) -> int:
@@ -336,7 +544,13 @@ def extract_contacts_playwright(website: str, org_id: str) -> list[dict]:
         return []
 
 
-def run_extraction(min_score: int = 5, org_ids: list[str] | None = None, org_limit: int | None = None) -> int:
+def run_extraction(
+    min_score: int = 5,
+    org_ids: list[str] | None = None,
+    org_limit: int | None = None,
+    deadline_ts: float | None = None,
+    max_runtime_seconds: float | int | None = None,
+) -> int:
     """
     Main entry point.
     Fetches orgs from Supabase, extracts contacts, upserts results.
@@ -350,24 +564,46 @@ def run_extraction(min_score: int = 5, org_ids: list[str] | None = None, org_lim
         orgs = orgs[: max(1, int(org_limit))]
     logger.info(f"Found {len(orgs)} organizations to process.")
 
+    effective_deadline = _effective_contact_deadline(
+        deadline_ts=deadline_ts,
+        max_runtime_seconds=max_runtime_seconds,
+    )
+
     total_saved = 0
     for org in orgs:
+        if _deadline_reached(effective_deadline):
+            logger.warning("Contact extraction deadline reached; stopping early with partial results.")
+            break
         org_id = org["id"]
         website = org.get("website", "")
         name = org.get("name", "Unknown")
 
-        if not website:
-            logger.info(f"  Skipping '{name}' — no website.")
-            continue
-
-        logger.info(f"  Processing: {name} ({website})")
-        contacts = extract_contacts_static(website, org_id)
+        logger.info(f"  Processing: {name} ({website or 'no website'})")
+        contacts = _dedupe_contacts_for_org(_apollo_search_people(org, per_org_limit=5), org)
+        if _deadline_reached(effective_deadline):
+            logger.warning("Contact extraction deadline reached after Apollo search; stopping early.")
+            break
+        if website:
+            contacts.extend(extract_contacts_static(website, org_id))
+        elif not contacts:
+            logger.info(f"    ↳ No website available; Apollo returned no contacts.")
+        if _deadline_reached(effective_deadline):
+            logger.warning("Contact extraction deadline reached after static scraping; stopping early.")
+            break
 
         # Fallback to Playwright if static yielded nothing
-        if not contacts:
+        if not contacts and website and not _deadline_reached(effective_deadline):
             contacts = extract_contacts_playwright(website, org_id)
+        else:
+            # If Apollo/static yielded some contacts, Playwright is optional and can be skipped for speed.
+            pass
+        contacts = _dedupe_contacts_for_org(contacts, org)
 
         for contact in contacts:
+            if _deadline_reached(effective_deadline):
+                logger.warning("Contact extraction deadline reached while saving contacts; stopping early.")
+                logger.info(f"Extraction complete (partial). {total_saved} contacts saved.")
+                return total_saved
             if not contact.get("email"):
                 logger.info(f"    ↳ Skipping contact (no email): {contact.get('full_name')}")
                 continue
@@ -382,7 +618,12 @@ def run_extraction(min_score: int = 5, org_ids: list[str] | None = None, org_lim
     return total_saved
 
 
-def extract_contacts_preview_for_orgs(orgs: list[dict], per_org_limit: int = 5) -> list[dict]:
+def extract_contacts_preview_for_orgs(
+    orgs: list[dict],
+    per_org_limit: int = 5,
+    deadline_ts: float | None = None,
+    max_runtime_seconds: float | int | None = None,
+) -> list[dict]:
     """
     Preview-mode extraction for discovery results (no DB writes).
     Returns contact candidates enriched with org metadata and a contact category.
@@ -390,18 +631,35 @@ def extract_contacts_preview_for_orgs(orgs: list[dict], per_org_limit: int = 5) 
     results: list[dict] = []
     seen_keys: set[str] = set()
     existing_emails = _load_existing_contact_emails()
+    effective_deadline = _effective_contact_deadline(
+        deadline_ts=deadline_ts,
+        max_runtime_seconds=max_runtime_seconds,
+    )
     for org in (orgs or []):
+        if _deadline_reached(effective_deadline):
+            logger.warning("Contact preview extraction deadline reached; returning partial preview results.")
+            break
         website = str(org.get("website") or "").strip()
-        if not website:
-            continue
         org_key = str(org.get("_preview_key") or org.get("id") or org.get("name") or "").strip()
         if not org_key:
             continue
         org_id_hint = str(org.get("id") or f"preview:{org_key}")
-        contacts = extract_contacts_static(website, org_id_hint)
-        if not contacts:
+        contacts = _apollo_search_people(org, per_org_limit=min(max(1, int(per_org_limit or 5)), APOLLO_PREVIEW_PER_ORG_LIMIT))
+        if _deadline_reached(effective_deadline):
+            logger.warning("Contact preview extraction deadline reached after Apollo search; returning partial preview results.")
+            break
+        if website:
+            contacts.extend(extract_contacts_static(website, org_id_hint))
+        if _deadline_reached(effective_deadline):
+            logger.warning("Contact preview extraction deadline reached after static scraping; returning partial preview results.")
+            break
+        if not contacts and website and not _deadline_reached(effective_deadline):
             contacts = extract_contacts_playwright(website, org_id_hint)
+        contacts = _dedupe_contacts_for_org(contacts, org)
         for contact in (contacts or [])[: max(1, int(per_org_limit or 5))]:
+            if _deadline_reached(effective_deadline):
+                logger.warning("Contact preview extraction deadline reached while building preview records; returning partial results.")
+                return results
             email = str(contact.get("email") or "").strip().lower()
             full_name = str(contact.get("full_name") or "").strip()
             if email and email in existing_emails:
@@ -427,6 +685,37 @@ def extract_contacts_preview_for_orgs(orgs: list[dict], per_org_limit: int = 5) 
                 "donation_potential_score": org.get("donation_potential_score"),
             })
     return results
+
+
+def _dedupe_contacts_for_org(contacts: list[dict], org: dict | None = None) -> list[dict]:
+    """Prefer Apollo-enriched contacts and unique email/name-title combos per org."""
+    if not isinstance(contacts, list):
+        return []
+    seen: set[str] = set()
+    ranked: list[tuple[int, dict]] = []
+    for c in contacts:
+        if not isinstance(c, dict):
+            continue
+        email = str(c.get("email") or "").strip().lower()
+        full_name = str(c.get("full_name") or "").strip().lower()
+        title = str(c.get("title") or "").strip().lower()
+        if not (email or full_name):
+            continue
+        key = f"{email}|{full_name}|{title}"
+        if key in seen:
+            continue
+        seen.add(key)
+        score = 0
+        if c.get("_apollo"):
+            score += 5
+        if email:
+            score += 3
+        if c.get("phone"):
+            score += 2
+        score += min(5, score_title(str(c.get("title") or "")))
+        ranked.append((score, c))
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    return [c for _, c in ranked]
 
 
 if __name__ == "__main__":

@@ -2,6 +2,10 @@
 .env
 *.env
 .env.local
+.runtime_auth_accounts.json
+.runtime_*.json
+.runtime_*.json.*
+.runtime_*.log
 
 # Python
 __pycache__/

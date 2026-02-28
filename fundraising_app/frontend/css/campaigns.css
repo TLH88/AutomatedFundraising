@@ -468,6 +468,180 @@
 }
 
 /* ============================================
+   CAMPAIGN ACTION MODAL
+   ============================================ */
+
+.campaign-action-modal-content {
+  max-width: 980px;
+}
+
+.campaign-action-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.campaign-action-body {
+  min-height: 220px;
+}
+
+.campaign-modal-panel-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+.campaign-modal-panel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--table-divider);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.campaign-modal-section-title {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--text-h3);
+  color: var(--text-primary);
+}
+
+.campaign-modal-description {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.campaign-modal-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.campaign-modal-kpi {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campaign-modal-kpi span {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.campaign-modal-kpi strong {
+  color: var(--text-primary);
+  font-size: var(--text-body-large);
+  font-family: var(--font-numeric);
+}
+
+.campaign-modal-progress-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  overflow: hidden;
+}
+
+.campaign-modal-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--accent-green),
+    var(--accent-green-light, var(--accent-green))
+  );
+  transition: width 0.25s ease;
+}
+
+.campaign-modal-detail-list {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.campaign-modal-detail-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--table-divider);
+}
+
+.campaign-modal-detail-list > div:last-child {
+  border-bottom: 0;
+}
+
+.campaign-modal-detail-list span {
+  color: var(--text-muted);
+}
+
+.campaign-modal-detail-list strong {
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.campaign-analytics-bars {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.campaign-analytics-bar-row {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+}
+
+.campaign-analytics-bar-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  overflow: hidden;
+}
+
+.campaign-analytics-bar-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--accent-green),
+    var(--accent-green-light, var(--accent-green))
+  );
+}
+
+.campaign-analytics-bar-fill.alt {
+  background: linear-gradient(
+    90deg,
+    var(--accent-green-light, var(--accent-green)),
+    var(--accent-green-dark, var(--accent-green))
+  );
+}
+
+.campaign-analytics-bar-row strong {
+  color: var(--text-primary);
+  font-family: var(--font-numeric);
+}
+
+.campaign-analytics-insights {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+/* ============================================
    RESPONSIVE DESIGN
    ============================================ */
 
@@ -501,6 +675,15 @@
 
   .page-actions .btn {
     flex: 1;
+  }
+
+  .campaign-modal-panel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-analytics-bar-row {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 }
 

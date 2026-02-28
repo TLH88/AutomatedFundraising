@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () { try { var theme = localStorage.getItem('funds_theme'); if (theme) document.documentElement.setAttribute('data-theme', theme); } catch (e) {} })();
+  </script>
+  <title>Animals - Funds 4 Furry Friends</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/public-pages.css">
+</head>
+<body data-public-page="animals">
+  <nav class="topbar landing-topbar">
+    <div class="topbar-left">
+      <a href="/" class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></a>
+      <div class="landing-nav-links">
+        <a href="public-animals.html" class="nav-link">Animals</a>
+        <a href="public-events.html" class="nav-link">Events</a>
+        <a href="public-impact.html" class="nav-link">Campaigns & Stories</a>
+        <a href="public-help.html" class="nav-link">Help</a>
+      </div>
+    </div>
+    <div class="topbar-right"></div>
+  </nav>
+
+  <main class="public-main">
+    <div class="public-shell">
+      <div class="public-header">
+        <div>
+          <h1 class="page-title">Meet Our Animals</h1>
+          <p class="page-subtitle">Search and view profiles of animals currently in our care and adoption program.</p>
+        </div>
+      </div>
+      <div class="public-toolbar">
+        <input id="publicAnimalsSearch" class="input" placeholder="Search by name, breed, species, or status">
+        <select id="publicAnimalsSpecies" class="select">
+          <option value="all">All Species</option>
+          <option value="dog">Dogs</option>
+          <option value="cat">Cats</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div id="publicAnimalsGrid" class="public-grid animals"></div>
+    </div>
+  </main>
+  <script src="js/main.js"></script>
+  <script src="js/public-pages.js"></script>
+</body>
+</html>
+

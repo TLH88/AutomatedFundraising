@@ -53,3 +53,7 @@ Thumbs.db
 config.json
 credentials.json
 token.json
+AutomatedFundraisingProjNotes.txt
+*.notes.txt
+secrets/
+NOT_NEEDED_ARCHIVE/

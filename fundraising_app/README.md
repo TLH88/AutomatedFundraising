@@ -47,6 +47,27 @@ python server.py
 Open:
 - `http://localhost:5000`
 
+## First Admin Bootstrap (One-Time)
+
+The app no longer auto-creates a hardcoded default admin account.
+
+1. Set `AUTH_BOOTSTRAP_TOKEN` in `fundraising_app/.env`.
+2. Start the server.
+3. Create the initial admin with:
+
+```bash
+curl -X POST http://localhost:5000/api/auth/bootstrap/admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bootstrap_token": "YOUR_BOOTSTRAP_TOKEN",
+    "email": "you@example.org",
+    "password": "choose-a-strong-password",
+    "full_name": "Your Name"
+  }'
+```
+
+Bootstrap is only allowed while no active administrator account exists.
+
 ## API Endpoints (CRM + Dashboard)
 
 Examples:
@@ -85,12 +106,19 @@ From the repository root:
 # API smoke tests (mock mode if Supabase not configured)
 python fundraising_app/scripts/smoke_test_server.py
 
+# Optional: include write/create endpoint checks (creates test records)
+SMOKE_TEST_ENABLE_WRITE_CHECKS=true python fundraising_app/scripts/smoke_test_server.py
+
 # Pre-deploy checks (compile, imports, smoke tests, optional connection checks)
 python fundraising_app/scripts/pre_deploy_check.py
 
 # Optional deeper external validation (if Supabase env vars are set)
 python fundraising_app/scripts/test_connections.py
 ```
+
+Notes:
+- Smoke tests run read/auth checks by default.
+- Write/create checks are opt-in via `SMOKE_TEST_ENABLE_WRITE_CHECKS=true` to avoid polluting local/dev data.
 
 ## Outreach Pipeline Commands
 

@@ -9,15 +9,15 @@ Your task is to write a new specification for a **non-profit fundraising app cal
 
 ## 1. Overall Style & Visual Language
 
-This interface represents a warm, engaging non-profit fundraising dashboard using a dark theme with **skeuomorphic design principles**, **glassmorphism**, and **soft, compassionate aesthetics**.
+This interface represents a warm, engaging non-profit fundraising organization management platform using a dark theme with **skeuomorphic design principles**, **glassmorphism**, and **soft, compassionate aesthetics**.
 
 ### Core characteristics:
-- **Green accent highlights** (emerald, mint, forest tones) symbolizing growth and hope
+- **Global brand color accent highlights** (emerald, mint, forest tones) symbolizing growth, community and hope 
 - **Deep, layered shadows** creating realistic depth
 - **Frosted glass effects** with blur and translucency
 - **Soft, rounded elements** mimicking physical objects
-- **Subtle textures** and gradients
-- **Warm, welcoming color transitions**
+- **Subtle textures** and smooth gradients
+- **Warm, welcoming color transitions** no hard lines or competing colors
 - **Animal-friendly imagery** and iconography
 
 ### Visual effects:

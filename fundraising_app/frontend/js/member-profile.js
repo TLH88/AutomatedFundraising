@@ -3,7 +3,7 @@
  */
 
 const MemberProfilePage = (() => {
-  const DEFAULT_ADMIN_EMAIL = 'admin@funds4furry.local';
+  const DEFAULT_ADMIN_EMAIL = 'admin@admin.local';
 
   const state = {
     memberId: null,
@@ -495,6 +495,7 @@ const MemberProfilePage = (() => {
   }
 
   async function apiJson(url, options) {
+    if (window.FundsApp?.apiJson) return window.FundsApp.apiJson(url, options);
     const res = await fetch(url, options);
     if (!res.ok) {
       let detail = `HTTP ${res.status}`;

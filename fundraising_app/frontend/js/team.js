@@ -13,11 +13,20 @@ const TeamPage = (() => {
     disabledIds: new Set(),
   };
 
+  function describeApiError(error, fallback = 'Request failed') {
+    const parts = [error?.message || fallback];
+    if (error?.details) parts.push(error.details);
+    if (error?.hint) parts.push(`Hint: ${error.hint}`);
+    if (error?.code) parts.push(`Code: ${error.code}`);
+    return parts.join(' | ');
+  }
+
   function isTeamPage() {
     return !!document.getElementById('teamList');
   }
 
   async function apiJson(url, options) {
+    if (window.FundsApp?.apiJson) return window.FundsApp.apiJson(url, options);
     const res = await fetch(url, options);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
@@ -29,7 +38,6 @@ const TeamPage = (() => {
     ensureFiltersBar();
     ensureAccessRequestsPanel();
     bindActions();
-    ensureDefaultAdminMember();
     await loadMembers();
     ensureNewMemberModal();
   }
@@ -235,33 +243,6 @@ const TeamPage = (() => {
     return currentRole() === 'administrator';
   }
 
-  async function ensureDefaultAdminMember() {
-    try {
-      const admin = window.FundsApp.getDefaultAdminAccount();
-      const teamRes = await apiJson('/api/team?limit=500');
-      const exists = (teamRes.team || []).some((m) => String(m.email || '').toLowerCase() === admin.email.toLowerCase());
-      if (exists) return;
-      const created = await apiJson('/api/team', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'member',
-          full_name: admin.full_name,
-          email: admin.email,
-          role: 'administrator',
-          status: 'active',
-          title: admin.title || 'System Administrator',
-        }),
-      });
-      const member = created.member;
-      if (member?.id) {
-        window.FundsApp.upsertLocalAccount({ ...admin, team_member_id: member.id });
-      }
-    } catch (err) {
-      console.warn('Unable to ensure default admin member record', err);
-    }
-  }
-
   async function loadMembers() {
     const res = await apiJson('/api/team?limit=500');
     syncDisabledIdsFromLocalAccounts(res.team || []);
@@ -407,7 +388,7 @@ const TeamPage = (() => {
 
   function renderMemberCard(m) {
     const roleClass = m.role === 'administrator' ? 'admin' : m.role === 'editor' ? 'editor' : 'viewer';
-    const canRemoveMember = canAdminister() && String(m.email).toLowerCase() !== 'admin@funds4furry.local';
+    const canRemoveMember = canAdminister();
     const isDisabled = m.status === 'disabled';
     const editButtonHtml = canAdminister()
       ? `<button class="btn btn-sm btn-secondary" data-action="edit" data-member-id="${escapeHtml(m.id)}" ${isDisabled ? 'disabled title="Re-enable this account before editing"' : ''}>Edit</button>`
@@ -415,7 +396,7 @@ const TeamPage = (() => {
     const removeButtonHtml = canAdminister()
       ? (isDisabled
         ? `<button class="btn btn-sm btn-secondary" data-action="reenable" data-member-id="${escapeHtml(m.id)}">Re-enable</button>`
-        : `<button class="btn btn-sm btn-secondary" data-action="remove" data-member-id="${escapeHtml(m.id)}" ${canRemoveMember ? '' : 'disabled title="Default admin account cannot be disabled"'}>Disable</button>`)
+        : `<button class="btn btn-sm btn-secondary" data-action="remove" data-member-id="${escapeHtml(m.id)}" ${canRemoveMember ? '' : 'disabled'}>Disable</button>`)
       : '';
     return `
       <div class="team-member-card">
@@ -461,7 +442,7 @@ const TeamPage = (() => {
       await loadMembers();
     } catch (err) {
       console.error(err);
-      window.FundsApp.showToast('Failed to send invite');
+      window.FundsApp.showToast(describeApiError(err, 'Failed to send invite'));
     }
   }
 
@@ -485,7 +466,11 @@ const TeamPage = (() => {
               <div class="input-group"><label class="input-label">Title</label><input class="input" name="title" placeholder="Coordinator"></div>
             </div>
             <div class="form-row">
-              <div class="input-group"><label class="input-label">Initial Password *</label><input class="input" type="password" name="password" value="Member" required></div>
+              <div class="input-group">
+                <label class="input-label">Initial Password *</label>
+                <input class="input" type="password" name="password" minlength="8" required>
+                <p class="text-muted text-caption" style="margin:6px 0 0;">Use at least 8 chars with uppercase, lowercase, and a number.</p>
+              </div>
               <div class="input-group"><label class="input-label">Profile Photo URL</label><input class="input" type="url" name="avatar_url" placeholder="https://..."></div>
             </div>
             <div class="input-group">
@@ -524,6 +509,17 @@ const TeamPage = (() => {
       return;
     }
     const data = Object.fromEntries(new FormData(e.target));
+    const password = String(data.password || '');
+    const passwordCheck = validateStrongPassword(password);
+    if (!passwordCheck.ok) {
+      window.FundsApp.showToast(passwordCheck.error);
+      return;
+    }
+    const generatedAvatar = data.avatar_url
+      || await window.FundsApp.generateAnimalAvatar?.(
+        `${data.email}|${data.full_name}|member`,
+        { email: data.email, name: data.full_name, role: 'member' },
+      ) || '';
     try {
       const createdRes = await apiJson('/api/team', {
         method: 'POST',
@@ -535,18 +531,19 @@ const TeamPage = (() => {
           role: data.role,
           status: 'active',
           title: data.title || null,
-          avatar_url: data.avatar_url || null,
+          avatar_url: generatedAvatar || null,
+          password,
         }),
       });
       const member = createdRes.member;
       window.FundsApp.upsertLocalAccount({
         full_name: data.full_name,
         email: data.email,
-        password: data.password || 'Member',
+        password,
         role: data.role === 'editor' ? 'member' : data.role,
         status: 'active',
         title: data.title || null,
-        avatar_url: data.avatar_url || '',
+        avatar_url: generatedAvatar || '',
         team_member_id: member?.id || null,
       });
       window.FundsApp.notify('Member created', `${data.full_name} has been added.`, ['administrator']);
@@ -555,7 +552,7 @@ const TeamPage = (() => {
       await loadMembers();
     } catch (err) {
       console.error(err);
-      window.FundsApp.showToast('Failed to create member');
+      window.FundsApp.showToast(describeApiError(err, 'Failed to create member'));
     }
   }
 
@@ -566,10 +563,6 @@ const TeamPage = (() => {
     }
     const member = state.members.find((m) => m.id === memberId);
     if (!member) return;
-    if (String(member.email).toLowerCase() === 'admin@funds4furry.local') {
-      window.FundsApp.showToast('Default admin cannot be removed');
-      return;
-    }
     if (!window.confirm(`Disable ${member.full_name}? This will preserve records but block sign-in access.`)) return;
     try {
       await apiJson(`/api/team/${encodeURIComponent(memberId)}`, { method: 'DELETE' });
@@ -583,7 +576,7 @@ const TeamPage = (() => {
       await loadMembers();
     } catch (err) {
       console.error(err);
-      window.FundsApp.showToast('Failed to remove member');
+      window.FundsApp.showToast(describeApiError(err, 'Failed to disable member'));
     }
   }
 
@@ -610,7 +603,7 @@ const TeamPage = (() => {
       await loadMembers();
     } catch (err) {
       console.error(err);
-      window.FundsApp.showToast('Failed to re-enable member');
+      window.FundsApp.showToast(describeApiError(err, 'Failed to re-enable member'));
     }
   }
 
@@ -672,6 +665,11 @@ const TeamPage = (() => {
     }
 
     const backendRole = request.requested_role === 'member' ? 'editor' : 'viewer';
+    const tempPassword = generateTemporaryPassword();
+    const generatedAvatar = await window.FundsApp.generateAnimalAvatar?.(
+      `${request.email}|${request.full_name}|member`,
+      { email: request.email, name: request.full_name, role: 'member' },
+    ) || null;
     try {
       const createdRes = await apiJson('/api/team', {
         method: 'POST',
@@ -683,13 +681,14 @@ const TeamPage = (() => {
           role: backendRole,
           status: 'active',
           title: request.title || null,
+          avatar_url: generatedAvatar,
+          password: tempPassword,
         }),
       });
       const member = createdRes.member;
       window.FundsApp.upsertLocalAccount({
         full_name: request.full_name,
         email: request.email,
-        password: request.password,
         role: request.requested_role,
         status: 'active',
         title: request.title || null,
@@ -697,11 +696,43 @@ const TeamPage = (() => {
       });
       window.FundsApp.reviewSignupRequest?.(requestId, 'approve');
       window.FundsApp.notify('Signup request approved', `${request.full_name} has been granted access.`, ['administrator']);
+      window.FundsApp.showToast(`Approved ${request.email}. Temporary password: ${tempPassword}`);
       await loadMembers();
     } catch (err) {
       console.error(err);
-      window.FundsApp.showToast('Failed to approve request');
+      window.FundsApp.showToast(describeApiError(err, 'Failed to approve request'));
     }
+  }
+
+  function generateTemporaryPassword() {
+    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lower = 'abcdefghijkmnopqrstuvwxyz';
+    const digits = '23456789';
+    const symbols = '!@#$%';
+    const all = upper + lower + digits + symbols;
+    const chars = [
+      upper.charAt(Math.floor(Math.random() * upper.length)),
+      lower.charAt(Math.floor(Math.random() * lower.length)),
+      digits.charAt(Math.floor(Math.random() * digits.length)),
+      symbols.charAt(Math.floor(Math.random() * symbols.length)),
+    ];
+    for (let i = chars.length; i < 14; i += 1) {
+      chars.push(all.charAt(Math.floor(Math.random() * all.length)));
+    }
+    for (let i = chars.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+    return chars.join('');
+  }
+
+  function validateStrongPassword(password) {
+    const value = String(password || '');
+    if (value.length < 8) return { ok: false, error: 'Password must be at least 8 characters.' };
+    if (!/[A-Z]/.test(value)) return { ok: false, error: 'Password must include an uppercase letter.' };
+    if (!/[a-z]/.test(value)) return { ok: false, error: 'Password must include a lowercase letter.' };
+    if (!/\d/.test(value)) return { ok: false, error: 'Password must include a number.' };
+    return { ok: true };
   }
 
   async function rejectSignupRequest(requestId) {

@@ -26,6 +26,12 @@ from dotenv import load_dotenv
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from db.client import get_client, upsert_contact, upsert_organization
 from scraper.google_places import discover_google_places_nearby, google_places_configured
+from scraper.llm_assist import (
+    build_serpapi_queries,
+    contact_justification as build_contact_justification,
+    org_justification as build_org_justification,
+    plan_source_types,
+)
 from scraper.utils import parse_search_location, geocode_location, within_radius_miles
 
 # Load app-local environment so scraper runs match server behavior.
@@ -208,6 +214,9 @@ def _format_org_for_ui(org: dict) -> dict:
         "longitude": org.get("longitude"),
         "email": org.get("email"),
         "phone": org.get("phone"),
+        "justification": org.get("justification"),
+        "additional_info": org.get("additional_info"),
+        "source_notes": org.get("notes"),
         "notes": org.get("notes"),
         "created_at": org.get("created_at"),
         "updated_at": org.get("updated_at"),
@@ -500,7 +509,8 @@ def _collect_candidates(
         location_query = location_filter.get("query")
         serpapi_started = time.monotonic()
         serpapi_failures = 0
-        for query in SEARCH_QUERIES:
+        dynamic_queries = build_serpapi_queries(SEARCH_QUERIES, location_filter.get("_source_plan") or {}, location_query=location_query)
+        for localized_query in dynamic_queries:
             if deadline_ts and time.monotonic() >= deadline_ts:
                 logger.info("Global discovery deadline reached before finishing SerpAPI queries; continuing with collected sources.")
                 if callable(progress_cb):
@@ -527,7 +537,6 @@ def _collect_candidates(
                         "stop_reason": "serpapi_stage_deadline",
                     })
                 break
-            localized_query = f"{query} {location_query}".strip() if location_query else query
             results = search_via_serpapi(localized_query, num=per_query, location_query=location_query)
             logger.info("  '%s...' -> %s results", localized_query[:60], len(results))
             if not results:
@@ -669,7 +678,13 @@ def import_discovery_results(
             from scraper.extract_contacts import run_extraction
             min_score_10 = _normalize_min_score(min_score)
             emit("import_contacts_extract", "running", f"Extracting contacts for {len(saved_ids)} imported organization(s)...", 88, saved_count=len(saved_rows))
-            run_extraction(min_score=min_score_10, org_ids=saved_ids, org_limit=len(saved_ids))
+            run_extraction(
+                min_score=min_score_10,
+                org_ids=saved_ids,
+                org_limit=len(saved_ids),
+                deadline_ts=deadline_ts,
+                max_runtime_seconds=max_runtime,
+            )
             contacts_extracted = True
             emit("import_contacts_extract", "running", "Contact extraction complete.", 97, saved_count=len(saved_rows))
         except Exception as exc:
@@ -733,17 +748,33 @@ def run_discovery(
     excluded_keys = {str(x).strip().lower() for x in (exclude_record_keys or []) if str(x).strip()}
     radius_n = float(radius_miles) if radius_miles not in (None, "") else None
     location_filter = parse_search_location(location)
+    source_plan = plan_source_types({
+        "location": location_filter.get("raw") or location_filter.get("query"),
+        "radius_miles": radius_n,
+        "min_score": min_score,
+        "discovery_mode": discovery_mode_n,
+    })
+    location_filter["_source_plan"] = source_plan
     emit("geocoding", "running", "Geocoding search origin...", 5, location=location_filter.get("query") or None)
     origin_geo = geocode_location(location_filter.get("query")) if location_filter.get("query") else None
 
     logger.info(
-        "Discovery filters -> location=%s radius=%s limit=%s min_score_10=%s mode=%s geocoded=%s",
+        "Discovery filters -> location=%s radius=%s limit=%s min_score_10=%s mode=%s geocoded=%s planner=%s",
         location_filter.get("query") or None,
         radius_n,
         limit_n,
         min_score_10,
         discovery_mode_n,
         bool(origin_geo),
+        source_plan.get("planner"),
+    )
+    emit(
+        "planning",
+        "running",
+        f"Source targeting plan ready ({source_plan.get('planner', 'heuristic')}).",
+        8,
+        planner=source_plan.get("planner"),
+        source_types=source_plan.get("source_types") or [],
     )
 
     emit("collecting_sources", "running", f"Collecting candidates for mode '{discovery_mode_n}'...", 10, discovery_mode=discovery_mode_n)
@@ -790,6 +821,18 @@ def run_discovery(
             break
 
     logger.info("%s organizations matched filters (cap=%s).", len(matched), limit_n)
+    for org in matched:
+        try:
+            j = build_org_justification(org, {
+                "location": location_filter.get("raw") or location_filter.get("query"),
+                "radius_miles": radius_n,
+                "min_score": min_score,
+                "discovery_mode": discovery_mode_n,
+            })
+            org["justification"] = j.get("justification")
+            org["additional_info"] = j.get("additional_info")
+        except Exception:
+            pass
     matched_source_counts = _count_sources(matched)
     emit("filtered", "running", f"{len(matched)} organizations matched the search criteria.", 65, matched=len(matched), source_counts=matched_source_counts, discovery_mode=discovery_mode_n)
     if dry_run:
@@ -804,7 +847,13 @@ def run_discovery(
                 preview_orgs = [_format_org_for_ui(o) | {"_preview_key": o.get("_preview_key")} for o in matched]
                 if remaining < 30:
                     preview_orgs = preview_orgs[: max(1, min(5, len(preview_orgs)))]
-                preview_contacts = extract_contacts_preview_for_orgs(preview_orgs)
+                preview_contacts = extract_contacts_preview_for_orgs(
+                    preview_orgs,
+                    deadline_ts=deadline_ts,
+                    max_runtime_seconds=max_runtime,
+                )
+                for c in preview_contacts:
+                    c["justification"] = build_contact_justification(c, {"name": c.get("organization_name")})
                 emit("contacts_preview", "running", f"Extracted {len(preview_contacts)} contact preview result(s).", 92, preview_contacts=len(preview_contacts))
             else:
                 emit("contacts_preview", "warning", "Skipped contact preview extraction (global time budget reached).", 92, stopped_early=True, stop_reason="global_deadline")
@@ -831,6 +880,7 @@ def run_discovery(
                     "discovery_mode": discovery_mode_n,
                     "max_runtime_seconds": max_runtime,
                     "excluded_record_keys_count": len(excluded_keys),
+                    "source_plan": source_plan,
                 },
                 "dry_run": True,
                 "contacts_extracted": bool(preview_contacts),
@@ -870,7 +920,13 @@ def run_discovery(
             from scraper.extract_contacts import run_extraction
             logger.info("Running contact extraction for %s discovered org(s)...", len(saved_ids))
             emit("contacts", "running", f"Extracting contacts for {len(saved_ids)} discovered organizations...", 90, saved_count=success)
-            run_extraction(min_score=min_score_10, org_ids=saved_ids, org_limit=len(saved_ids))
+            run_extraction(
+                min_score=min_score_10,
+                org_ids=saved_ids,
+                org_limit=len(saved_ids),
+                deadline_ts=deadline_ts,
+                max_runtime_seconds=max_runtime,
+            )
             contacts_ran = True
             emit("contacts", "running", "Contact extraction complete.", 97, saved_count=success)
         except Exception as e:
@@ -896,6 +952,7 @@ def run_discovery(
                     "discovery_mode": discovery_mode_n,
                     "max_runtime_seconds": max_runtime,
                     "excluded_record_keys_count": len(excluded_keys),
+                    "source_plan": source_plan,
                 },
                 "dry_run": False,
                 "contacts_extracted": contacts_ran,

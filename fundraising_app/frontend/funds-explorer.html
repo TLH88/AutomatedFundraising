@@ -35,24 +35,69 @@
     .explorer-progress-card[data-status="completed"] .explorer-progress-dot { background: #10B981; animation: none; box-shadow: 0 0 0 4px rgba(16,185,129,.14); }
     .explorer-progress-card[data-status="failed"] .explorer-progress-dot { background: #EF4444; animation: none; box-shadow: 0 0 0 4px rgba(239,68,68,.12); }
     .explorer-progress-track {
-      position: relative; height: 12px; border-radius: 999px; overflow: hidden;
-      background: rgba(var(--accent-green-rgb), .08);
-      border: 1px solid rgba(var(--accent-green-rgb), .18);
+      position: relative; height: 14px; border-radius: 999px; overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(var(--accent-green-rgb), .07), rgba(var(--accent-green-rgb), .03)),
+        repeating-linear-gradient(
+          -55deg,
+          rgba(var(--accent-green-rgb), .06) 0 10px,
+          rgba(var(--accent-green-rgb), .03) 10px 20px
+        );
+      border: 1px solid rgba(var(--accent-green-rgb), .20);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), inset 0 -1px 0 rgba(0,0,0,.18);
+    }
+    .explorer-progress-track::before {
+      content:'';
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(var(--accent-green-rgb), .08), transparent);
+      transform: translateX(-100%);
+      animation: explorerTrackSweep 2.6s linear infinite;
+      opacity: .8;
+      pointer-events:none;
     }
     .explorer-progress-fill {
       position:absolute; inset:0 auto 0 0; width:0%;
-      background: linear-gradient(90deg, var(--accent-green), var(--accent-green-light));
-      box-shadow: 0 0 18px rgba(var(--accent-green-rgb), .25);
-      transition: width .35s ease;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0) 45%),
+        linear-gradient(90deg, var(--accent-green-dark), var(--accent-green), var(--accent-green-light));
+      box-shadow: 0 0 18px rgba(var(--accent-green-rgb), .25), inset 0 -1px 0 rgba(0,0,0,.15);
+      transition: width .35s ease, filter .25s ease;
+      filter: saturate(1.05);
+    }
+    .explorer-progress-fill::before {
+      content:'';
+      position:absolute; right:-7px; top:50%;
+      width:18px; height:18px; border-radius:999px;
+      background: radial-gradient(circle, rgba(255,255,255,.95) 0 28%, rgba(var(--accent-green-rgb), .95) 42%, rgba(var(--accent-green-rgb), .25) 72%, transparent 76%);
+      transform: translateY(-50%);
+      box-shadow: 0 0 0 4px rgba(var(--accent-green-rgb), .12), 0 0 18px rgba(var(--accent-green-rgb), .35);
     }
     .explorer-progress-fill::after {
       content:''; position:absolute; inset:0 -30% 0 auto; width:30%;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
-      animation: explorerShimmer 1.2s linear infinite;
+      animation: explorerShimmer 1.05s linear infinite;
     }
     html[data-theme="light"] .explorer-progress-fill::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); }
+    html[data-theme="light"] .explorer-progress-fill::before { box-shadow: 0 0 0 4px rgba(var(--accent-green-rgb), .14), 0 0 12px rgba(var(--accent-green-rgb), .22); }
     .explorer-progress-card[data-status="completed"] .explorer-progress-fill::after,
-    .explorer-progress-card[data-status="failed"] .explorer-progress-fill::after { display:none; }
+    .explorer-progress-card[data-status="failed"] .explorer-progress-fill::after,
+    .explorer-progress-card[data-status="completed"] .explorer-progress-track::before,
+    .explorer-progress-card[data-status="failed"] .explorer-progress-track::before { display:none; }
+    .explorer-progress-card[data-status="completed"] .explorer-progress-fill::before,
+    .explorer-progress-card[data-status="failed"] .explorer-progress-fill::before { opacity:.65; }
+    .explorer-progress-track[data-indeterminate="true"] .explorer-progress-fill {
+      width: 22% !important;
+      min-width: 18%;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0) 45%),
+        linear-gradient(90deg, rgba(var(--accent-green-rgb), .32), var(--accent-green), rgba(var(--accent-green-rgb), .50));
+      animation: explorerIndeterminateSweep 1.35s cubic-bezier(.22,.61,.36,1) infinite,
+                 explorerIndeterminatePulse 1.0s ease-in-out infinite alternate;
+      will-change: transform, filter;
+    }
+    .explorer-progress-track[data-indeterminate="true"] .explorer-progress-fill::before {
+      animation: explorerIndeterminateHead 1.1s ease-in-out infinite alternate;
+    }
     .explorer-progress-line { color: var(--text-secondary); font-size: .95rem; }
     .explorer-progress-meta { color: var(--text-muted); font-size: .85rem; }
     .explorer-progress-actions { display:flex; gap:8px; flex-wrap:wrap; }
@@ -65,9 +110,82 @@
       from { transform: translateX(0); }
       to { transform: translateX(220%); }
     }
+    @keyframes explorerTrackSweep {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(220%); }
+    }
+    @keyframes explorerIndeterminatePulse {
+      from { filter: saturate(1) brightness(0.95); }
+      to { filter: saturate(1.1) brightness(1.05); }
+    }
+    @keyframes explorerIndeterminateSweep {
+      0% { transform: translateX(-12%); }
+      100% { transform: translateX(360%); }
+    }
+    @keyframes explorerIndeterminateHead {
+      from { transform: translateY(-50%) scale(0.92); }
+      to { transform: translateY(-50%) scale(1.06); }
+    }
     .explorer-search-card.collapsed .card-body { display:none; }
     .explorer-search-toggle { margin-left:auto; }
     .explorer-filter-grid { display:grid; gap:12px; grid-template-columns: 1.2fr .8fr .8fr .8fr .9fr auto; align-items:end; }
+    .explorer-strategy-card[data-hidden="true"] { display:none; }
+    .explorer-strategy-shell { display:grid; gap:14px; }
+    .explorer-strategy-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .explorer-strategy-summary { display:flex; gap:8px; flex-wrap:wrap; align-items:center; color:var(--text-muted); font-size:.85rem; }
+    .explorer-strategy-chip {
+      display:inline-flex; align-items:center; gap:6px;
+      border:1px solid rgba(var(--accent-green-rgb), .25);
+      background: rgba(var(--accent-green-rgb), .08);
+      color: var(--text-primary);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+    .explorer-strategy-chip.is-llm { border-color: rgba(59,130,246,.30); background: rgba(59,130,246,.10); }
+    .explorer-strategy-grid { display:grid; gap:12px; grid-template-columns: 1.1fr .9fr; }
+    .explorer-strategy-panel {
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      border-radius: 14px;
+      padding: 12px;
+      display:grid;
+      gap:10px;
+    }
+    .explorer-strategy-panel h3 {
+      margin:0;
+      font-size: .95rem;
+      color: var(--text-primary);
+    }
+    .explorer-strategy-text {
+      margin:0;
+      color: var(--text-muted);
+      font-size: .85rem;
+      line-height: 1.45;
+    }
+    .explorer-strategy-tag-list { display:flex; gap:8px; flex-wrap:wrap; }
+    .explorer-strategy-tag {
+      border:1px solid var(--glass-border);
+      background: rgba(var(--accent-green-rgb), .06);
+      color: var(--text-secondary);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .explorer-strategy-list { display:grid; gap:10px; margin:0; padding:0; list-style:none; }
+    .explorer-strategy-list li {
+      border:1px solid var(--glass-border);
+      border-radius: 12px;
+      background: rgba(var(--accent-green-rgb), .04);
+      padding: 10px 12px;
+    }
+    .explorer-strategy-list strong { color: var(--text-primary); }
+    .explorer-strategy-list p { margin:4px 0 0; color:var(--text-muted); font-size:.82rem; }
+    .explorer-strategy-query-list { margin:0; padding-left:16px; display:grid; gap:4px; color:var(--text-secondary); font-size:.82rem; }
+    .explorer-strategy-query-title { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .explorer-strategy-priority { color: var(--text-muted); font-size:.75rem; }
     .inline-label-help { display:inline-flex; align-items:center; gap:6px; }
     .info-tip {
       width: 18px; height: 18px; border-radius:999px;
@@ -118,6 +236,7 @@
     .explorer-contact-meta { margin:4px 0 0; color:var(--text-muted); font-size:.85rem; }
     @media (max-width: 980px) {
       .explorer-filter-grid { grid-template-columns: 1fr 1fr; }
+      .explorer-strategy-grid { grid-template-columns: 1fr; }
       .explorer-header-row, .explorer-result-item { grid-template-columns: 1fr; }
       .explorer-profile-hero-body { padding:76px 14px 14px; }
       .explorer-profile-avatar { left:14px; width:84px; height:84px; top:-28px; font-size:1.2rem; }
@@ -262,13 +381,128 @@
         </div>
       </div>
 
+      <!-- MOCKUP: Search Strategy panel (easy rollback via ENABLE_EXPLORER_STRATEGY_MOCKUP in js/funds-explorer.js) -->
+      <div class="card explorer-strategy-card" id="explorerStrategyMockCard" data-hidden="false">
+        <div class="card-header">
+          <h2 class="card-title">Search Strategy (Mockup)</h2>
+          <div class="explorer-strategy-summary">
+            <span class="explorer-strategy-chip is-llm">LLM Planner</span>
+            <span class="explorer-strategy-chip">Mode: All Sources</span>
+            <span class="explorer-strategy-chip">Radius: 10 mi</span>
+            <span class="explorer-strategy-chip">Score: &gt;70</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="explorer-strategy-shell">
+            <p class="explorer-strategy-text">
+              Mock preview of a future strategy panel. It would show how the planner balances cash donations, in-kind support, and creative local partnerships before and during discovery.
+            </p>
+
+            <div class="explorer-strategy-panel">
+              <h3>Contribution Modes</h3>
+              <div class="explorer-strategy-tag-list">
+                <span class="explorer-strategy-tag">Cash Donations</span>
+                <span class="explorer-strategy-tag">Sponsorships</span>
+                <span class="explorer-strategy-tag">Grants</span>
+                <span class="explorer-strategy-tag">Gift Cards</span>
+                <span class="explorer-strategy-tag">In-Kind Goods</span>
+                <span class="explorer-strategy-tag">In-Kind Services</span>
+                <span class="explorer-strategy-tag">Event Partnerships</span>
+              </div>
+            </div>
+
+            <div class="explorer-strategy-grid">
+              <div class="explorer-strategy-panel">
+                <h3>Source Buckets</h3>
+                <ul class="explorer-strategy-list">
+                  <li>
+                    <strong>Corporate Sponsorships</strong>
+                    <p>Examples: banks, real estate firms, insurance agencies, dealerships</p>
+                    <p>Why: local businesses with marketing budgets may support events and campaigns.</p>
+                  </li>
+                  <li>
+                    <strong>Gift Cards / Certificates</strong>
+                    <p>Examples: restaurants, salons, spas, coffee shops, retail boutiques</p>
+                    <p>Why: high-value raffle and auction support even when cash donations are limited.</p>
+                  </li>
+                  <li>
+                    <strong>In-Kind Services</strong>
+                    <p>Examples: printers, photographers, marketing agencies, landscapers, cleaners</p>
+                    <p>Why: service donations reduce operating costs and expand campaign capacity.</p>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="explorer-strategy-panel">
+                <h3>Role Targets</h3>
+                <div class="explorer-strategy-tag-list">
+                  <span class="explorer-strategy-tag">Owner</span>
+                  <span class="explorer-strategy-tag">Store Manager</span>
+                  <span class="explorer-strategy-tag">Community Relations</span>
+                  <span class="explorer-strategy-tag">Marketing Director</span>
+                  <span class="explorer-strategy-tag">CSR Manager</span>
+                  <span class="explorer-strategy-tag">Foundation Officer</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="explorer-strategy-panel">
+              <h3>Query Families</h3>
+              <div class="explorer-strategy-list">
+                <li>
+                  <div class="explorer-strategy-query-title">
+                    <strong>Gift Cards / Certificates</strong>
+                    <span class="explorer-strategy-priority">Priority 2</span>
+                  </div>
+                  <ul class="explorer-strategy-query-list">
+                    <li>gift card donation raffle local business</li>
+                    <li>gift certificate donation nonprofit fundraiser</li>
+                  </ul>
+                </li>
+                <li>
+                  <div class="explorer-strategy-query-title">
+                    <strong>In-Kind Services</strong>
+                    <span class="explorer-strategy-priority">Priority 3</span>
+                  </div>
+                  <ul class="explorer-strategy-query-list">
+                    <li>donated services nonprofit fundraiser local</li>
+                    <li>pro bono services animal rescue organization</li>
+                  </ul>
+                </li>
+                <li>
+                  <div class="explorer-strategy-query-title">
+                    <strong>Corporate Sponsorships</strong>
+                    <span class="explorer-strategy-priority">Priority 1</span>
+                  </div>
+                  <ul class="explorer-strategy-query-list">
+                    <li>local business event sponsorship nonprofit</li>
+                    <li>community sponsor animal rescue fundraiser</li>
+                  </ul>
+                </li>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Results</h2>
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+            <select class="select" id="explorerResultTypeFilter" style="max-width:180px;" aria-label="Filter result type">
+              <option value="all">All Results</option>
+              <option value="organization">Organizations</option>
+              <option value="contact">Contacts</option>
+              <option value="contact_valid">Contacts (Valid)</option>
+              <option value="contact_review">Contacts (Needs Review)</option>
+            </select>
             <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted);">
               <input type="checkbox" id="explorerImportContactsToggle">
               Also extract contacts after import
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted);">
+              <input type="checkbox" id="explorerIncludeLowQualityContacts">
+              Include low-quality contacts in import
             </label>
             <button type="button" class="btn btn-secondary btn-pill" id="explorerImportSelectedBtn" disabled>Import Selected</button>
             <button type="button" class="btn btn-primary btn-pill" id="explorerImportAllBtn" disabled>Import All</button>
@@ -276,6 +510,7 @@
           </div>
         </div>
         <div class="card-body">
+          <p class="text-muted text-caption" id="explorerReviewSummary" style="margin:0 0 10px 0;">Preview validation summary will appear after a search runs.</p>
           <div class="explorer-header-row">
             <div>Name</div>
             <div>Type</div>

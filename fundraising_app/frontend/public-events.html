@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () { try { var theme = localStorage.getItem('funds_theme'); if (theme) document.documentElement.setAttribute('data-theme', theme); } catch (e) {} })();
+  </script>
+  <title>Events - Funds 4 Furry Friends</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/public-pages.css">
+</head>
+<body data-public-page="events">
+  <nav class="topbar landing-topbar">
+    <div class="topbar-left">
+      <a href="/" class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></a>
+      <div class="landing-nav-links">
+        <a href="public-animals.html" class="nav-link">Animals</a>
+        <a href="public-events.html" class="nav-link">Events</a>
+        <a href="public-impact.html" class="nav-link">Campaigns & Stories</a>
+        <a href="public-help.html" class="nav-link">Help</a>
+      </div>
+    </div>
+    <div class="topbar-right"></div>
+  </nav>
+
+  <main class="public-main">
+    <div class="public-shell">
+      <div class="public-header">
+        <div>
+          <h1 class="page-title">Events Calendar</h1>
+          <p class="page-subtitle">Browse upcoming fundraising, adoption, and community events.</p>
+        </div>
+        <div class="public-chip-row">
+          <button id="publicEventsPrev" class="btn btn-secondary" type="button">Previous</button>
+          <span id="publicEventsMonthLabel" class="public-chip">Month</span>
+          <button id="publicEventsNext" class="btn btn-secondary" type="button">Next</button>
+        </div>
+      </div>
+      <section class="public-grid" style="grid-template-columns:1.25fr .9fr; align-items:start;">
+        <div id="publicEventsCalendar" class="public-calendar"></div>
+        <div id="publicEventsList" class="public-list"></div>
+      </section>
+    </div>
+  </main>
+  <script src="js/main.js"></script>
+  <script src="js/public-pages.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () { try { var theme = localStorage.getItem('funds_theme'); if (theme) document.documentElement.setAttribute('data-theme', theme); } catch (e) {} })();
+  </script>
+  <title>Help & Resources - Funds 4 Furry Friends</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/public-pages.css">
+</head>
+<body data-public-page="help">
+  <nav class="topbar landing-topbar">
+    <div class="topbar-left">
+      <a href="/" class="brand"><span class="brand-icon">🐾</span><span class="brand-name">Funds 4 Furry Friends</span></a>
+      <div class="landing-nav-links">
+        <a href="public-animals.html" class="nav-link">Animals</a>
+        <a href="public-events.html" class="nav-link">Events</a>
+        <a href="public-impact.html" class="nav-link">Campaigns & Stories</a>
+        <a href="public-help.html" class="nav-link">Help</a>
+      </div>
+    </div>
+    <div class="topbar-right"></div>
+  </nav>
+
+  <main class="public-main">
+    <div class="public-shell">
+      <div class="public-header">
+        <div>
+          <h1 class="page-title">Help & Resources</h1>
+          <p class="page-subtitle">Quick answers for visitors, donors, sponsors, and community supporters.</p>
+        </div>
+      </div>
+
+      <section class="public-help-spotlight">
+        <div class="public-help-spotlight-main">
+          <p class="public-help-kicker">Quick Support Paths</p>
+          <h2>Need help deciding how to get involved?</h2>
+          <p>Whether you want to donate, volunteer, or coordinate business support, our team can route you to the right next step quickly.</p>
+          <div class="public-card-footer">
+            <button class="btn btn-secondary" type="button" id="publicContactSpotlightBtn">Contact Our Team</button>
+            <button class="btn btn-primary" type="button" id="publicVolunteerSpotlightBtn">Want to Volunteer?</button>
+          </div>
+        </div>
+        <div class="public-help-spotlight-side">
+          <article class="public-help-mini-card">
+            <p class="public-help-kicker">Best Fit Partners</p>
+            <p>Pet services, clinics, retailers, restaurants, and community-centered businesses can drive outsized impact.</p>
+          </article>
+          <article class="public-help-mini-card">
+            <p class="public-help-kicker">Popular Contributions</p>
+            <p>Cash gifts, gift cards, raffle items, services, sponsorship dollars, and matching campaigns are all accepted.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="public-help-accordion" id="publicHelpAccordion">
+        <article class="public-help-item" data-help-item="donate">
+          <button class="public-help-item-header" type="button" data-help-toggle="donate" aria-expanded="false">
+            <span>How do I donate?</span>
+            <span class="public-help-toggle-indicator">+</span>
+          </button>
+          <div class="public-help-item-body" id="publicHelpDonateBody" hidden>
+            <p>Donations can be one-time gifts or recurring support. We also accept gift cards, in-kind supplies, services, and sponsorship contributions.</p>
+            <p>Use Campaigns & Stories to review active funding needs and choose where your contribution is directed.</p>
+            <div class="public-card-footer">
+              <button class="btn btn-primary" type="button" id="publicDonateNowBtn">Donate Now</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="public-help-item" data-help-item="volunteer">
+          <button class="public-help-item-header" type="button" data-help-toggle="volunteer" aria-expanded="false">
+            <span>Can I volunteer?</span>
+            <span class="public-help-toggle-indicator">+</span>
+          </button>
+          <div class="public-help-item-body" id="publicHelpVolunteerBody" hidden>
+            <p>Volunteers support animal care, foster coordination, transport, events, and community outreach. We match opportunities to your availability and experience.</p>
+            <p>Once submitted, your request is reviewed and a team member follows up with next steps.</p>
+            <div class="public-card-footer">
+              <button class="btn btn-primary" type="button" id="publicVolunteerRequestBtn">Request to Volunteer</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="public-help-item" data-help-item="business">
+          <button class="public-help-item-header" type="button" data-help-toggle="business" aria-expanded="false">
+            <span>How can my business help?</span>
+            <span class="public-help-toggle-indicator">+</span>
+          </button>
+          <div class="public-help-item-body" id="publicHelpBusinessBody" hidden>
+            <p>Corporate support can include direct sponsorship, matching gifts, event partnerships, donated goods/services, and employee volunteer programs.</p>
+            <p>We strongly encourage visitors to coordinate with business leadership so contributions align with company giving policies and timelines.</p>
+            <div class="public-card-footer">
+              <button class="btn btn-primary" type="button" id="publicBusinessInfoBtn">Request More Information</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="public-help-final">
+        <div>
+          <p class="public-help-kicker">Ready To Help?</p>
+          <h2>Join a community that funds second chances.</h2>
+          <p>Whether you are an individual donor, a business owner, or a grantmaking partner, your support helps save lives.</p>
+        </div>
+        <div class="public-card-footer">
+          <a class="btn btn-secondary" href="public-impact.html">Read Rescue Stories</a>
+          <button class="btn btn-primary" type="button" id="publicVolunteerCtaBtn">Want to Volunteer?</button>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="js/main.js"></script>
+  <script src="js/public-pages.js"></script>
+</body>
+</html>

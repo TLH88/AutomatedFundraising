@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/campaigns.css">
 </head>
-<body>
+<body data-api-page="true" data-api-page-state="loading">
   <!-- Top Navigation -->
   <nav class="topbar">
     <div class="topbar-left">
@@ -131,11 +131,11 @@
           <p class="page-subtitle">Manage your fundraising campaigns and track performance</p>
         </div>
         <div class="page-actions">
-          <button class="btn btn-secondary">
+          <button type="button" class="btn btn-secondary">
             <span>📊</span>
             <span>Campaign Reports</span>
           </button>
-          <button class="btn btn-primary" onclick="openModal('addCampaignModal')">
+          <button type="button" class="btn btn-primary" id="newCampaignBtn" onclick="openModal('addCampaignModal')">
             <span>➕</span>
             <span>New Campaign</span>
           </button>
@@ -490,7 +490,7 @@
     <div class="modal-content modal-large">
       <div class="modal-header">
         <h2 class="modal-title">Create New Campaign</h2>
-        <button class="modal-close" onclick="closeModal('addCampaignModal')">×</button>
+        <button type="button" class="modal-close" onclick="closeModal('addCampaignModal')">×</button>
       </div>
 
       <div class="modal-body">

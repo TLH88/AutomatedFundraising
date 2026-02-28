@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/donors.css">
 </head>
-<body>
+<body data-api-page="true" data-api-page-state="loading">
 
   <!-- Top Navigation -->
   <nav class="topbar">
@@ -612,7 +612,7 @@
             </div>
           </a>
 
-          <button class="contact-option-card" onclick="alert('SMS feature coming soon!')">
+          <button class="contact-option-card" type="button" id="contactSms">
             <div class="contact-option-icon" style="background: var(--accent-celebration);">
               💬
             </div>
