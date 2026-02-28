@@ -32,8 +32,31 @@ def _load_local_app():
     return app
 
 
+def _print_app_diagnostics(app) -> None:
+    try:
+        server_module = sys.modules.get(app.import_name)
+        server_file = str(Path(getattr(server_module, "__file__", "")).resolve()) if server_module else "unknown"
+    except Exception:
+        server_file = "unknown"
+    print(f"INFO app.import_name -> {app.import_name}")
+    print(f"INFO server module file -> {server_file}")
+    auth_rules = []
+    for rule in app.url_map.iter_rules():
+        if "/api/auth" in str(rule):
+            methods = ",".join(sorted(m for m in rule.methods if m not in {"HEAD", "OPTIONS"}))
+            auth_rules.append(f"{rule.rule} [{methods}]")
+    auth_rules = sorted(set(auth_rules))
+    print(f"INFO auth route count -> {len(auth_rules)}")
+    for item in auth_rules:
+        print(f"INFO auth route -> {item}")
+
+
 def main() -> int:
+    # In clean CI environments, ensure bootstrap can run when no auth accounts exist.
+    if not str(os.environ.get("AUTH_BOOTSTRAP_TOKEN") or "").strip():
+        os.environ["AUTH_BOOTSTRAP_TOKEN"] = "smoke-local-bootstrap-token"
     app = _load_local_app()
+    _print_app_diagnostics(app)
 
     client = app.test_client()
     auth_email = str(os.environ.get("SMOKE_TEST_AUTH_EMAIL") or "").strip().lower()
