@@ -8,7 +8,7 @@ import sys
 import time
 import os
 from pathlib import Path
-import importlib
+import runpy
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -21,14 +21,12 @@ def _env_enabled(name: str) -> bool:
 
 def _load_local_app():
     app_dir = str((ROOT / "fundraising_app").resolve())
+    server_path = str((ROOT / "fundraising_app" / "server.py").resolve())
     if app_dir not in sys.path:
         sys.path.insert(0, app_dir)
-    module = importlib.import_module("server")
-    module_path = str(Path(getattr(module, "__file__", "")).resolve())
-    expected_path = str((ROOT / "fundraising_app" / "server.py").resolve())
-    if module_path != expected_path:
-        raise RuntimeError(f"Unexpected server module resolved: {module_path} (expected {expected_path})")
-    app = getattr(module, "app", None)
+    # Execute the local server file directly to avoid any module-resolution ambiguity in CI.
+    namespace = runpy.run_path(server_path)
+    app = namespace.get("app")
     if app is None:
         raise RuntimeError("Flask app object not found in local server module")
     return app
